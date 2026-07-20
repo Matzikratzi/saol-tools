@@ -5,6 +5,13 @@ import re
 HEADWORD = re.compile(r"^[\^]?([A-Za-zÅÄÖåäöÀÁÉàáé][A-Za-zÅÄÖåäöÀÁÉàáé-]*)")
 VALID_WORD = re.compile(r"^[a-zåäöàáé-]+$", re.IGNORECASE)
 
+RUNEberg_METADATA = re.compile(
+    r"(?:Below is the raw OCR text|Do you see an error|Proofread the page now|"
+    r"Här nedan syns maskintolkade texten|Ser du något fel|Korrekturläs sidan nu|"
+    r"This page has .*proofread|Denna sida har .*korrekturlästs|Project Runeberg)",
+    re.IGNORECASE,
+)
+
 
 def normalize_word(word: str) -> str:
     return word.strip().lstrip("^").lower()
@@ -17,6 +24,10 @@ def candidate_words(text: str) -> list[str]:
     for raw_line in text.splitlines():
         line = raw_line.strip()
         if not line or line.isdigit() or len(line) > 180:
+            continue
+        # Defence in depth: metadata must never become candidate words even if
+        # Runeberg changes its HTML and the earlier OCR cleanup misses a line.
+        if RUNEberg_METADATA.search(line):
             continue
         match = HEADWORD.match(line)
         if not match:
