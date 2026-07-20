@@ -1,10 +1,29 @@
 # SAOL-tools
 
-Ett fristående webbaserat verktyg för att skapa en ren ordlista från den OCR-tolkade skanningen av SAOL 11 hos Projekt Runeberg.
+Ett fristående webbaserat granskningsverktyg för att skapa en ren ordlista från den skannade SAOL 11 hos Projekt Runeberg.
 
-Verktyget sparar bara ord, sidreferenser, status och korrläsarens namn. Den fullständiga OCR-texten lagras inte.
+Verktyget använder själva sidbilden som källa. Lokal Tesseract-OCR körs i hOCR-läge för att identifiera ord som är tryckta i halvfet eller extra fet stil. Den tillfälliga OCR- och layoutinformationen lagras inte. Databasen innehåller bara ord, sidreferenser, status och korrläsarens namn.
 
-## Start på macOS
+## Tolkningsprincip
+
+Enligt vägledningen på bokens sidor 8–13 gäller bland annat:
+
+- alla ord i halvfet stil är uppslagsord, även sammansättningar
+- extra fet stil markerar bara det första uppslagsordet i ett stycke
+- flerordiga uttryck kan vara uppslagsord
+- lodstreck, bindestreck, parenteser och andra specialtecken påverkar hur sammansättningar och varianter ska rekonstrueras
+
+Automatiken föreslår därför ord utifrån identifierad fetstil. Sammansättningsfragment och flerordiga uttryck markeras som misstänkta för manuell kontroll mot bilden.
+
+## Installation på macOS
+
+Installera först Tesseract och svenska språkdata:
+
+```bash
+brew install tesseract tesseract-lang
+```
+
+Installera och starta sedan applikationen:
 
 ```bash
 cd ~/projs/saol-tools
@@ -27,10 +46,11 @@ chmod +x run.command
 ## Arbetsflöde
 
 1. Ange ett Runeberg-sidnummer och välj **Öppna/importera**.
-2. Kontrollera orden mot den skannade sidan.
-3. Rätta, ta bort eller lägg till ord.
-4. Spara som utkast eller välj **Godkänn sida**.
-5. Exportera till `exports/ordlista.txt`.
+2. Kontrollera alla föreslagna uppslagsord mot fetstilen i den skannade sidan.
+3. Rekonstruera sammansättningar och varianter enligt reglerna på sidorna 8–13.
+4. Rätta, ta bort eller lägg till ord.
+5. Spara som utkast eller välj **Godkänn sida**.
+6. Exportera till `exports/ordlista.txt`.
 
 ## Tester
 
