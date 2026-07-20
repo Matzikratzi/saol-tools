@@ -21,6 +21,7 @@ app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 class ImportRequest(BaseModel):
     page_number: int = Field(ge=1, le=9999)
+    force: bool = False
 
 
 class WordInput(BaseModel):
@@ -78,16 +79,37 @@ def import_page(request: ImportRequest):
         raise HTTPException(status_code=502, detail=f"Kunde inte importera sidan: {exc}") from exc
 
     with connect() as connection:
-        existing = connection.execute("SELECT 1 FROM pages WHERE page_number=?", (request.page_number,)).fetchone()
+        existing = connection.execute(
+            "SELECT status FROM pages WHERE page_number=?", (request.page_number,)
+        ).fetchone()
+
+        if existing is not None and request.force and existing["status"] == "approved":
+            raise HTTPException(
+                status_code=409,
+                detail="En godkänd sida kan inte importeras om utan att först sparas som utkast",
+            )
+
         if existing is None:
             connection.execute(
                 "INSERT INTO pages(page_number, source_url, image_url) VALUES (?, ?, ?)",
                 (imported.page_number, imported.source_url, imported.image_url),
             )
+        elif request.force:
+            connection.execute(
+                "UPDATE pages SET source_url=?, image_url=?, status='new', verified_by='', updated_at=CURRENT_TIMESTAMP WHERE page_number=?",
+                (imported.source_url, imported.image_url, imported.page_number),
+            )
+            connection.execute("DELETE FROM words WHERE page_number=?", (request.page_number,))
+
+        if existing is None or request.force:
             connection.executemany(
                 "INSERT INTO words(page_number, word, sort_order, suspicious) VALUES (?, ?, ?, ?)",
-                [(imported.page_number, word, index, int(suspicious_word(word))) for index, word in enumerate(candidates)],
+                [
+                    (imported.page_number, word, index, int(suspicious_word(word)))
+                    for index, word in enumerate(candidates)
+                ],
             )
+
         result = page_payload(connection, request.page_number)
     return result
 
