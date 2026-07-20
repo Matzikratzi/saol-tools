@@ -3,6 +3,6 @@ __pycache__/
 .pytest_cache/
 *.pyc
 data/*.db
-exports/*.txt
-exports/*.json
-exports/*.csv
+exports/*
+!data/.gitkeep
+!exports/.gitkeep
