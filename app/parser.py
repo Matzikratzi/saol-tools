@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 
-HEADWORD = re.compile(r"^[\^]?([A-Za-zÅÄÖåäöÀÁÉàáé][A-Za-zÅÄÖåäöÀÁÉàáé-]*)")
 VALID_WORD = re.compile(r"^[a-zåäöàáé-]+$", re.IGNORECASE)
 
 RUNEberg_METADATA = re.compile(
@@ -14,25 +13,25 @@ RUNEberg_METADATA = re.compile(
 
 
 def normalize_word(word: str) -> str:
-    return word.strip().lstrip("^").lower()
+    return re.sub(r"\s+", " ", word.strip().lstrip("^")).lower()
 
 
 def candidate_words(text: str) -> list[str]:
-    """Extract cautious headword candidates from Runeberg OCR."""
+    """Normalize already selected bold headword groups.
+
+    The image OCR selects typographically bold spans first. A span may be a
+    compound fragment or a multiword headword, so it must not be truncated to
+    the first token.
+    """
     words: list[str] = []
     seen: set[str] = set()
     for raw_line in text.splitlines():
         line = raw_line.strip()
         if not line or line.isdigit() or len(line) > 180:
             continue
-        # Defence in depth: metadata must never become candidate words even if
-        # Runeberg changes its HTML and the earlier OCR cleanup misses a line.
         if RUNEberg_METADATA.search(line):
             continue
-        match = HEADWORD.match(line)
-        if not match:
-            continue
-        word = normalize_word(match.group(1))
+        word = normalize_word(line)
         if len(word) < 2 or word in seen:
             continue
         seen.add(word)
