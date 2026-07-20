@@ -29,11 +29,12 @@ def page_urls(page_number: int) -> tuple[str, str]:
 
 
 def _clean_lines(text: str) -> str:
-    lines = [re.sub(r"[ \t]+", " ", line).rstrip() for line in text.splitlines()]
-    while lines and not lines[0].strip():
-        lines.pop(0)
-    while lines and not lines[-1].strip():
-        lines.pop()
+    """Normalize whitespace and discard empty HTML separator lines."""
+    lines: list[str] = []
+    for raw_line in text.splitlines():
+        line = re.sub(r"[ \t]+", " ", raw_line).strip()
+        if line:
+            lines.append(line)
     return "\n".join(lines)
 
 
