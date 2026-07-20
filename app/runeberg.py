@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 
 import httpx
-from bs4 import BeautifulSoup, NavigableString, Tag
+from bs4 import BeautifulSoup, NavigableString
 
 BASE_URL = "https://runeberg.org/saol/11-6"
 
@@ -37,6 +37,29 @@ def _clean_lines(text: str) -> str:
     return "\n".join(lines)
 
 
+def _strip_ocr_prelude(text: str) -> str:
+    """Remove Runeberg's bilingual instructions and proofreading status."""
+    lines = text.splitlines()
+    status_index: int | None = None
+    for index, line in enumerate(lines):
+        if re.search(r"This page has .*proofread|Denna sida har .*korrekturlästs", line, re.I):
+            status_index = index
+    if status_index is not None:
+        lines = lines[status_index + 1 :]
+
+    filtered = [
+        line
+        for line in lines
+        if not re.search(
+            r"^(?:Proofread the page now!|Korrekturläs sidan nu!|"
+            r"Här nedan syns maskintolkade texten|Do you see an error\?|Ser du något fel\?)",
+            line.strip(),
+            re.I,
+        )
+    ]
+    return _clean_lines("\n".join(filtered))
+
+
 def extract_ocr(html: str) -> str:
     soup = BeautifulSoup(html, "html.parser")
     for selector in ("textarea", "pre"):
@@ -44,33 +67,42 @@ def extract_ocr(html: str) -> str:
         if candidate and len(candidate.get_text("\n", strip=False).strip()) > 5:
             return _clean_lines(candidate.get_text("\n", strip=False))
 
-    marker = soup.find(string=re.compile(r"Below is the raw OCR text", re.I))
-    if marker is None:
-        marker = soup.find(string=re.compile(r"Här nedan syns maskintolkade texten", re.I))
-    if marker is None:
-        raise ValueError("Kunde inte hitta OCR-avsnittet på Runeberg-sidan")
-
     body = soup.body or soup
     start_found = False
+    marker_window = ""
     pieces: list[str] = []
+
+    # Runeberg sometimes splits the marker sentence across text nodes because
+    # the proofreading link sits in the middle of the sentence. Search a
+    # rolling window instead of requiring the complete sentence in one node.
     for node in body.descendants:
-        if node is marker:
-            start_found = True
-            continue
-        if not start_found or not isinstance(node, NavigableString):
-            continue
-        text = str(node)
-        if "<< prev. page" in text or "Project Runeberg," in text:
-            break
-        if re.search(r"This page has .*proofread|Denna sida har .*korrekturlästs", text, re.I):
+        if not isinstance(node, NavigableString):
             continue
         parent = node.parent
         if parent and parent.name in {"script", "style", "nav"}:
             continue
+
+        text = str(node)
+        if not start_found:
+            marker_window = (marker_window + " " + text)[-1000:]
+            normalized = re.sub(r"\s+", " ", marker_window)
+            if re.search(
+                r"Below is the raw OCR text from the above scanned image|"
+                r"Här nedan syns maskintolkade texten från faksimilbilden ovan",
+                normalized,
+                re.I,
+            ):
+                start_found = True
+            continue
+
+        if "<< prev. page" in text or "Project Runeberg," in text:
+            break
         pieces.append(text)
 
-    result = _clean_lines("\n".join(pieces))
-    result = re.sub(r"^(?:Proofread the page now!|Korrekturläs sidan nu!)\s*", "", result, flags=re.I)
+    if not start_found:
+        raise ValueError("Kunde inte hitta OCR-avsnittet på Runeberg-sidan")
+
+    result = _strip_ocr_prelude(_clean_lines("\n".join(pieces)))
     if len(result) < 5:
         raise ValueError("OCR-avsnittet hittades men verkar vara tomt")
     return result
@@ -78,6 +110,11 @@ def extract_ocr(html: str) -> str:
 
 def fetch_page(page_number: int) -> ImportedPage:
     source_url, image_url = page_urls(page_number)
-    response = httpx.get(source_url, timeout=30.0, follow_redirects=True, headers={"User-Agent": "saol-tools/0.2"})
+    response = httpx.get(
+        source_url,
+        timeout=30.0,
+        follow_redirects=True,
+        headers={"User-Agent": "saol-tools/0.2"},
+    )
     response.raise_for_status()
     return ImportedPage(page_number, source_url, image_url, extract_ocr(response.text))
