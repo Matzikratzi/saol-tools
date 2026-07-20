@@ -39,24 +39,39 @@ def _clean_lines(text: str) -> str:
 
 def _strip_ocr_prelude(text: str) -> str:
     """Remove Runeberg's bilingual instructions and proofreading status."""
-    lines = text.splitlines()
+    cleaned = _clean_lines(text)
+    lines = cleaned.splitlines()
+
+    # The actual OCR always follows Runeberg's proofreading status line.
+    # Use the last matching line in case the bilingual text is split.
     status_index: int | None = None
     for index, line in enumerate(lines):
-        if re.search(r"This page has .*proofread|Denna sida har .*korrekturlästs", line, re.I):
-            status_index = index
-    if status_index is not None:
-        lines = lines[status_index + 1 :]
-
-    filtered = [
-        line
-        for line in lines
-        if not re.search(
-            r"^(?:Proofread the page now!|Korrekturläs sidan nu!|"
-            r"Här nedan syns maskintolkade texten|Do you see an error\?|Ser du något fel\?)",
-            line.strip(),
+        normalized = re.sub(r"\s+", " ", line).strip()
+        if re.search(
+            r"This page has .*proofread|Denna sida har .*korrekturlästs",
+            normalized,
             re.I,
-        )
-    ]
+        ):
+            status_index = index
+
+    if status_index is not None:
+        return _clean_lines("\n".join(lines[status_index + 1 :]))
+
+    # Fallback for pages where Runeberg omits or changes the status line.
+    prelude_patterns = (
+        r"Below is the raw OCR text from the above scanned image",
+        r"Do you see an error\?",
+        r"Proofread the page now!",
+        r"Här nedan syns maskintolkade texten från faksimilbilden ovan",
+        r"Ser du något fel\?",
+        r"Korrekturläs sidan nu!",
+    )
+    filtered = []
+    for line in lines:
+        normalized = re.sub(r"\s+", " ", line).strip()
+        if any(re.search(pattern, normalized, re.I) for pattern in prelude_patterns):
+            continue
+        filtered.append(line)
     return _clean_lines("\n".join(filtered))
 
 
@@ -65,7 +80,9 @@ def extract_ocr(html: str) -> str:
     for selector in ("textarea", "pre"):
         candidate = soup.select_one(selector)
         if candidate and len(candidate.get_text("\n", strip=False).strip()) > 5:
-            return _clean_lines(candidate.get_text("\n", strip=False))
+            result = _strip_ocr_prelude(candidate.get_text("\n", strip=False))
+            if len(result) >= 5:
+                return result
 
     body = soup.body or soup
     start_found = False
