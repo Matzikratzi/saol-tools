@@ -13,20 +13,67 @@ SUPERSCRIPT_TRANSLATION = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹", "01234567
 SUPERSCRIPT_PREFIX = re.compile(r"^([⁰¹²³⁴⁵⁶⁷⁸⁹]+)\s*(.*)$")
 FLAT_SENSE_PREFIX = re.compile(r"^([1-9][0-9]?)\s*([a-zåäöàáé].*)$", re.IGNORECASE)
 
+# These are grammatical labels and inflection markers printed inside SAOL
+# articles. They describe the preceding headword and must never start a new
+# dictionary article or enter the game word list.
+ARTICLE_LABELS = {
+    "best.",
+    "obest.",
+    "pl.",
+    "sing.",
+    "pres.",
+    "pret.",
+    "perf.",
+    "sup.",
+    "imp.",
+    "inf.",
+    "part.",
+    "komp.",
+    "superl.",
+    "neutr.",
+    "mask.",
+    "fem.",
+    "gen.",
+    "dat.",
+    "ack.",
+    "äv.",
+    "el.",
+}
+
 
 def normalize_word(word: str) -> str:
     return re.sub(r"\s+", " ", word.strip().lstrip("^")).lower()
 
 
-def split_headword_marker(text: str) -> tuple[int | None, str]:
-    """Split a printed homonym number from a headword without losing either."""
+def _is_article_label(text: str) -> bool:
     normalized = normalize_word(text)
+    return normalized in ARTICLE_LABELS or normalized.endswith(".")
+
+
+def split_headword_marker(text: str) -> tuple[int | None, str]:
+    """Split a printed homonym number from a headword without losing either.
+
+    Grammatical abbreviations such as ``best.`` and ``pl.`` return an empty
+    headword because they belong to the preceding article.
+    """
+    normalized = normalize_word(text)
+    if _is_article_label(normalized):
+        return None, ""
+
     match = SUPERSCRIPT_PREFIX.match(normalized)
     if match:
-        return int(match.group(1).translate(SUPERSCRIPT_TRANSLATION)), normalize_word(match.group(2))
+        word = normalize_word(match.group(2))
+        if _is_article_label(word):
+            return None, ""
+        return int(match.group(1).translate(SUPERSCRIPT_TRANSLATION)), word
+
     match = FLAT_SENSE_PREFIX.match(normalized)
     if match:
-        return int(match.group(1)), normalize_word(match.group(2))
+        word = normalize_word(match.group(2))
+        if _is_article_label(word):
+            return None, ""
+        return int(match.group(1)), word
+
     return None, normalized
 
 
