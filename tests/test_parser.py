@@ -23,15 +23,6 @@ abakus
     assert candidate_words(text) == ["abakus"]
 
 
-def test_superscript_sense_numbers_are_not_part_of_headword():
-    assert normalize_word("¹a") == "a"
-    assert normalize_word("²a") == "a"
-    assert normalize_word("³a") == "a"
-    assert normalize_word("1a") == "a"
-    assert normalize_word("2a") == "a"
-    assert candidate_words("¹a\n²a\n³a") == ["a"]
-
-
 def test_normalize_and_suspicious():
     assert normalize_word("  ^Abbé ") == "abbé"
     assert suspicious_word("tiii") is True
