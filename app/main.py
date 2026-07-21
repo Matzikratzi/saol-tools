@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -18,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 STATIC = ROOT / "static"
 TRAINING_PAGES = range(19, 29)
 
-app = FastAPI(title="SAOL-tools", version="0.7.0")
+app = FastAPI(title="SAOL-tools", version="0.8.0")
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
@@ -105,44 +106,202 @@ def dictionary_body_observations(observations):
     return [item for item in observations if item.top >= body_top]
 
 
-def observations_to_candidates(observations):
-    observations = dictionary_body_observations(observations)
-    model = HeadwordModel.load()
-    scored = []
-    if model is None:
-        densities = sorted(item.ink_density for item in observations)
-        density_limit = densities[int(len(densities) * 0.62)] if densities else 0.0
-        for item in observations:
-            if item.ink_density >= density_limit:
-                scored.append((item.top, item.left, item, 0.5))
-    else:
-        for item in observations:
-            probability = model.probability(item)
-            if probability >= 0.50:
-                scored.append((item.top, item.left, item, probability))
+def _median(values):
+    ordered = sorted(values)
+    if not ordered:
+        return 0.0
+    middle = len(ordered) // 2
+    if len(ordered) % 2:
+        return float(ordered[middle])
+    return (ordered[middle - 1] + ordered[middle]) / 2.0
+
+
+def _split_printed_columns(observations):
+    """Split OCR observations at the widest central horizontal whitespace.
+
+    Dictionary pages are read as two independent columns. The split is based on
+    token centres, but only gaps in the middle 60 percent of the page are
+    considered so that short words at a page edge do not create a false column.
+    """
+    if len(observations) < 4:
+        return [sorted(observations, key=lambda item: (item.top, item.left))]
+
+    centres = sorted(item.left + item.width / 2 for item in observations)
+    low = centres[0] + (centres[-1] - centres[0]) * 0.20
+    high = centres[0] + (centres[-1] - centres[0]) * 0.80
+    gaps = [
+        (right - left, (left + right) / 2)
+        for left, right in zip(centres, centres[1:])
+        if low <= (left + right) / 2 <= high
+    ]
+    if not gaps:
+        return [sorted(observations, key=lambda item: (item.top, item.left))]
+
+    gap, split = max(gaps)
+    median_width = _median([item.width for item in observations])
+    if gap < max(24.0, median_width * 1.8):
+        return [sorted(observations, key=lambda item: (item.top, item.left))]
+
+    left_column = [item for item in observations if item.left + item.width / 2 < split]
+    right_column = [item for item in observations if item.left + item.width / 2 >= split]
+    return [
+        sorted(left_column, key=lambda item: (item.top, item.left)),
+        sorted(right_column, key=lambda item: (item.top, item.left)),
+    ]
+
+
+def _group_printed_rows(column):
+    """Group OCR boxes that overlap the same printed baseline."""
+    if not column:
+        return []
+    median_height = max(1.0, _median([item.height for item in column]))
+    tolerance = median_height * 0.55
+    rows = []
+    for item in sorted(column, key=lambda value: (value.top + value.height / 2, value.left)):
+        centre = item.top + item.height / 2
+        best = None
+        best_distance = None
+        for row in rows[-3:]:
+            distance = abs(centre - row["centre"])
+            if distance <= tolerance and (best_distance is None or distance < best_distance):
+                best = row
+                best_distance = distance
+        if best is None:
+            rows.append({"items": [item], "centre": centre})
+        else:
+            best["items"].append(item)
+            best["centre"] = sum(
+                value.top + value.height / 2 for value in best["items"]
+            ) / len(best["items"])
 
     result = []
-    seen = set()
-    for _, _, item, probability in sorted(scored, key=lambda value: (value[0], value[1])):
-        sense_number, word = split_headword_marker(item.text)
-        key = (word.casefold(), sense_number)
-        if not word or key in seen:
-            continue
-        seen.add(key)
-        result.append(
-            {
-                "word": word,
-                "sense_number": sense_number,
-                "word_class": "",
-                "inflection_raw": "",
-                "forms": [],
-                "suspicious": probability < 0.72 or suspicious_word(word),
-                "bbox_left": item.left,
-                "bbox_top": item.top,
-                "bbox_width": item.width,
-                "bbox_height": item.height,
-            }
+    for row in sorted(rows, key=lambda value: value["centre"]):
+        result.append(sorted(row["items"], key=lambda value: value.left))
+    return result
+
+
+def _sense_only(text: str) -> int | None:
+    token = text.strip().strip(".,:;()[]")
+    translated = token.translate(str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹", "0123456789"))
+    if translated.isdigit() and 1 <= int(translated) <= 99:
+        return int(translated)
+    return None
+
+
+def _union_box(items):
+    left = min(item.left for item in items)
+    top = min(item.top for item in items)
+    right = max(item.left + item.width for item in items)
+    bottom = max(item.top + item.height for item in items)
+    return left, top, right - left, bottom - top
+
+
+def _row_headword(row):
+    """Return the possible article start from the beginning of a printed row.
+
+    Tesseract often separates a raised homonym number from a one-letter
+    headword. In that case the first two boxes are joined logically, while the
+    number remains metadata and never becomes part of the exported word.
+    """
+    if not row:
+        return None
+    first = row[0]
+    separate_sense = _sense_only(first.text)
+    if separate_sense is not None and len(row) >= 2:
+        second = row[1]
+        horizontal_gap = second.left - (first.left + first.width)
+        vertical_overlap = min(first.top + first.height, second.top + second.height) - max(
+            first.top, second.top
         )
+        if horizontal_gap <= max(first.height, second.height) * 1.6 and vertical_overlap >= -first.height:
+            _, word = split_headword_marker(second.text)
+            if word:
+                left, top, width, height = _union_box([first, second])
+                return separate_sense, word, second, (left, top, width, height), True
+
+    sense_number, word = split_headword_marker(first.text)
+    if not word:
+        return None
+    return sense_number, word, first, _union_box([first]), sense_number is not None
+
+
+def _looks_like_inflection_fragment(word: str) -> bool:
+    """Reject common compact endings, not all hyphenated dictionary words."""
+    normalized = word.casefold().strip()
+    if normalized.startswith("-"):
+        return True
+    return bool(re.fullmatch(r"[a-zåäö]-[a-zåäö]{1,3}", normalized))
+
+
+def _column_margin(rows, median_height):
+    first_lefts = sorted(row[0].left for row in rows if row)
+    if not first_lefts:
+        return 0.0
+    sample_count = max(1, len(first_lefts) // 3)
+    return _median(first_lefts[:sample_count])
+
+
+def observations_to_candidates(observations):
+    """Find article starts in printed reading order: left column, then right.
+
+    Every non-indented printed row gets a headword chance regardless of ink
+    density. Boldness/model probability remains supporting evidence. This is
+    essential for tiny headwords such as raised ``¹`` followed by ``a``.
+    """
+    observations = dictionary_body_observations(observations)
+    model = HeadwordModel.load()
+    result = []
+    seen = set()
+
+    for column_number, column in enumerate(_split_printed_columns(observations)):
+        if not column:
+            continue
+        rows = _group_printed_rows(column)
+        median_height = max(1.0, _median([item.height for item in column]))
+        margin = _column_margin(rows, median_height)
+        indent_limit = margin + median_height * 1.35
+
+        densities = sorted(item.ink_density for item in column)
+        density_limit = densities[int(len(densities) * 0.62)] if densities else 0.0
+
+        for row in rows:
+            candidate = _row_headword(row)
+            if candidate is None:
+                continue
+            sense_number, word, source, box, explicit_sense = candidate
+            if source.left > indent_limit and not explicit_sense:
+                continue
+            if _looks_like_inflection_fragment(word) and not explicit_sense:
+                continue
+
+            probability = model.probability(source) if model is not None else 0.5
+            typographic_support = (
+                probability >= 0.50 if model is not None else source.ink_density >= density_limit
+            )
+            key = (word.casefold(), sense_number)
+            if key in seen:
+                continue
+            seen.add(key)
+            left, top, width, height = box
+            result.append(
+                {
+                    "word": word,
+                    "sense_number": sense_number,
+                    "word_class": "",
+                    "inflection_raw": "",
+                    "forms": [],
+                    "suspicious": (
+                        not explicit_sense
+                        and (not typographic_support or suspicious_word(word))
+                    ),
+                    "bbox_left": left,
+                    "bbox_top": top,
+                    "bbox_width": width,
+                    "bbox_height": height,
+                    "column": column_number,
+                }
+            )
+
     return result
 
 
