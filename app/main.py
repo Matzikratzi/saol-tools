@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 STATIC = ROOT / "static"
 TRAINING_PAGES = range(19, 29)
 
-app = FastAPI(title="SAOL-tools", version="0.7.3")
+app = FastAPI(title="SAOL-tools", version="0.8.0")
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
@@ -38,6 +38,10 @@ class ArticleInput(BaseModel):
     bbox_top: int | None = None
     bbox_width: int | None = None
     bbox_height: int | None = None
+    ocr_tesseract: str = Field(default="", max_length=100)
+    ocr_runeberg: str = Field(default="", max_length=100)
+    ocr_conflict: bool = False
+    ocr_resolved: bool = True
 
 
 class SaveRequest(BaseModel):
@@ -57,24 +61,19 @@ def index() -> FileResponse:
 
 
 def page_payload(connection, page_number: int):
-    page = connection.execute(
-        "SELECT * FROM pages WHERE page_number=?", (page_number,)
-    ).fetchone()
+    page = connection.execute("SELECT * FROM pages WHERE page_number=?", (page_number,)).fetchone()
     if page is None:
         return None
-
     rows = connection.execute(
         """
         SELECT id, word, sort_order, suspicious, sense_number, word_class,
                inflection_raw, forms_json,
-               bbox_left, bbox_top, bbox_width, bbox_height
-        FROM words
-        WHERE page_number=?
-        ORDER BY sort_order
+               bbox_left, bbox_top, bbox_width, bbox_height,
+               ocr_tesseract, ocr_runeberg, ocr_conflict, ocr_resolved
+        FROM words WHERE page_number=? ORDER BY sort_order
         """,
         (page_number,),
     ).fetchall()
-
     result = dict(page)
     result["words"] = []
     for row in rows:
@@ -83,33 +82,27 @@ def page_payload(connection, page_number: int):
             item["forms"] = json.loads(item.pop("forms_json") or "[]")
         except (TypeError, json.JSONDecodeError):
             item["forms"] = []
+        item["ocr_conflict"] = bool(item["ocr_conflict"])
+        item["ocr_resolved"] = bool(item["ocr_resolved"])
         result["words"].append(item)
     return result
 
 
 def dictionary_body_observations(observations):
-    """Remove a probable running header from a full OCR page."""
     if len(observations) < 12:
         return observations
-
     ordered = sorted(observations, key=lambda item: (item.top, item.left))
     tops = sorted({item.top for item in ordered})
     if len(tops) < 8:
         return observations
-
     min_top = tops[0]
     max_bottom = max(item.top + item.height for item in ordered)
     vertical_span = max(1, max_bottom - min_top)
     median_height = sorted(item.height for item in ordered)[len(ordered) // 2]
     early_limit = min_top + vertical_span * 0.30
-    gaps = [
-        (next_top - top, next_top)
-        for top, next_top in zip(tops, tops[1:])
-        if next_top <= early_limit
-    ]
+    gaps = [(next_top - top, next_top) for top, next_top in zip(tops, tops[1:]) if next_top <= early_limit]
     if not gaps:
         return observations
-
     gap, body_top = max(gaps)
     if gap < median_height * 1.5:
         return observations
@@ -121,9 +114,7 @@ def _median(values):
     if not ordered:
         return 0.0
     middle = len(ordered) // 2
-    if len(ordered) % 2:
-        return float(ordered[middle])
-    return (ordered[middle - 1] + ordered[middle]) / 2.0
+    return float(ordered[middle]) if len(ordered) % 2 else (ordered[middle - 1] + ordered[middle]) / 2.0
 
 
 def _one_column(observations):
@@ -131,31 +122,19 @@ def _one_column(observations):
 
 
 def _split_printed_columns(observations):
-    """Return OCR boxes in printed reading order.
-
-    SAOL pages use two fixed printed columns. Gaps between individual OCR words
-    are not a reliable gutter detector: a long word in the left column can reach
-    almost to the gutter. Instead, use the horizontal centre of the observed
-    printed page and classify boxes by their left edge. This keeps long left-
-    column words on the left and gives the order left column, then right column.
-    """
     if len(observations) < 4:
         return _one_column(observations)
-
     page_left = min(item.left for item in observations)
     page_right = max(item.left + item.width for item in observations)
     horizontal_span = page_right - page_left
     if horizontal_span <= 0:
         return _one_column(observations)
-
     split = page_left + horizontal_span / 2.0
     left_column = [item for item in observations if item.left < split]
     right_column = [item for item in observations if item.left >= split]
-
     minimum_side = max(2, len(observations) // 12)
     if len(left_column) < minimum_side or len(right_column) < minimum_side:
         return _one_column(observations)
-
     return [
         sorted(left_column, key=lambda item: (item.top, item.left)),
         sorted(right_column, key=lambda item: (item.top, item.left)),
@@ -163,40 +142,26 @@ def _split_printed_columns(observations):
 
 
 def _group_printed_rows(column):
-    """Group OCR boxes that lie on the same printed row."""
     if not column:
         return []
-
     median_height = max(1.0, _median([item.height for item in column]))
     tolerance = median_height * 0.55
     rows = []
-
-    for item in sorted(
-        column, key=lambda value: (value.top + value.height / 2, value.left)
-    ):
+    for item in sorted(column, key=lambda value: (value.top + value.height / 2, value.left)):
         centre = item.top + item.height / 2
         best = None
         best_distance = None
         for row in rows[-3:]:
             distance = abs(centre - row["centre"])
-            if distance <= tolerance and (
-                best_distance is None or distance < best_distance
-            ):
+            if distance <= tolerance and (best_distance is None or distance < best_distance):
                 best = row
                 best_distance = distance
-
         if best is None:
             rows.append({"items": [item], "centre": centre})
         else:
             best["items"].append(item)
-            best["centre"] = sum(
-                value.top + value.height / 2 for value in best["items"]
-            ) / len(best["items"])
-
-    return [
-        sorted(row["items"], key=lambda value: value.left)
-        for row in sorted(rows, key=lambda value: value["centre"])
-    ]
+            best["centre"] = sum(value.top + value.height / 2 for value in best["items"]) / len(best["items"])
+    return [sorted(row["items"], key=lambda value: value.left) for row in sorted(rows, key=lambda value: value["centre"])]
 
 
 def _sense_only(text: str) -> int | None:
@@ -216,121 +181,85 @@ def _union_box(items):
 
 
 def _row_headword(row):
-    """Return a possible article start at the beginning of a printed row."""
     if not row:
         return None
-
     first = row[0]
     row_left = first.left
     separate_sense = _sense_only(first.text)
     if separate_sense is not None and len(row) >= 2:
         second = row[1]
         horizontal_gap = second.left - (first.left + first.width)
-        vertical_overlap = min(
-            first.top + first.height, second.top + second.height
-        ) - max(first.top, second.top)
-        if (
-            horizontal_gap <= max(first.height, second.height) * 1.6
-            and vertical_overlap >= -first.height
-        ):
+        vertical_overlap = min(first.top + first.height, second.top + second.height) - max(first.top, second.top)
+        if horizontal_gap <= max(first.height, second.height) * 1.6 and vertical_overlap >= -first.height:
             _, word = split_headword_marker(second.text)
             if word:
-                box = _union_box([first, second])
-                return separate_sense, word, second, box, True, row_left
-
+                return separate_sense, word, second, _union_box([first, second]), True, row_left
     sense_number, word = split_headword_marker(first.text)
     if not word:
         return None
-    return (
-        sense_number,
-        word,
-        first,
-        _union_box([first]),
-        sense_number is not None,
-        row_left,
-    )
+    return sense_number, word, first, _union_box([first]), sense_number is not None, row_left
 
 
 def _looks_like_inflection_fragment(word: str) -> bool:
     normalized = word.casefold().strip()
-    if normalized.startswith("-"):
-        return True
-    return bool(re.fullmatch(r"[a-zåäö]-[a-zåäö]{1,3}", normalized))
+    return normalized.startswith("-") or bool(re.fullmatch(r"[a-zåäö]-[a-zåäö]{1,3}", normalized))
 
 
 def _column_margin(rows):
     first_lefts = sorted(row[0].left for row in rows if row)
     if not first_lefts:
         return 0.0
-    sample_count = max(1, len(first_lefts) // 3)
-    return _median(first_lefts[:sample_count])
+    return _median(first_lefts[: max(1, len(first_lefts) // 3)])
 
 
 def observations_to_candidates(observations):
-    """Find article starts in printed order: left column, then right column."""
     observations = dictionary_body_observations(observations)
     model = HeadwordModel.load()
     result = []
     seen = set()
-
     for column_number, column in enumerate(_split_printed_columns(observations)):
         if not column:
             continue
-
         rows = _group_printed_rows(column)
         median_height = max(1.0, _median([item.height for item in column]))
         margin = _column_margin(rows)
-        indent_tolerance = max(3.0, median_height * 0.35)
-        indent_limit = margin + indent_tolerance
-
+        indent_limit = margin + max(3.0, median_height * 0.35)
         densities = sorted(item.ink_density for item in column)
-        density_limit = (
-            densities[int(len(densities) * 0.62)] if densities else 0.0
-        )
-
+        density_limit = densities[int(len(densities) * 0.62)] if densities else 0.0
         for row in rows:
             candidate = _row_headword(row)
             if candidate is None:
                 continue
-
             sense_number, word, source, box, explicit_sense, row_left = candidate
             if row_left > indent_limit and not explicit_sense:
                 continue
             if _looks_like_inflection_fragment(word) and not explicit_sense:
                 continue
-
             probability = model.probability(source) if model is not None else 0.5
-            typographic_support = (
-                probability >= 0.50
-                if model is not None
-                else source.ink_density >= density_limit
-            )
-
+            typographic_support = probability >= 0.50 if model is not None else source.ink_density >= density_limit
             key = (word.casefold(), sense_number)
             if key in seen:
                 continue
             seen.add(key)
-
             left, top, width, height = box
-            result.append(
-                {
-                    "word": word,
-                    "sense_number": sense_number,
-                    "word_class": "",
-                    "inflection_raw": "",
-                    "forms": [],
-                    "suspicious": (
-                        not explicit_sense
-                        and (not typographic_support or suspicious_word(word))
-                    ),
-                    "bbox_left": left,
-                    "bbox_top": top,
-                    "bbox_width": width,
-                    "bbox_height": height,
-                    "column": column_number,
-                }
-            )
-
+            conflict = bool(getattr(source, "ocr_conflict", False))
+            result.append({
+                "word": word,
+                "sense_number": sense_number,
+                "word_class": "",
+                "inflection_raw": "",
+                "forms": [],
+                "suspicious": conflict or (not explicit_sense and (not typographic_support or suspicious_word(word))),
+                "bbox_left": left,
+                "bbox_top": top,
+                "bbox_width": width,
+                "bbox_height": height,
+                "column": column_number,
+                "ocr_tesseract": getattr(source, "ocr_tesseract", "") or source.text,
+                "ocr_runeberg": getattr(source, "ocr_runeberg", ""),
+                "ocr_conflict": conflict,
+                "ocr_resolved": not conflict,
+            })
     return result
 
 
@@ -338,14 +267,10 @@ def observations_to_candidates(observations):
 def list_pages():
     with connect() as connection:
         rows = connection.execute(
-            """
-            SELECT p.page_number, p.status, p.verified_by, p.updated_at,
-                   COUNT(w.id) AS word_count
-            FROM pages p
-            LEFT JOIN words w ON w.page_number=p.page_number
-            GROUP BY p.page_number
-            ORDER BY p.page_number
-            """
+            """SELECT p.page_number, p.status, p.verified_by, p.updated_at,
+                      COUNT(w.id) AS word_count
+               FROM pages p LEFT JOIN words w ON w.page_number=p.page_number
+               GROUP BY p.page_number ORDER BY p.page_number"""
         ).fetchall()
     return [dict(row) for row in rows]
 
@@ -355,45 +280,24 @@ def model_status():
     model = HeadwordModel.load()
     if model is None:
         return {"trained": False, "training_pages": list(TRAINING_PAGES)}
-    return {
-        "trained": True,
-        "samples": model.samples,
-        "positive_samples": model.positive_samples,
-        "training_pages": list(TRAINING_PAGES),
-    }
+    return {"trained": True, "samples": model.samples, "positive_samples": model.positive_samples, "training_pages": list(TRAINING_PAGES)}
 
 
 @app.post("/api/model/train")
 def train_headword_model():
     samples = []
     missing = []
-
     with connect() as connection:
         labels_by_page = {}
         for page_number in TRAINING_PAGES:
-            page = connection.execute(
-                "SELECT status FROM pages WHERE page_number=?", (page_number,)
-            ).fetchone()
+            page = connection.execute("SELECT status FROM pages WHERE page_number=?", (page_number,)).fetchone()
             if page is None or page["status"] != "approved":
                 missing.append(page_number)
                 continue
-
-            rows = connection.execute(
-                "SELECT word FROM words WHERE page_number=?", (page_number,)
-            ).fetchall()
-            labels_by_page[page_number] = {
-                token
-                for row in rows
-                for token in (normalize_token(part) for part in row["word"].split())
-                if token
-            }
-
+            rows = connection.execute("SELECT word FROM words WHERE page_number=?", (page_number,)).fetchall()
+            labels_by_page[page_number] = {token for row in rows for token in (normalize_token(part) for part in row["word"].split()) if token}
     if missing:
-        raise HTTPException(
-            status_code=409,
-            detail=f"Godkänn först träningssidorna: {', '.join(map(str, missing))}",
-        )
-
+        raise HTTPException(status_code=409, detail=f"Godkänn först träningssidorna: {', '.join(map(str, missing))}")
     try:
         for page_number in TRAINING_PAGES:
             imported = fetch_page(page_number)
@@ -406,15 +310,8 @@ def train_headword_model():
         model = train_model(samples)
         model.save()
     except Exception as exc:
-        raise HTTPException(
-            status_code=502, detail=f"Kunde inte träna modellen: {exc}"
-        ) from exc
-
-    return {
-        "trained": True,
-        "samples": model.samples,
-        "positive_samples": model.positive_samples,
-    }
+        raise HTTPException(status_code=502, detail=f"Kunde inte träna modellen: {exc}") from exc
+    return {"trained": True, "samples": model.samples, "positive_samples": model.positive_samples}
 
 
 @app.post("/api/pages/import")
@@ -423,67 +320,34 @@ def import_page(request: ImportRequest):
         imported = fetch_page(request.page_number)
         candidates = observations_to_candidates(imported.observations)
     except Exception as exc:
-        raise HTTPException(
-            status_code=502, detail=f"Kunde inte importera sidan: {exc}"
-        ) from exc
-
+        raise HTTPException(status_code=502, detail=f"Kunde inte importera sidan: {exc}") from exc
     with connect() as connection:
-        existing = connection.execute(
-            "SELECT status FROM pages WHERE page_number=?", (request.page_number,)
-        ).fetchone()
-
+        existing = connection.execute("SELECT status FROM pages WHERE page_number=?", (request.page_number,)).fetchone()
         if existing is not None and request.force and existing["status"] == "approved":
-            raise HTTPException(
-                status_code=409, detail="En godkänd sida kan inte importeras om"
-            )
-
+            raise HTTPException(status_code=409, detail="En godkänd sida kan inte importeras om")
         if existing is None:
-            connection.execute(
-                "INSERT INTO pages(page_number, source_url, image_url) VALUES (?, ?, ?)",
-                (imported.page_number, imported.source_url, imported.image_url),
-            )
+            connection.execute("INSERT INTO pages(page_number, source_url, image_url) VALUES (?, ?, ?)", (imported.page_number, imported.source_url, imported.image_url))
         elif request.force:
             connection.execute(
-                """
-                UPDATE pages
-                SET source_url=?, image_url=?, status='started', verified_by='',
-                    updated_at=CURRENT_TIMESTAMP
-                WHERE page_number=?
-                """,
+                """UPDATE pages SET source_url=?, image_url=?, status='started', verified_by='',
+                   updated_at=CURRENT_TIMESTAMP WHERE page_number=?""",
                 (imported.source_url, imported.image_url, imported.page_number),
             )
-            connection.execute(
-                "DELETE FROM words WHERE page_number=?", (request.page_number,)
-            )
-
+            connection.execute("DELETE FROM words WHERE page_number=?", (request.page_number,))
         if existing is None or request.force:
             connection.executemany(
-                """
-                INSERT INTO words(
+                """INSERT INTO words(
                     page_number, word, sort_order, suspicious, sense_number,
                     word_class, inflection_raw, forms_json,
-                    bbox_left, bbox_top, bbox_width, bbox_height
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                [
-                    (
-                        imported.page_number,
-                        candidate["word"],
-                        index,
-                        int(candidate["suspicious"]),
-                        candidate["sense_number"],
-                        "",
-                        "",
-                        "[]",
-                        candidate["bbox_left"],
-                        candidate["bbox_top"],
-                        candidate["bbox_width"],
-                        candidate["bbox_height"],
-                    )
-                    for index, candidate in enumerate(candidates)
-                ],
+                    bbox_left, bbox_top, bbox_width, bbox_height,
+                    ocr_tesseract, ocr_runeberg, ocr_conflict, ocr_resolved
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                [(
+                    imported.page_number, candidate["word"], index, int(candidate["suspicious"]), candidate["sense_number"],
+                    "", "", "[]", candidate["bbox_left"], candidate["bbox_top"], candidate["bbox_width"], candidate["bbox_height"],
+                    candidate["ocr_tesseract"], candidate["ocr_runeberg"], int(candidate["ocr_conflict"]), int(candidate["ocr_resolved"]),
+                ) for index, candidate in enumerate(candidates)],
             )
-
         result = page_payload(connection, request.page_number)
     return result
 
@@ -501,61 +365,38 @@ def get_page(page_number: int):
 def save_page(page_number: int, request: SaveRequest):
     if request.status not in {"started", "approved"}:
         raise HTTPException(status_code=400, detail="Ogiltig status")
-
+    if request.status == "approved" and any(item.ocr_conflict and not item.ocr_resolved for item in request.words):
+        raise HTTPException(status_code=409, detail="Lös alla OCR-konflikter innan sidan godkänns")
     normalized = []
     seen = set()
     for item in request.words:
         detected_sense, word = split_headword_marker(item.word)
-        sense_number = (
-            item.sense_number if item.sense_number is not None else detected_sense
-        )
+        sense_number = item.sense_number if item.sense_number is not None else detected_sense
         key = (word.casefold(), sense_number)
         if not word or key in seen:
             continue
         seen.add(key)
-        forms = normalize_forms(item.forms)
-        normalized.append((word, sense_number, forms, item))
-
+        normalized.append((word, sense_number, normalize_forms(item.forms), item))
     with connect() as connection:
-        exists = connection.execute(
-            "SELECT 1 FROM pages WHERE page_number=?", (page_number,)
-        ).fetchone()
-        if exists is None:
+        if connection.execute("SELECT 1 FROM pages WHERE page_number=?", (page_number,)).fetchone() is None:
             raise HTTPException(status_code=404, detail="Sidan är inte importerad")
-
         connection.execute("DELETE FROM words WHERE page_number=?", (page_number,))
         connection.executemany(
-            """
-            INSERT INTO words(
+            """INSERT INTO words(
                 page_number, word, sort_order, suspicious, sense_number,
                 word_class, inflection_raw, forms_json,
-                bbox_left, bbox_top, bbox_width, bbox_height
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            [
-                (
-                    page_number,
-                    word,
-                    index,
-                    int(suspicious_word(word)),
-                    sense_number,
-                    item.word_class.strip(),
-                    item.inflection_raw.strip(),
-                    json.dumps(forms, ensure_ascii=False),
-                    item.bbox_left,
-                    item.bbox_top,
-                    item.bbox_width,
-                    item.bbox_height,
-                )
-                for index, (word, sense_number, forms, item) in enumerate(normalized)
-            ],
+                bbox_left, bbox_top, bbox_width, bbox_height,
+                ocr_tesseract, ocr_runeberg, ocr_conflict, ocr_resolved
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            [(
+                page_number, word, index, int(suspicious_word(word) or (item.ocr_conflict and not item.ocr_resolved)), sense_number,
+                item.word_class.strip(), item.inflection_raw.strip(), json.dumps(forms, ensure_ascii=False),
+                item.bbox_left, item.bbox_top, item.bbox_width, item.bbox_height,
+                item.ocr_tesseract.strip(), item.ocr_runeberg.strip(), int(item.ocr_conflict), int(item.ocr_resolved),
+            ) for index, (word, sense_number, forms, item) in enumerate(normalized)],
         )
         connection.execute(
-            """
-            UPDATE pages
-            SET status=?, verified_by=?, updated_at=CURRENT_TIMESTAMP
-            WHERE page_number=?
-            """,
+            "UPDATE pages SET status=?, verified_by=?, updated_at=CURRENT_TIMESTAMP WHERE page_number=?",
             (request.status, request.verified_by.strip(), page_number),
         )
         result = page_payload(connection, page_number)
@@ -565,11 +406,7 @@ def save_page(page_number: int, request: SaveRequest):
 @app.post("/api/export")
 def export_words():
     path, count = export_approved()
-    return {
-        "filename": path.name,
-        "word_count": count,
-        "download_url": "/api/export/download",
-    }
+    return {"filename": path.name, "word_count": count, "download_url": "/api/export/download"}
 
 
 @app.get("/api/export/download")
