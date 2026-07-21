@@ -3,11 +3,13 @@ from __future__ import annotations
 import argparse
 import base64
 import html
-import mimetypes
+import io
 import webbrowser
 from pathlib import Path
 
 import httpx
+from PIL import Image
+
 from app.runeberg import (
     _align_lines,
     _normalized_observation_line,
@@ -26,16 +28,20 @@ def _escape(value: object) -> str:
     return html.escape(str(value), quote=True)
 
 
-def _image_data_url(content: bytes, source_url: str) -> str:
-    mime_type = mimetypes.guess_type(source_url)[0] or "image/tiff"
-    encoded = base64.b64encode(content).decode("ascii")
-    return f"data:{mime_type};base64,{encoded}"
+def _image_data_url(content: bytes) -> tuple[str, int, int]:
+    """Convert the Runeberg TIFF to a browser-friendly embedded PNG."""
+    with Image.open(io.BytesIO(content)) as source:
+        image = source.convert("RGB")
+        width, height = image.size
+        output = io.BytesIO()
+        image.save(output, format="PNG", optimize=True)
+    encoded = base64.b64encode(output.getvalue()).decode("ascii")
+    return f"data:image/png;base64,{encoded}", width, height
 
 
 def _review_html(
     page: int,
     source_url: str,
-    image_url: str,
     image_content: bytes,
     raw_text: str,
     runeberg_lines: list[list[str]],
@@ -50,7 +56,7 @@ def _review_html(
     mean_similarity = sum(pair_scores) / len(pair_scores) if pair_scores else 0.0
 
     rows: list[str] = []
-    for item in sorted(corrected, key=lambda value: (value.top, value.left)):
+    for index, item in enumerate(sorted(corrected, key=lambda value: (value.top, value.left))):
         if item.ocr_conflict:
             status = "Konflikt"
             css_class = "conflict"
@@ -61,12 +67,18 @@ def _review_html(
             status = "Endast Tesseract"
             css_class = "tesseract-only"
         rows.append(
-            "<tr class=\"%s\">"
-            "<td>%s</td><td>%s</td><td>%s</td><td>%s</td>"
-            "<td>%d</td><td>%d</td><td>%.1f</td>"
-            "</tr>"
+            '<tr class="%s" tabindex="0" role="button" '
+            'data-left="%d" data-top="%d" data-width="%d" data-height="%d" '
+            'onclick="focusObservation(this)" onkeydown="activateRow(event, this)">'
+            '<td>%s</td><td>%s</td><td>%s</td><td>%s</td>'
+            '<td>%d</td><td>%d</td><td>%.1f</td>'
+            '</tr>'
             % (
                 css_class,
+                item.left,
+                item.top,
+                item.width,
+                item.height,
                 _escape(status),
                 _escape(item.text),
                 _escape(item.ocr_tesseract),
@@ -92,39 +104,52 @@ def _review_html(
             )
         )
 
-    image_data = _image_data_url(image_content, image_url)
+    image_data, image_width, image_height = _image_data_url(image_content)
     return f"""<!doctype html>
-<html lang=\"sv\">
+<html lang="sv">
 <head>
-<meta charset=\"utf-8\">
-<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OCR-granskning – sida {page}</title>
 <style>
 :root {{ color-scheme: light dark; font-family: system-ui, sans-serif; }}
 body {{ margin: 0; background: #f3f4f6; color: #111827; }}
-header {{ position: sticky; top: 0; z-index: 2; padding: 14px 20px; background: #111827; color: white; }}
+header {{ position: sticky; top: 0; z-index: 20; padding: 14px 20px; background: #111827; color: white; }}
 header h1 {{ margin: 0 0 8px; font-size: 1.25rem; }}
 .summary {{ display: flex; flex-wrap: wrap; gap: 8px; }}
 .badge {{ padding: 4px 9px; border-radius: 999px; background: #374151; font-size: .88rem; }}
 .badge.good {{ background: #166534; }} .badge.bad {{ background: #991b1b; }}
-main {{ max-width: 1600px; margin: auto; padding: 18px; }}
-.grid {{ display: grid; grid-template-columns: minmax(320px, 42%) minmax(520px, 58%); gap: 18px; align-items: start; }}
+main {{ max-width: 1800px; margin: auto; padding: 18px; }}
+.grid {{ display: grid; grid-template-columns: minmax(360px, 48%) minmax(520px, 52%); gap: 18px; align-items: start; }}
 .panel {{ background: white; border: 1px solid #d1d5db; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px #0002; }}
 .panel h2 {{ margin: 0; padding: 12px 14px; font-size: 1rem; background: #e5e7eb; }}
-.image-wrap {{ max-height: calc(100vh - 145px); overflow: auto; padding: 12px; text-align: center; }}
-.image-wrap img {{ max-width: 100%; height: auto; background: white; }}
-.table-wrap {{ max-height: calc(100vh - 145px); overflow: auto; }}
+.image-toolbar {{ display: flex; align-items: center; gap: 7px; padding: 8px 12px; border-bottom: 1px solid #d1d5db; }}
+.image-toolbar button {{ padding: 4px 10px; cursor: pointer; }}
+.image-toolbar .hint {{ margin-left: auto; font-size: .82rem; opacity: .72; }}
+.image-wrap {{ height: calc(100vh - 205px); min-height: 420px; overflow: auto; padding: 12px; background: #d1d5db; }}
+.scan-stage {{ position: relative; width: {image_width}px; height: {image_height}px; transform-origin: top left; }}
+.scan-stage img {{ display: block; width: {image_width}px; height: {image_height}px; background: white; user-select: none; }}
+.marker {{ position: absolute; display: none; box-sizing: border-box; border: 4px solid #dc2626; background: #ef444433; border-radius: 3px; pointer-events: none; z-index: 5; box-shadow: 0 0 0 2px white, 0 0 14px #0009; }}
+.marker::after {{ content: ""; position: absolute; inset: -10px; border: 2px dashed #dc2626; }}
+.table-wrap {{ height: calc(100vh - 145px); min-height: 480px; overflow: auto; }}
 table {{ width: 100%; border-collapse: collapse; font-size: .86rem; }}
-th {{ position: sticky; top: 0; background: #e5e7eb; text-align: left; }}
+th {{ position: sticky; top: 0; z-index: 2; background: #e5e7eb; text-align: left; }}
 th, td {{ padding: 6px 8px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }}
+tbody tr {{ cursor: pointer; }}
+tbody tr:hover, tbody tr.selected {{ outline: 3px solid #2563eb; outline-offset: -3px; }}
 tr.accepted {{ background: #dcfce7; }} tr.conflict {{ background: #fee2e2; font-weight: 650; }} tr.tesseract-only {{ background: #fff; }}
 details {{ margin-top: 18px; }} summary {{ cursor: pointer; font-weight: 700; padding: 10px 0; }}
 pre {{ white-space: pre-wrap; background: white; border: 1px solid #d1d5db; border-radius: 8px; padding: 12px; }}
 a {{ color: inherit; }}
-@media (max-width: 900px) {{ .grid {{ grid-template-columns: 1fr; }} .image-wrap, .table-wrap {{ max-height: none; }} }}
+@media (max-width: 900px) {{
+  .grid {{ grid-template-columns: 1fr; }}
+  .image-wrap {{ height: 62vh; }}
+  .table-wrap {{ height: auto; max-height: 62vh; }}
+}}
 @media (prefers-color-scheme: dark) {{
  body {{ background: #111827; color: #f9fafb; }} .panel, pre {{ background: #1f2937; border-color: #4b5563; }}
- .panel h2, th {{ background: #374151; }} th, td {{ border-color: #4b5563; }}
+ .panel h2, th {{ background: #374151; }} th, td, .image-toolbar {{ border-color: #4b5563; }}
+ .image-wrap {{ background: #111827; }}
  tr.accepted {{ background: #14532d; }} tr.conflict {{ background: #7f1d1d; }} tr.tesseract-only {{ background: #1f2937; }}
 }}
 </style>
@@ -132,36 +157,130 @@ a {{ color: inherit; }}
 <body>
 <header>
   <h1>OCR-granskning – sida {page}</h1>
-  <div class=\"summary\">
-    <span class=\"badge\">Tesseract: {len(observations)}</span>
-    <span class=\"badge\">Runeberg-kopplade: {len(runeberg_values)}</span>
-    <span class=\"badge good\">Accepterade: {len(accepted)}</span>
-    <span class=\"badge bad\">Konflikter: {len(conflicts)}</span>
-    <span class=\"badge\">Radsimilaritet: {mean_similarity:.3f}</span>
+  <div class="summary">
+    <span class="badge">Tesseract: {len(observations)}</span>
+    <span class="badge">Runeberg-kopplade: {len(runeberg_values)}</span>
+    <span class="badge good">Accepterade: {len(accepted)}</span>
+    <span class="badge bad">Konflikter: {len(conflicts)}</span>
+    <span class="badge">Radsimilaritet: {mean_similarity:.3f}</span>
   </div>
 </header>
 <main>
-  <div class=\"grid\">
-    <section class=\"panel\">
-      <h2>Faksimil – <a href=\"{_escape(source_url)}\">öppna hos Runeberg</a></h2>
-      <div class=\"image-wrap\"><img src=\"{image_data}\" alt=\"Skannad SAOL-sida {page}\"></div>
+  <div class="grid">
+    <section class="panel">
+      <h2>Faksimil – <a href="{_escape(source_url)}">öppna hos Runeberg</a></h2>
+      <div class="image-toolbar">
+        <button type="button" onclick="changeZoom(-0.25)">−</button>
+        <button type="button" onclick="fitImage()">Anpassa</button>
+        <button type="button" onclick="changeZoom(0.25)">+</button>
+        <span id="zoomLabel">100 %</span>
+        <span class="hint">Klicka på en rad för att hitta ordet</span>
+      </div>
+      <div class="image-wrap" id="imageWrap">
+        <div class="scan-stage" id="scanStage">
+          <img id="scanImage" src="{image_data}" alt="Skannad SAOL-sida {page}">
+          <div class="marker" id="marker"></div>
+        </div>
+      </div>
     </section>
-    <section class=\"panel\">
+    <section class="panel">
       <h2>Sammanfogade observationer</h2>
-      <div class=\"table-wrap\"><table>
+      <div class="table-wrap"><table>
         <thead><tr><th>Status</th><th>Vald text</th><th>Tesseract</th><th>Runeberg</th><th>x</th><th>y</th><th>Säkerhet</th></tr></thead>
         <tbody>{''.join(rows)}</tbody>
       </table></div>
     </section>
   </div>
   <details><summary>Matchade OCR-rader ({len(pairs)})</summary>
-    <div class=\"panel table-wrap\"><table>
+    <div class="panel table-wrap"><table>
       <thead><tr><th>T-rad</th><th>R-rad</th><th>Likhet</th><th>Tesseract</th><th>Runeberg</th></tr></thead>
       <tbody>{''.join(line_rows)}</tbody>
     </table></div>
   </details>
   <details><summary>Runebergs råa OCR-text</summary><pre>{_escape(raw_text)}</pre></details>
 </main>
+<script>
+const naturalWidth = {image_width};
+const naturalHeight = {image_height};
+const imageWrap = document.getElementById('imageWrap');
+const scanStage = document.getElementById('scanStage');
+const marker = document.getElementById('marker');
+const zoomLabel = document.getElementById('zoomLabel');
+let zoom = 1;
+let selectedRow = null;
+
+function setZoom(value, keepCenter = true) {{
+  const oldZoom = zoom;
+  const centerX = (imageWrap.scrollLeft + imageWrap.clientWidth / 2) / oldZoom;
+  const centerY = (imageWrap.scrollTop + imageWrap.clientHeight / 2) / oldZoom;
+  zoom = Math.max(0.15, Math.min(3, value));
+  scanStage.style.width = `${{naturalWidth * zoom}}px`;
+  scanStage.style.height = `${{naturalHeight * zoom}}px`;
+  document.getElementById('scanImage').style.width = `${{naturalWidth * zoom}}px`;
+  document.getElementById('scanImage').style.height = `${{naturalHeight * zoom}}px`;
+  zoomLabel.textContent = `${{Math.round(zoom * 100)}} %`;
+  if (selectedRow) positionMarker(selectedRow);
+  if (keepCenter) {{
+    imageWrap.scrollLeft = centerX * zoom - imageWrap.clientWidth / 2;
+    imageWrap.scrollTop = centerY * zoom - imageWrap.clientHeight / 2;
+  }}
+}}
+
+function fitImage() {{
+  const available = Math.max(100, imageWrap.clientWidth - 24);
+  setZoom(Math.min(1, available / naturalWidth), false);
+  imageWrap.scrollTo(0, 0);
+}}
+
+function changeZoom(delta) {{ setZoom(zoom + delta); }}
+
+function positionMarker(row) {{
+  const left = Number(row.dataset.left);
+  const top = Number(row.dataset.top);
+  const width = Number(row.dataset.width);
+  const height = Number(row.dataset.height);
+  const margin = Math.max(4, height * 0.25);
+  marker.style.left = `${{(left - margin) * zoom}}px`;
+  marker.style.top = `${{(top - margin) * zoom}}px`;
+  marker.style.width = `${{(width + margin * 2) * zoom}}px`;
+  marker.style.height = `${{(height + margin * 2) * zoom}}px`;
+  marker.style.display = 'block';
+}}
+
+function focusObservation(row) {{
+  if (selectedRow) selectedRow.classList.remove('selected');
+  selectedRow = row;
+  row.classList.add('selected');
+
+  // A readable zoom is chosen automatically when the page is currently fitted.
+  if (zoom < 0.8) setZoom(1, false);
+  positionMarker(row);
+
+  const left = Number(row.dataset.left) * zoom;
+  const top = Number(row.dataset.top) * zoom;
+  const width = Number(row.dataset.width) * zoom;
+  const height = Number(row.dataset.height) * zoom;
+  imageWrap.scrollTo({{
+    left: Math.max(0, left + width / 2 - imageWrap.clientWidth / 2),
+    top: Math.max(0, top + height / 2 - imageWrap.clientHeight / 2),
+    behavior: 'smooth'
+  }});
+}}
+
+function activateRow(event, row) {{
+  if (event.key === 'Enter' || event.key === ' ') {{
+    event.preventDefault();
+    focusObservation(row);
+  }}
+}}
+
+window.addEventListener('load', () => {{
+  fitImage();
+  const firstConflict = document.querySelector('tr.conflict');
+  if (firstConflict) firstConflict.scrollIntoView({{block: 'nearest'}});
+}});
+window.addEventListener('resize', () => {{ if (!selectedRow) fitImage(); }});
+</script>
 </body>
 </html>
 """
@@ -228,7 +347,6 @@ def main() -> None:
             _review_html(
                 args.page,
                 source_url,
-                tif_url,
                 image_response.content,
                 raw_text,
                 runeberg_lines,
