@@ -43,6 +43,28 @@ def _normalize_line_text(text: str) -> str:
     return re.sub(r"[^a-zåäö]+", " ", text.casefold()).strip()
 
 
+def _instruction_marker_count(text: str) -> int:
+    normalized = _normalize_line_text(text)
+    words = set(normalized.split())
+
+    hits = 0
+    hits += bool(words & {"här", "har"})
+    hits += "nedan" in words
+    hits += any(word.startswith(("maskintolk", "misstolk")) for word in words)
+    hits += "texten" in words or "text" in words
+    hits += "från" in words or "fran" in words
+    hits += any(word.startswith("faksimil") for word in words)
+    hits += any(word.startswith("korrekturl") for word in words)
+    hits += "sidan" in words
+    hits += "ovan" in words
+    hits += sum(
+        token in words
+        for token in ("below", "raw", "ocr", "scanned", "image", "proofread", "page")
+    )
+    hits += int("project runeberg" in normalized)
+    return hits
+
+
 def is_runeberg_instruction_line(text: str) -> bool:
     """Recognize Runeberg's OCR/proofreading overlay text.
 
@@ -74,23 +96,31 @@ def is_runeberg_instruction_line(text: str) -> bool:
 def instruction_line_keys(
     ordered_lines: list[tuple[tuple[str, str, str, str], int, str]],
 ) -> set[tuple[str, str, str, str]]:
-    """Find overlay lines even when Tesseract splits the sentence.
+    """Find overlay lines without consuming the first real dictionary line.
 
-    Tesseract may divide Runeberg's explanatory sentence into two or three OCR
-    lines. We therefore inspect overlapping windows, but only remove the lines
-    in a window whose combined text clearly matches the instruction phrase.
+    Runeberg's explanatory sentence may be split over several OCR lines. We
+    group adjacent lines that each contain at least one characteristic marker.
+    A normal dictionary line ends that group, even if a larger sliding window
+    would still contain enough earlier markers to look like the overlay.
     """
     excluded: set[tuple[str, str, str, str]] = set()
     lines = sorted(ordered_lines, key=lambda item: item[1])
+    cluster: list[tuple[tuple[str, str, str, str], int, str]] = []
 
-    for index in range(len(lines)):
-        for window_size in (1, 2, 3, 4):
-            window = lines[index : index + window_size]
-            if len(window) != window_size:
-                continue
-            combined = " ".join(text for _, _, text in window)
-            if is_runeberg_instruction_line(combined):
-                excluded.update(key for key, _, _ in window)
+    def flush() -> None:
+        if not cluster:
+            return
+        combined = " ".join(text for _, _, text in cluster)
+        if is_runeberg_instruction_line(combined):
+            excluded.update(key for key, _, _ in cluster)
+        cluster.clear()
+
+    for line in lines:
+        if _instruction_marker_count(line[2]) > 0:
+            cluster.append(line)
+        else:
+            flush()
+    flush()
     return excluded
 
 
