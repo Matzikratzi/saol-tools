@@ -14,6 +14,18 @@ SUPERSCRIPT_PREFIX = re.compile(r"^([⁰¹²³⁴⁵⁶⁷⁸⁹]+)\s*(.*)$")
 FLAT_SENSE_PREFIX = re.compile(r"^([1-9][0-9]?)\s*([a-zåäöàáé].*)$", re.IGNORECASE)
 APOSTROPHE_ONE_PREFIX = re.compile(r"^[\'’`´]\s*([a-zåäöàáé].*)$", re.IGNORECASE)
 
+# Very small raised digits are repeatedly misread in the first SAOL articles.
+# These aliases are only interpreted by split_headword_marker(), i.e. while a
+# token is already being considered as an article-start token. They are not
+# global spelling corrections and therefore cannot silently alter article text.
+OCR_HEADWORD_ALIASES: dict[str, tuple[int, str]] = {
+    "åå": (2, "a"),   # printed ²a
+    "'&": (3, "a"),  # printed ³a
+    "’&": (3, "a"),
+    "`&": (3, "a"),
+    "´&": (3, "a"),
+}
+
 ARTICLE_LABELS = {
     "best.",
     "obest.",
@@ -52,13 +64,18 @@ def split_headword_marker(text: str) -> tuple[int | None, str]:
     """Split a printed homonym number from a headword without losing either.
 
     Tesseract sometimes reads a tiny raised ``¹`` as an apostrophe, producing
-    tokens such as ``'a`` or ``’a``. At the beginning of a candidate article
-    row that punctuation is interpreted as homonym number 1, not as part of the
-    headword.
+    tokens such as ``'a`` or ``’a``. It also repeatedly reads the following
+    printed entries ``²a`` and ``³a`` as ``åå`` and ``'&``. Since this function
+    is called only for an article-start candidate, those known glyph confusions
+    can safely be converted to homonym metadata here.
     """
     normalized = normalize_word(text)
     if _is_article_label(normalized):
         return None, ""
+
+    alias = OCR_HEADWORD_ALIASES.get(normalized)
+    if alias is not None:
+        return alias
 
     match = SUPERSCRIPT_PREFIX.match(normalized)
     if match:
