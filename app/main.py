@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 STATIC = ROOT / "static"
 TRAINING_PAGES = range(19, 29)
 
-app = FastAPI(title="SAOL-tools", version="0.7.2")
+app = FastAPI(title="SAOL-tools", version="0.7.3")
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
@@ -88,11 +88,7 @@ def page_payload(connection, page_number: int):
 
 
 def dictionary_body_observations(observations):
-    """Remove a probable running header from a full OCR page.
-
-    Sparse synthetic layouts do not contain enough evidence for this operation,
-    so they are kept intact.
-    """
+    """Remove a probable running header from a full OCR page."""
     if len(observations) < 12:
         return observations
 
@@ -135,38 +131,24 @@ def _one_column(observations):
 
 
 def _split_printed_columns(observations):
-    """Split a two-column page by OCR boxes' left edges.
+    """Return OCR boxes in printed reading order.
 
-    A long headword in the left column may extend almost to the gutter. Its box
-    centre is therefore not a reliable column anchor. The left edge remains at
-    the printed column margin, so it is robust for both short and long words.
+    SAOL pages use two fixed printed columns. Gaps between individual OCR words
+    are not a reliable gutter detector: a long word in the left column can reach
+    almost to the gutter. Instead, use the horizontal centre of the observed
+    printed page and classify boxes by their left edge. This keeps long left-
+    column words on the left and gives the order left column, then right column.
     """
     if len(observations) < 4:
         return _one_column(observations)
 
-    left_edges = sorted({item.left for item in observations})
-    if len(left_edges) < 2:
+    page_left = min(item.left for item in observations)
+    page_right = max(item.left + item.width for item in observations)
+    horizontal_span = page_right - page_left
+    if horizontal_span <= 0:
         return _one_column(observations)
 
-    span = left_edges[-1] - left_edges[0]
-    if span <= 0:
-        return _one_column(observations)
-
-    low = left_edges[0] + span * 0.20
-    high = left_edges[0] + span * 0.80
-    gaps = [
-        (right - left, (left + right) / 2)
-        for left, right in zip(left_edges, left_edges[1:])
-        if low <= (left + right) / 2 <= high
-    ]
-    if not gaps:
-        return _one_column(observations)
-
-    gap, split = max(gaps)
-    median_height = _median([item.height for item in observations])
-    if gap < max(24.0, median_height * 2.5):
-        return _one_column(observations)
-
+    split = page_left + horizontal_span / 2.0
     left_column = [item for item in observations if item.left < split]
     right_column = [item for item in observations if item.left >= split]
 
