@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 STATIC = ROOT / "static"
 TRAINING_PAGES = range(19, 29)
 
-app = FastAPI(title="SAOL-tools", version="0.7.1")
+app = FastAPI(title="SAOL-tools", version="0.7.2")
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
@@ -130,33 +130,50 @@ def _median(values):
     return (ordered[middle - 1] + ordered[middle]) / 2.0
 
 
-def _split_printed_columns(observations):
-    """Split observations at the widest central horizontal whitespace."""
-    if len(observations) < 4:
-        return [sorted(observations, key=lambda item: (item.top, item.left))]
+def _one_column(observations):
+    return [sorted(observations, key=lambda item: (item.top, item.left))]
 
-    centres = sorted(item.left + item.width / 2 for item in observations)
-    low = centres[0] + (centres[-1] - centres[0]) * 0.20
-    high = centres[0] + (centres[-1] - centres[0]) * 0.80
+
+def _split_printed_columns(observations):
+    """Split a two-column page by OCR boxes' left edges.
+
+    A long headword in the left column may extend almost to the gutter. Its box
+    centre is therefore not a reliable column anchor. The left edge remains at
+    the printed column margin, so it is robust for both short and long words.
+    """
+    if len(observations) < 4:
+        return _one_column(observations)
+
+    left_edges = sorted({item.left for item in observations})
+    if len(left_edges) < 4:
+        return _one_column(observations)
+
+    span = left_edges[-1] - left_edges[0]
+    if span <= 0:
+        return _one_column(observations)
+
+    low = left_edges[0] + span * 0.20
+    high = left_edges[0] + span * 0.80
     gaps = [
         (right - left, (left + right) / 2)
-        for left, right in zip(centres, centres[1:])
+        for left, right in zip(left_edges, left_edges[1:])
         if low <= (left + right) / 2 <= high
     ]
     if not gaps:
-        return [sorted(observations, key=lambda item: (item.top, item.left))]
+        return _one_column(observations)
 
     gap, split = max(gaps)
-    median_width = _median([item.width for item in observations])
-    if gap < max(24.0, median_width * 1.8):
-        return [sorted(observations, key=lambda item: (item.top, item.left))]
+    median_height = _median([item.height for item in observations])
+    if gap < max(24.0, median_height * 2.5):
+        return _one_column(observations)
 
-    left_column = [
-        item for item in observations if item.left + item.width / 2 < split
-    ]
-    right_column = [
-        item for item in observations if item.left + item.width / 2 >= split
-    ]
+    left_column = [item for item in observations if item.left < split]
+    right_column = [item for item in observations if item.left >= split]
+
+    minimum_side = max(2, len(observations) // 12)
+    if len(left_column) < minimum_side or len(right_column) < minimum_side:
+        return _one_column(observations)
+
     return [
         sorted(left_column, key=lambda item: (item.top, item.left)),
         sorted(right_column, key=lambda item: (item.top, item.left)),
@@ -217,12 +234,7 @@ def _union_box(items):
 
 
 def _row_headword(row):
-    """Return a possible article start at the beginning of a printed row.
-
-    The returned row_left always refers to the first OCR box on the row. This is
-    important when a raised homonym number is a separate box: indentation is a
-    property of the row, not of the following letter box.
-    """
+    """Return a possible article start at the beginning of a printed row."""
     if not row:
         return None
 
@@ -268,9 +280,6 @@ def _column_margin(rows):
     first_lefts = sorted(row[0].left for row in rows if row)
     if not first_lefts:
         return 0.0
-
-    # The lowest third is dominated by real article starts. Using its median
-    # resists one or two OCR boxes that protrude slightly into the margin.
     sample_count = max(1, len(first_lefts) // 3)
     return _median(first_lefts[:sample_count])
 
@@ -289,10 +298,6 @@ def observations_to_candidates(observations):
         rows = _group_printed_rows(column)
         median_height = max(1.0, _median([item.height for item in column]))
         margin = _column_margin(rows)
-
-        # A continuation line in SAOL is visibly indented, often only by a few
-        # pixels. The old allowance of 1.35 text heights was so wide that words
-        # such as "det" on continuation lines were promoted to headwords.
         indent_tolerance = max(3.0, median_height * 0.35)
         indent_limit = margin + indent_tolerance
 
@@ -397,9 +402,7 @@ def train_headword_model():
             labels_by_page[page_number] = {
                 token
                 for row in rows
-                for token in (
-                    normalize_token(part) for part in row["word"].split()
-                )
+                for token in (normalize_token(part) for part in row["word"].split())
                 if token
             }
 
