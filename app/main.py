@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -10,14 +11,14 @@ from pydantic import BaseModel, Field
 from .classifier import HeadwordModel, normalize_token, train_model
 from .database import connect, init_db
 from .exporter import export_approved
-from .parser import normalize_word, suspicious_word
+from .parser import normalize_forms, split_headword_marker, suspicious_word
 from .runeberg import fetch_page
 
 ROOT = Path(__file__).resolve().parents[1]
 STATIC = ROOT / "static"
 TRAINING_PAGES = range(19, 29)
 
-app = FastAPI(title="SAOL-tools", version="0.6.0")
+app = FastAPI(title="SAOL-tools", version="0.7.0")
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
@@ -26,8 +27,12 @@ class ImportRequest(BaseModel):
     force: bool = False
 
 
-class WordInput(BaseModel):
+class ArticleInput(BaseModel):
     word: str = Field(min_length=1, max_length=100)
+    sense_number: int | None = Field(default=None, ge=1, le=99)
+    word_class: str = Field(default="", max_length=50)
+    inflection_raw: str = Field(default="", max_length=500)
+    forms: list[str] = Field(default_factory=list)
     bbox_left: int | None = None
     bbox_top: int | None = None
     bbox_width: int | None = None
@@ -35,7 +40,7 @@ class WordInput(BaseModel):
 
 
 class SaveRequest(BaseModel):
-    words: list[WordInput]
+    words: list[ArticleInput]
     status: str = "started"
     verified_by: str = ""
 
@@ -54,41 +59,39 @@ def page_payload(connection, page_number: int):
     page = connection.execute("SELECT * FROM pages WHERE page_number=?", (page_number,)).fetchone()
     if page is None:
         return None
-    words = connection.execute(
+    rows = connection.execute(
         """
-        SELECT id, word, sort_order, suspicious,
+        SELECT id, word, sort_order, suspicious, sense_number, word_class,
+               inflection_raw, forms_json,
                bbox_left, bbox_top, bbox_width, bbox_height
         FROM words WHERE page_number=? ORDER BY sort_order
         """,
         (page_number,),
     ).fetchall()
     result = dict(page)
-    result["words"] = [dict(row) for row in words]
+    result["words"] = []
+    for row in rows:
+        item = dict(row)
+        try:
+            item["forms"] = json.loads(item.pop("forms_json") or "[]")
+        except (TypeError, json.JSONDecodeError):
+            item["forms"] = []
+        result["words"].append(item)
     return result
 
 
 def dictionary_body_observations(observations):
-    """Remove a running header before classification or training.
-
-    The scanned pages often repeat the last headword from the previous page in
-    the page head. We find the largest early vertical gap and treat everything
-    before it as page furniture. This avoids learning that running head as the
-    first entry while preserving the first real dictionary row.
-    """
     if len(observations) < 3:
         return observations
-
     ordered = sorted(observations, key=lambda item: (item.top, item.left))
     tops = sorted({item.top for item in ordered})
     if len(tops) < 3:
         return observations
-
     min_top = tops[0]
     max_bottom = max(item.top + item.height for item in ordered)
     vertical_span = max(1, max_bottom - min_top)
     median_height = sorted(item.height for item in ordered)[len(ordered) // 2]
     early_limit = min_top + vertical_span * 0.30
-
     gaps = [
         (next_top - top, next_top)
         for top, next_top in zip(tops, tops[1:])
@@ -96,7 +99,6 @@ def dictionary_body_observations(observations):
     ]
     if not gaps:
         return observations
-
     gap, body_top = max(gaps)
     if gap < median_height * 1.5:
         return observations
@@ -111,9 +113,6 @@ def observations_to_candidates(observations):
         densities = sorted(item.ink_density for item in observations)
         density_limit = densities[int(len(densities) * 0.62)] if densities else 0.0
         for item in observations:
-            # Before training we deliberately keep dark candidates from both
-            # columns. Tesseract can merge the two printed columns into one OCR
-            # line, so requiring line_left == 0 loses the entire right column.
             if item.ink_density >= density_limit:
                 scored.append((item.top, item.left, item, 0.5))
     else:
@@ -125,14 +124,18 @@ def observations_to_candidates(observations):
     result = []
     seen = set()
     for _, _, item, probability in sorted(scored, key=lambda value: (value[0], value[1])):
-        word = normalize_word(item.text)
-        key = word.casefold()
-        if len(word) < 2 or key in seen:
+        sense_number, word = split_headword_marker(item.text)
+        key = (word.casefold(), sense_number)
+        if not word or key in seen:
             continue
         seen.add(key)
         result.append(
             {
                 "word": word,
+                "sense_number": sense_number,
+                "word_class": "",
+                "inflection_raw": "",
+                "forms": [],
                 "suspicious": probability < 0.72 or suspicious_word(word),
                 "bbox_left": item.left,
                 "bbox_top": item.top,
@@ -203,8 +206,9 @@ def train_headword_model():
             imported = fetch_page(page_number)
             labels = labels_by_page[page_number]
             for observation in dictionary_body_observations(imported.observations):
-                token = normalize_token(observation.text)
-                if len(token) >= 2:
+                _, headword = split_headword_marker(observation.text)
+                token = normalize_token(headword)
+                if token:
                     samples.append((observation, int(token in labels)))
         model = train_model(samples)
         model.save()
@@ -247,9 +251,10 @@ def import_page(request: ImportRequest):
             connection.executemany(
                 """
                 INSERT INTO words(
-                    page_number, word, sort_order, suspicious,
+                    page_number, word, sort_order, suspicious, sense_number,
+                    word_class, inflection_raw, forms_json,
                     bbox_left, bbox_top, bbox_width, bbox_height
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 [
                     (
@@ -257,10 +262,10 @@ def import_page(request: ImportRequest):
                         candidate["word"],
                         index,
                         int(candidate["suspicious"]),
-                        candidate["bbox_left"],
-                        candidate["bbox_top"],
-                        candidate["bbox_width"],
-                        candidate["bbox_height"],
+                        candidate["sense_number"],
+                        "", "", "[]",
+                        candidate["bbox_left"], candidate["bbox_top"],
+                        candidate["bbox_width"], candidate["bbox_height"],
                     )
                     for index, candidate in enumerate(candidates)
                 ],
@@ -285,12 +290,15 @@ def save_page(page_number: int, request: SaveRequest):
     normalized = []
     seen = set()
     for item in request.words:
-        word = normalize_word(item.word)
-        key = word.casefold()
+        detected_sense, word = split_headword_marker(item.word)
+        sense_number = item.sense_number if item.sense_number is not None else detected_sense
+        key = (word.casefold(), sense_number)
         if not word or key in seen:
             continue
         seen.add(key)
-        normalized.append((word, item))
+        forms = normalize_forms(item.forms)
+        normalized.append((word, sense_number, forms, item))
+
     with connect() as connection:
         if connection.execute("SELECT 1 FROM pages WHERE page_number=?", (page_number,)).fetchone() is None:
             raise HTTPException(status_code=404, detail="Sidan är inte importerad")
@@ -298,22 +306,19 @@ def save_page(page_number: int, request: SaveRequest):
         connection.executemany(
             """
             INSERT INTO words(
-                page_number, word, sort_order, suspicious,
+                page_number, word, sort_order, suspicious, sense_number,
+                word_class, inflection_raw, forms_json,
                 bbox_left, bbox_top, bbox_width, bbox_height
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 (
-                    page_number,
-                    word,
-                    index,
-                    int(suspicious_word(word)),
-                    item.bbox_left,
-                    item.bbox_top,
-                    item.bbox_width,
-                    item.bbox_height,
+                    page_number, word, index, int(suspicious_word(word)),
+                    sense_number, item.word_class.strip(), item.inflection_raw.strip(),
+                    json.dumps(forms, ensure_ascii=False),
+                    item.bbox_left, item.bbox_top, item.bbox_width, item.bbox_height,
                 )
-                for index, (word, item) in enumerate(normalized)
+                for index, (word, sense_number, forms, item) in enumerate(normalized)
             ],
         )
         connection.execute(
