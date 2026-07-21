@@ -10,6 +10,7 @@ from pathlib import Path
 import httpx
 from PIL import Image
 
+from app.classifier import HeadwordModel
 from app.runeberg import (
     _align_lines,
     _normalized_observation_line,
@@ -46,17 +47,21 @@ def _review_html(
     raw_text: str,
     runeberg_lines: list[list[str]],
     observations: list,
-    corrected: list,
+    displayed: list[tuple[object, float]],
     pairs: list[tuple[int, int, float]],
+    *,
+    all_ocr: bool,
+    threshold: float,
 ) -> str:
-    runeberg_values = [item for item in corrected if item.ocr_runeberg]
-    conflicts = [item for item in corrected if item.ocr_conflict]
+    displayed_items = [item for item, _ in displayed]
+    runeberg_values = [item for item in displayed_items if item.ocr_runeberg]
+    conflicts = [item for item in displayed_items if item.ocr_conflict]
     accepted = [item for item in runeberg_values if not item.ocr_conflict]
     pair_scores = [score for _, _, score in pairs]
     mean_similarity = sum(pair_scores) / len(pair_scores) if pair_scores else 0.0
 
     rows: list[str] = []
-    for index, item in enumerate(sorted(corrected, key=lambda value: (value.top, value.left))):
+    for item, probability in sorted(displayed, key=lambda value: (value[0].top, value[0].left)):
         if item.ocr_conflict:
             status = "Konflikt"
             css_class = "conflict"
@@ -71,8 +76,7 @@ def _review_html(
             'data-left="%d" data-top="%d" data-width="%d" data-height="%d" '
             'onclick="focusObservation(this)" onkeydown="activateRow(event, this)">'
             '<td>%s</td><td>%s</td><td>%s</td><td>%s</td>'
-            '<td>%d</td><td>%d</td><td>%.1f</td>'
-            '</tr>'
+            '<td>%.1f%%</td><td>%d</td><td>%d</td><td>%.1f</td></tr>'
             % (
                 css_class,
                 item.left,
@@ -83,28 +87,26 @@ def _review_html(
                 _escape(item.text),
                 _escape(item.ocr_tesseract),
                 _escape(item.ocr_runeberg),
+                probability * 100,
                 item.left,
                 item.top,
                 item.confidence,
             )
         )
 
-    line_rows: list[str] = []
     observation_lines = _observation_line_indices(observations)
     tesseract_lines = [_normalized_observation_line(observations, line) for line in observation_lines]
-    for left, right, score in pairs:
-        line_rows.append(
-            "<tr><td>%d</td><td>%d</td><td>%.3f</td><td>%s</td><td>%s</td></tr>"
-            % (
-                left,
-                right,
-                score,
-                _escape(" ".join(tesseract_lines[left])),
-                _escape(" ".join(runeberg_lines[right])),
-            )
-        )
+    line_rows = [
+        "<tr><td>%d</td><td>%d</td><td>%.3f</td><td>%s</td><td>%s</td></tr>"
+        % (left, right, score, _escape(" ".join(tesseract_lines[left])), _escape(" ".join(runeberg_lines[right])))
+        for left, right, score in pairs
+    ]
 
     image_data, image_width, image_height = _image_data_url(image_content)
+    mode = "all OCR" if all_ocr else f"uppslagsord ≥ {threshold:.0%}"
+    heading = "Alla OCR-observationer" if all_ocr else "Uppslagsordskandidater"
+    empty_message = "" if rows else '<tr><td colspan="8">Inga uppslagsordskandidater över vald tröskel.</td></tr>'
+
     return f"""<!doctype html>
 <html lang="sv">
 <head>
@@ -141,11 +143,7 @@ tr.accepted {{ background: #dcfce7; }} tr.conflict {{ background: #fee2e2; font-
 details {{ margin-top: 18px; }} summary {{ cursor: pointer; font-weight: 700; padding: 10px 0; }}
 pre {{ white-space: pre-wrap; background: white; border: 1px solid #d1d5db; border-radius: 8px; padding: 12px; }}
 a {{ color: inherit; }}
-@media (max-width: 900px) {{
-  .grid {{ grid-template-columns: 1fr; }}
-  .image-wrap {{ height: 62vh; }}
-  .table-wrap {{ height: auto; max-height: 62vh; }}
-}}
+@media (max-width: 900px) {{ .grid {{ grid-template-columns: 1fr; }} .image-wrap {{ height: 62vh; }} .table-wrap {{ height: auto; max-height: 62vh; }} }}
 @media (prefers-color-scheme: dark) {{
  body {{ background: #111827; color: #f9fafb; }} .panel, pre {{ background: #1f2937; border-color: #4b5563; }}
  .panel h2, th {{ background: #374151; }} th, td, .image-toolbar {{ border-color: #4b5563; }}
@@ -158,7 +156,8 @@ a {{ color: inherit; }}
 <header>
   <h1>OCR-granskning – sida {page}</h1>
   <div class="summary">
-    <span class="badge">Tesseract: {len(observations)}</span>
+    <span class="badge">Läge: {_escape(mode)}</span>
+    <span class="badge">Kandidater: {len(displayed)}</span>
     <span class="badge">Runeberg-kopplade: {len(runeberg_values)}</span>
     <span class="badge good">Accepterade: {len(accepted)}</span>
     <span class="badge bad">Konflikter: {len(conflicts)}</span>
@@ -174,30 +173,24 @@ a {{ color: inherit; }}
         <button type="button" onclick="fitImage()">Anpassa</button>
         <button type="button" onclick="changeZoom(0.25)">+</button>
         <span id="zoomLabel">100 %</span>
-        <span class="hint">Klicka på en rad för att hitta ordet</span>
+        <span class="hint">Klicka på ett uppslagsord för att hitta det</span>
       </div>
-      <div class="image-wrap" id="imageWrap">
-        <div class="scan-stage" id="scanStage">
-          <img id="scanImage" src="{image_data}" alt="Skannad SAOL-sida {page}">
-          <div class="marker" id="marker"></div>
-        </div>
-      </div>
+      <div class="image-wrap" id="imageWrap"><div class="scan-stage" id="scanStage">
+        <img id="scanImage" src="{image_data}" alt="Skannad SAOL-sida {page}"><div class="marker" id="marker"></div>
+      </div></div>
     </section>
     <section class="panel">
-      <h2>Sammanfogade observationer</h2>
+      <h2>{heading}</h2>
       <div class="table-wrap"><table>
-        <thead><tr><th>Status</th><th>Vald text</th><th>Tesseract</th><th>Runeberg</th><th>x</th><th>y</th><th>Säkerhet</th></tr></thead>
-        <tbody>{''.join(rows)}</tbody>
+        <thead><tr><th>Status</th><th>Vald text</th><th>Tesseract</th><th>Runeberg</th><th>Grundord</th><th>x</th><th>y</th><th>OCR-säkerhet</th></tr></thead>
+        <tbody>{''.join(rows) or empty_message}</tbody>
       </table></div>
     </section>
   </div>
-  <details><summary>Matchade OCR-rader ({len(pairs)})</summary>
-    <div class="panel table-wrap"><table>
-      <thead><tr><th>T-rad</th><th>R-rad</th><th>Likhet</th><th>Tesseract</th><th>Runeberg</th></tr></thead>
-      <tbody>{''.join(line_rows)}</tbody>
-    </table></div>
-  </details>
-  <details><summary>Runebergs råa OCR-text</summary><pre>{_escape(raw_text)}</pre></details>
+  <details><summary>Debug: matchade OCR-rader ({len(pairs)})</summary><div class="panel table-wrap"><table>
+    <thead><tr><th>T-rad</th><th>R-rad</th><th>Likhet</th><th>Tesseract</th><th>Runeberg</th></tr></thead><tbody>{''.join(line_rows)}</tbody>
+  </table></div></details>
+  <details><summary>Debug: Runebergs råa OCR-text</summary><pre>{_escape(raw_text)}</pre></details>
 </main>
 <script>
 const naturalWidth = {image_width};
@@ -208,7 +201,6 @@ const marker = document.getElementById('marker');
 const zoomLabel = document.getElementById('zoomLabel');
 let zoom = 1;
 let selectedRow = null;
-
 function setZoom(value, keepCenter = true) {{
   const oldZoom = zoom;
   const centerX = (imageWrap.scrollLeft + imageWrap.clientWidth / 2) / oldZoom;
@@ -220,65 +212,25 @@ function setZoom(value, keepCenter = true) {{
   document.getElementById('scanImage').style.height = `${{naturalHeight * zoom}}px`;
   zoomLabel.textContent = `${{Math.round(zoom * 100)}} %`;
   if (selectedRow) positionMarker(selectedRow);
-  if (keepCenter) {{
-    imageWrap.scrollLeft = centerX * zoom - imageWrap.clientWidth / 2;
-    imageWrap.scrollTop = centerY * zoom - imageWrap.clientHeight / 2;
-  }}
+  if (keepCenter) {{ imageWrap.scrollLeft = centerX * zoom - imageWrap.clientWidth / 2; imageWrap.scrollTop = centerY * zoom - imageWrap.clientHeight / 2; }}
 }}
-
-function fitImage() {{
-  const available = Math.max(100, imageWrap.clientWidth - 24);
-  setZoom(Math.min(1, available / naturalWidth), false);
-  imageWrap.scrollTo(0, 0);
-}}
-
+function fitImage() {{ const available = Math.max(100, imageWrap.clientWidth - 24); setZoom(Math.min(1, available / naturalWidth), false); imageWrap.scrollTo(0, 0); }}
 function changeZoom(delta) {{ setZoom(zoom + delta); }}
-
 function positionMarker(row) {{
-  const left = Number(row.dataset.left);
-  const top = Number(row.dataset.top);
-  const width = Number(row.dataset.width);
-  const height = Number(row.dataset.height);
+  const left = Number(row.dataset.left), top = Number(row.dataset.top), width = Number(row.dataset.width), height = Number(row.dataset.height);
   const margin = Math.max(4, height * 0.25);
-  marker.style.left = `${{(left - margin) * zoom}}px`;
-  marker.style.top = `${{(top - margin) * zoom}}px`;
-  marker.style.width = `${{(width + margin * 2) * zoom}}px`;
-  marker.style.height = `${{(height + margin * 2) * zoom}}px`;
-  marker.style.display = 'block';
+  marker.style.left = `${{(left - margin) * zoom}}px`; marker.style.top = `${{(top - margin) * zoom}}px`;
+  marker.style.width = `${{(width + margin * 2) * zoom}}px`; marker.style.height = `${{(height + margin * 2) * zoom}}px`; marker.style.display = 'block';
 }}
-
 function focusObservation(row) {{
-  if (selectedRow) selectedRow.classList.remove('selected');
-  selectedRow = row;
-  row.classList.add('selected');
-
-  // A readable zoom is chosen automatically when the page is currently fitted.
-  if (zoom < 0.8) setZoom(1, false);
-  positionMarker(row);
-
-  const left = Number(row.dataset.left) * zoom;
-  const top = Number(row.dataset.top) * zoom;
-  const width = Number(row.dataset.width) * zoom;
-  const height = Number(row.dataset.height) * zoom;
-  imageWrap.scrollTo({{
-    left: Math.max(0, left + width / 2 - imageWrap.clientWidth / 2),
-    top: Math.max(0, top + height / 2 - imageWrap.clientHeight / 2),
-    behavior: 'smooth'
-  }});
+  if (selectedRow) selectedRow.classList.remove('selected'); selectedRow = row; row.classList.add('selected');
+  if (zoom < 0.8) setZoom(1, false); positionMarker(row);
+  const left = Number(row.dataset.left) * zoom, top = Number(row.dataset.top) * zoom;
+  const width = Number(row.dataset.width) * zoom, height = Number(row.dataset.height) * zoom;
+  imageWrap.scrollTo({{left: Math.max(0, left + width / 2 - imageWrap.clientWidth / 2), top: Math.max(0, top + height / 2 - imageWrap.clientHeight / 2), behavior: 'smooth'}});
 }}
-
-function activateRow(event, row) {{
-  if (event.key === 'Enter' || event.key === ' ') {{
-    event.preventDefault();
-    focusObservation(row);
-  }}
-}}
-
-window.addEventListener('load', () => {{
-  fitImage();
-  const firstConflict = document.querySelector('tr.conflict');
-  if (firstConflict) firstConflict.scrollIntoView({{block: 'nearest'}});
-}});
+function activateRow(event, row) {{ if (event.key === 'Enter' || event.key === ' ') {{ event.preventDefault(); focusObservation(row); }} }}
+window.addEventListener('load', () => {{ fitImage(); const firstConflict = document.querySelector('tr.conflict'); if (firstConflict) firstConflict.scrollIntoView({{block: 'nearest'}}); }});
 window.addEventListener('resize', () => {{ if (!selectedRow) fitImage(); }});
 </script>
 </body>
@@ -287,11 +239,19 @@ window.addEventListener('resize', () => {{ if (!selectedRow) fitImage(); }});
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Diagnostisera Tesseract/Runeberg-jämförelsen för en SAOL-sida.")
+    parser = argparse.ArgumentParser(description="Granska uppslagsord i Tesseract/Runeberg-jämförelsen för en SAOL-sida.")
     parser.add_argument("page", nargs="?", type=int, default=19)
     parser.add_argument("--html", nargs="?", const="", metavar="FIL", help="Skapa en HTML-granskningssida; standardnamn är pageNNNN-review.html.")
     parser.add_argument("--open", action="store_true", help="Öppna HTML-rapporten i webbläsaren.")
+    parser.add_argument("--all-ocr", action="store_true", help="Visa all OCR i stället för bara uppslagsordskandidater.")
+    parser.add_argument("--threshold", type=float, default=0.5, help="Lägsta sannolikhet för uppslagsord (standard: 0.5).")
     args = parser.parse_args()
+    if not 0.0 <= args.threshold <= 1.0:
+        parser.error("--threshold måste ligga mellan 0 och 1")
+
+    model = HeadwordModel.load()
+    if model is None and not args.all_ocr:
+        parser.error("Ingen tränad headword-modell finns. Träna modellen först eller kör med --all-ocr.")
 
     source_url, image_url = page_urls(args.page)
     headers = {"User-Agent": "saol-tools/debug"}
@@ -309,37 +269,29 @@ def main() -> None:
     tesseract_lines = [_normalized_observation_line(observations, line) for line in observation_lines]
     runeberg_normalized = [[token.casefold() for token in line] for line in runeberg_lines]
     pairs = _align_lines(tesseract_lines, runeberg_normalized)
+    corrected = reconcile_contextual_observations(observations, source_response.text)
+
+    probabilities = [model.probability(item) if model is not None else 0.0 for item in observations]
+    displayed = [
+        (item, probability)
+        for item, probability in zip(corrected, probabilities)
+        if args.all_ocr or probability >= args.threshold
+    ]
+    displayed_items = [item for item, _ in displayed]
+    conflicts = [item for item in displayed_items if item.ocr_conflict]
+    runeberg_values = [item for item in displayed_items if item.ocr_runeberg]
+    accepted = [item for item in runeberg_values if not item.ocr_conflict]
 
     print(f"Runeberg-URL: {source_url}")
     print(f"OCR-bild: {tif_url}")
-    print(f"HTML-tecken: {len(source_response.text)}")
-    print(f"Extraherad OCR-text: {len(raw_text)} tecken")
     print(f"Runeberg-token: {len(runeberg_tokens)}")
-    print(f"Tesseract-token: {len(observations)}")
-    print(f"Runeberg-rader: {len(runeberg_lines)}")
-    print(f"Tesseract-rader: {len(observation_lines)}")
-    print(f"Matchade rader: {len(pairs)}")
-    if pairs:
-        similarities = [score for _, _, score in pairs]
-        print(f"Radsimilaritet: min={min(similarities):.3f}, medel={sum(similarities)/len(similarities):.3f}, max={max(similarities):.3f}")
-        print("\nExempel på matchade rader:")
-        for left, right, score in pairs[:8]:
-            print(f"  {left:2d} ↔ {right:2d} ({score:.3f})")
-            print(f"    T: {' '.join(tesseract_lines[left])}")
-            print(f"    R: {' '.join(runeberg_lines[right])}")
-
-    corrected = reconcile_contextual_observations(observations, source_response.text)
-    conflicts = [item for item in corrected if item.ocr_conflict]
-    runeberg_values = [item for item in corrected if item.ocr_runeberg]
-    accepted = [item for item in runeberg_values if not item.ocr_conflict]
-    print(f"\nObservationer med Runeberg-värde: {len(runeberg_values)}")
-    print(f"Automatiskt accepterade: {len(accepted)}")
-    print(f"Konflikter: {len(conflicts)}")
+    print(f"Tesseract-token totalt: {len(observations)}")
+    print(f"Visade {'OCR-token' if args.all_ocr else 'uppslagsordskandidater'}: {len(displayed)}")
+    print(f"Runeberg-kopplade bland visade: {len(runeberg_values)}")
+    print(f"Automatiskt accepterade bland visade: {len(accepted)}")
+    print(f"Konflikter bland visade: {len(conflicts)}")
     for item in conflicts[:30]:
-        print(
-            f"  y={item.top:4d} x={item.left:4d}: "
-            f"Tesseract={item.ocr_tesseract!r}, Runeberg={item.ocr_runeberg!r}, text={item.text!r}"
-        )
+        print(f"  y={item.top:4d} x={item.left:4d}: Tesseract={item.ocr_tesseract!r}, Runeberg={item.ocr_runeberg!r}, text={item.text!r}")
 
     if args.html is not None or args.open:
         output = Path(args.html or f"page{args.page:04d}-review.html").resolve()
@@ -351,8 +303,10 @@ def main() -> None:
                 raw_text,
                 runeberg_lines,
                 observations,
-                corrected,
+                displayed,
                 pairs,
+                all_ocr=args.all_ocr,
+                threshold=args.threshold,
             ),
             encoding="utf-8",
         )
