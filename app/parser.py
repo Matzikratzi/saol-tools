@@ -11,9 +11,19 @@ RUNEberg_METADATA = re.compile(
     re.IGNORECASE,
 )
 
+SUPERSCRIPT_SENSE_PREFIX = re.compile(r"^[⁰¹²³⁴⁵⁶⁷⁸⁹]+\s*")
+OCR_SENSE_PREFIX = re.compile(r"^[1-9](?=[a-zåäöàáé])", re.IGNORECASE)
+
 
 def normalize_word(word: str) -> str:
-    return re.sub(r"\s+", " ", word.strip().lstrip("^")).lower()
+    normalized = re.sub(r"\s+", " ", word.strip().lstrip("^")).lower()
+    # SAOL prints a raised number before homonymous headwords, for example
+    # ¹a, ²a and ³a. Tesseract may preserve the superscript glyph or flatten it
+    # to an ordinary digit (1a). The number marks meaning/homonymy and is not
+    # part of the headword itself.
+    normalized = SUPERSCRIPT_SENSE_PREFIX.sub("", normalized)
+    normalized = OCR_SENSE_PREFIX.sub("", normalized)
+    return normalized.strip()
 
 
 def candidate_words(text: str) -> list[str]:
@@ -32,7 +42,7 @@ def candidate_words(text: str) -> list[str]:
         if RUNEberg_METADATA.search(line):
             continue
         word = normalize_word(line)
-        if len(word) < 2 or word in seen:
+        if len(word) < 1 or word in seen:
             continue
         seen.add(word)
         words.append(word)
