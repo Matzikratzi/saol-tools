@@ -145,7 +145,7 @@ def _split_printed_columns(observations):
         return _one_column(observations)
 
     left_edges = sorted({item.left for item in observations})
-    if len(left_edges) < 4:
+    if len(left_edges) < 2:
         return _one_column(observations)
 
     span = left_edges[-1] - left_edges[0]
