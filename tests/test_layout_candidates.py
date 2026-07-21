@@ -61,11 +61,13 @@ def test_first_token_at_column_margin_gets_a_candidate_chance_even_when_thin():
 
 
 def test_small_indent_marks_a_continuation_line():
+    # Keep this layout compact enough to remain one synthetic column. Column
+    # splitting is verified separately below; this test isolates indentation.
     observations = [
         obs("'a", 50, 100, width=15, density=0.08),
-        obs("artikeltext", 80, 100, width=80),
+        obs("artikeltext", 72, 100, width=38),
         obs("det", 60, 130, width=25, density=0.30),
-        obs("fortsätter", 95, 130, width=75),
+        obs("fortsätter", 91, 130, width=42),
         obs("²a", 50, 165, width=18, density=0.08),
     ]
 
