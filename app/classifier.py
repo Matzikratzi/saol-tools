@@ -21,6 +21,9 @@ class WordObservation:
     ink_density: float
     line_left: float
     relative_height: float
+    ocr_tesseract: str = ""
+    ocr_runeberg: str = ""
+    ocr_conflict: bool = False
 
     @property
     def features(self) -> list[float]:
@@ -78,34 +81,26 @@ def train_model(samples: list[tuple[WordObservation, int]]) -> HeadwordModel:
         raise ValueError("För få markerade uppslagsord i träningsmaterialet.")
 
     raw = [observation.features for observation, _ in samples]
-    feature_count = len(raw[0])
-    means = [0.0] * feature_count
-    scales = [1.0] * feature_count
-    for index in range(1, feature_count):
-        column = [row[index] for row in raw]
-        means[index] = sum(column) / len(column)
+    columns = list(zip(*raw))
+    means = [0.0] + [sum(column) / len(column) for column in columns[1:]]
+    scales = [1.0]
+    for index, column in enumerate(columns[1:], start=1):
         variance = sum((value - means[index]) ** 2 for value in column) / len(column)
-        scales[index] = max(math.sqrt(variance), 1e-6)
+        scales.append(max(math.sqrt(variance), 1e-6))
 
-    vectors = [
-        [1.0 if index == 0 else (value - means[index]) / scales[index] for index, value in enumerate(row)]
-        for row in raw
-    ]
-    labels = [label for _, label in samples]
-    weights = [0.0] * feature_count
-    positive_weight = max(1.0, (len(labels) - positives) / positives)
-
-    for step in range(1400):
-        gradients = [0.0] * feature_count
-        learning_rate = 0.12 / (1.0 + step / 500.0)
-        for vector, label in zip(vectors, labels):
-            prediction = sigmoid(sum(weight * value for weight, value in zip(weights, vector)))
-            sample_weight = positive_weight if label else 1.0
-            error = (prediction - label) * sample_weight
-            for index, value in enumerate(vector):
-                gradients[index] += error * value
-        for index in range(feature_count):
-            regularization = 0.0 if index == 0 else 0.002 * weights[index]
-            weights[index] -= learning_rate * (gradients[index] / len(samples) + regularization)
+    weights = [0.0] * len(raw[0])
+    rate = 0.08
+    for _ in range(1200):
+        gradient = [0.0] * len(weights)
+        for values, (_, label) in zip(raw, samples):
+            standardized = [
+                1.0 if index == 0 else (value - means[index]) / scales[index]
+                for index, value in enumerate(values)
+            ]
+            error = sigmoid(sum(w * v for w, v in zip(weights, standardized))) - label
+            for index, value in enumerate(standardized):
+                gradient[index] += error * value
+        for index in range(len(weights)):
+            weights[index] -= rate * gradient[index] / len(samples)
 
     return HeadwordModel(weights, means, scales, len(samples), positives)
