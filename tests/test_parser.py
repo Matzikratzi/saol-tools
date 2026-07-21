@@ -1,4 +1,10 @@
-from app.parser import candidate_words, normalize_word, suspicious_word
+from app.parser import (
+    candidate_words,
+    normalize_forms,
+    normalize_word,
+    split_headword_marker,
+    suspicious_word,
+)
 
 
 def test_candidate_words_preserves_complete_bold_groups():
@@ -21,6 +27,27 @@ This page has never been proofread. / Denna sida har aldrig korrekturlästs.
 abakus
 """
     assert candidate_words(text) == ["abakus"]
+
+
+def test_homonym_number_is_metadata_not_headword_text():
+    assert split_headword_marker("¹a") == (1, "a")
+    assert split_headword_marker("²a") == (2, "a")
+    assert split_headword_marker("³a") == (3, "a")
+    assert split_headword_marker("1a") == (1, "a")
+    assert split_headword_marker("12abc") == (12, "abc")
+    assert split_headword_marker("a1") == (None, "a1")
+
+
+def test_equal_headwords_with_different_numbers_remain_separate_articles():
+    assert candidate_words("¹a\n²a\n³a") == ["a", "a", "a"]
+
+
+def test_game_forms_are_split_normalized_and_deduplicated():
+    assert normalize_forms(["Katten, katter", "katterna; katten"]) == [
+        "katten",
+        "katter",
+        "katterna",
+    ]
 
 
 def test_normalize_and_suspicious():
