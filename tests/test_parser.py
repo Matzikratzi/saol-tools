@@ -38,6 +38,13 @@ def test_homonym_number_is_metadata_not_headword_text():
     assert split_headword_marker("a1") == (None, "a1")
 
 
+def test_known_ocr_confusions_of_raised_2a_and_3a_are_recovered():
+    assert split_headword_marker("åå") == (2, "a")
+    assert split_headword_marker("'&") == (3, "a")
+    assert split_headword_marker("’&") == (3, "a")
+    assert candidate_words("'a\nåå\n'&") == ["a", "a", "a"]
+
+
 def test_equal_headwords_with_different_numbers_remain_separate_articles():
     assert candidate_words("¹a\n²a\n³a") == ["a", "a", "a"]
 
