@@ -1,5 +1,5 @@
 from app.classifier import WordObservation, train_model
-from app.runeberg import page_urls
+from app.runeberg import is_runeberg_instruction_line, page_urls
 
 
 def observation(ink: float, line_left: float, height: float) -> WordObservation:
@@ -20,6 +20,20 @@ def test_page_urls():
     html, image = page_urls(19)
     assert html.endswith("/0019.html")
     assert image.endswith("/0019.3.png")
+
+
+def test_runeberg_instruction_line_is_removed_as_a_phrase():
+    assert is_runeberg_instruction_line(
+        "Här nedan syns misstolkade texten från faksimilbilden ovan"
+    )
+    assert is_runeberg_instruction_line(
+        "Below is the raw OCR text from the scanned image"
+    )
+
+
+def test_single_real_headword_is_not_removed():
+    assert not is_runeberg_instruction_line("från")
+    assert not is_runeberg_instruction_line("här")
 
 
 def test_model_learns_dark_left_aligned_words():
