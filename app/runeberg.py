@@ -6,15 +6,18 @@ import re
 import shutil
 import subprocess
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import httpx
+from bs4 import BeautifulSoup
 from PIL import Image, ImageOps
 
 from .classifier import WordObservation
 
 BASE_URL = "https://runeberg.org/saol/11-6"
+STEM_BOUNDARY_MARKS = "|¦│ǀ"
+STEM_BOUNDARY_TRANSLATION = str.maketrans("", "", STEM_BOUNDARY_MARKS)
 
 
 @dataclass(frozen=True)
@@ -165,6 +168,82 @@ def _is_printed_page_number(text: str, top: int, height: int, image_height: int)
     return center_y < image_height * 0.10 or center_y > image_height * 0.90
 
 
+def _stem_marked_tokens(html: str) -> list[str]:
+    """Return Runeberg OCR tokens that contain a printed SAOL stem boundary."""
+    text = BeautifulSoup(html, "html.parser").get_text(" ")
+    result: list[str] = []
+    seen: set[str] = set()
+    for raw in text.split():
+        token = raw.strip(".,:;!?()[]{}<>\"“”")
+        if not token or not any(mark in token for mark in STEM_BOUNDARY_MARKS):
+            continue
+        if token in seen:
+            continue
+        seen.add(token)
+        result.append(token)
+    return result
+
+
+def _word_letters(text: str) -> str:
+    without_boundary = text.translate(STEM_BOUNDARY_TRANSLATION).casefold()
+    return re.sub(r"[^a-zåäöàáé-]+", "", without_boundary)
+
+
+def _edit_distance_at_most_one(left: str, right: str) -> bool:
+    """Return true when two tokens differ by no more than one edit."""
+    if left == right:
+        return True
+    if abs(len(left) - len(right)) > 1:
+        return False
+    if len(left) == len(right):
+        return sum(a != b for a, b in zip(left, right)) <= 1
+    shorter, longer = (left, right) if len(left) < len(right) else (right, left)
+    index_short = index_long = differences = 0
+    while index_short < len(shorter) and index_long < len(longer):
+        if shorter[index_short] == longer[index_long]:
+            index_short += 1
+            index_long += 1
+        else:
+            differences += 1
+            index_long += 1
+            if differences > 1:
+                return False
+    return True
+
+
+def reconcile_stem_marked_observations(
+    observations: list[WordObservation], runeberg_tokens: list[str]
+) -> list[WordObservation]:
+    """Correct Tesseract words from Runeberg OCR while retaining image geometry.
+
+    Tesseract sometimes reads SAOL's thin stem boundary as a lower-case ``l``.
+    Runeberg's OCR often preserves it correctly, e.g. ``abbrevi|ation``. A
+    uniquely matching token within one edit replaces only the observation text;
+    its bounding box and typography features remain untouched.
+    """
+    corrected = list(observations)
+    used_observations: set[int] = set()
+    for runeberg_token in runeberg_tokens:
+        expected = _word_letters(runeberg_token)
+        if len(expected) < 4:
+            continue
+        matches = []
+        for index, observation in enumerate(corrected):
+            if index in used_observations:
+                continue
+            actual = _word_letters(observation.text)
+            if not actual or actual[:2] != expected[:2]:
+                continue
+            if _edit_distance_at_most_one(actual, expected):
+                matches.append(index)
+        if len(matches) != 1:
+            continue
+        index = matches[0]
+        corrected[index] = replace(corrected[index], text=runeberg_token)
+        used_observations.add(index)
+    return corrected
+
+
 def extract_observations(image_bytes: bytes) -> list[WordObservation]:
     with tempfile.TemporaryDirectory(prefix="saol-tools-") as directory:
         image_path = Path(directory) / "page.png"
@@ -244,14 +323,32 @@ def extract_observations(image_bytes: bytes) -> list[WordObservation]:
 
 def fetch_page(page_number: int) -> ImportedPage:
     source_url, image_url = page_urls(page_number)
-    response = httpx.get(
+    headers = {"User-Agent": "saol-tools/0.4"}
+
+    image_response = httpx.get(
         image_url,
         timeout=60.0,
         follow_redirects=True,
-        headers={"User-Agent": "saol-tools/0.4"},
+        headers=headers,
     )
-    response.raise_for_status()
-    observations = extract_observations(response.content)
+    image_response.raise_for_status()
+    observations = extract_observations(image_response.content)
     if not observations:
         raise ValueError("Inga OCR-ord hittades på sidan")
+
+    try:
+        source_response = httpx.get(
+            source_url,
+            timeout=60.0,
+            follow_redirects=True,
+            headers=headers,
+        )
+        source_response.raise_for_status()
+        observations = reconcile_stem_marked_observations(
+            observations, _stem_marked_tokens(source_response.text)
+        )
+    except httpx.HTTPError:
+        # The image OCR is still usable if Runeberg's HTML is temporarily down.
+        pass
+
     return ImportedPage(page_number, source_url, image_url, observations)
