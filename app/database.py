@@ -34,6 +34,10 @@ CREATE TABLE IF NOT EXISTS words (
     bbox_top INTEGER,
     bbox_width INTEGER,
     bbox_height INTEGER,
+    ocr_tesseract TEXT NOT NULL DEFAULT '',
+    ocr_runeberg TEXT NOT NULL DEFAULT '',
+    ocr_conflict INTEGER NOT NULL DEFAULT 0,
+    ocr_resolved INTEGER NOT NULL DEFAULT 1,
     FOREIGN KEY(page_number) REFERENCES pages(page_number) ON DELETE CASCADE
 );
 
@@ -50,6 +54,10 @@ WORD_COLUMNS = {
     "word_class": "TEXT NOT NULL DEFAULT ''",
     "inflection_raw": "TEXT NOT NULL DEFAULT ''",
     "forms_json": "TEXT NOT NULL DEFAULT '[]'",
+    "ocr_tesseract": "TEXT NOT NULL DEFAULT ''",
+    "ocr_runeberg": "TEXT NOT NULL DEFAULT ''",
+    "ocr_conflict": "INTEGER NOT NULL DEFAULT 0",
+    "ocr_resolved": "INTEGER NOT NULL DEFAULT 1",
 }
 
 
