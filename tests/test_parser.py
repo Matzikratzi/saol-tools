@@ -45,6 +45,15 @@ def test_known_ocr_confusions_of_raised_2a_and_3a_are_recovered():
     assert candidate_words("'a\nåå\n'&") == ["a", "a", "a"]
 
 
+def test_stem_boundary_marks_are_removed_from_normalized_headwords():
+    for marked in ("abborr|e", "abborr¦e", "abborr│e", "abborrǀe"):
+        assert normalize_word(marked) == "abborre"
+        assert split_headword_marker(marked) == (None, "abborre")
+        assert suspicious_word(marked) is False
+
+    assert candidate_words("abborr|e\nabborr¦e") == ["abborre"]
+
+
 def test_equal_headwords_with_different_numbers_remain_separate_articles():
     assert candidate_words("¹a\n²a\n³a") == ["a", "a", "a"]
 
