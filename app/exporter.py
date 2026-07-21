@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from .database import connect
-from .parser import normalize_word
+from .parser import normalize_forms, normalize_word
 
 EXPORT_DIR = Path(__file__).resolve().parents[1] / "exports"
 
@@ -17,14 +18,25 @@ def export_approved() -> tuple[Path, int]:
     with connect() as connection:
         rows = connection.execute(
             """
-            SELECT w.word
+            SELECT w.word, w.forms_json
             FROM words w
             JOIN pages p ON p.page_number = w.page_number
             WHERE p.status = 'approved'
             """
         ).fetchall()
 
-    words = sorted({normalize_word(row["word"]) for row in rows if normalize_word(row["word"])}, key=swedish_sort_key)
+    allowed: set[str] = set()
+    for row in rows:
+        headword = normalize_word(row["word"])
+        if headword:
+            allowed.add(headword)
+        try:
+            forms = json.loads(row["forms_json"] or "[]")
+        except (TypeError, json.JSONDecodeError):
+            forms = []
+        allowed.update(normalize_forms(forms))
+
+    words = sorted(allowed, key=swedish_sort_key)
     output = EXPORT_DIR / "ordlista.txt"
     output.write_text("\n".join(words) + ("\n" if words else ""), encoding="utf-8")
     return output, len(words)
