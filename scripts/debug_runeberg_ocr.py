@@ -47,11 +47,12 @@ def _review_html(
     raw_text: str,
     runeberg_lines: list[list[str]],
     observations: list,
-    displayed: list[tuple[object, float]],
+    displayed: list[tuple[object, float | None]],
     pairs: list[tuple[int, int, float]],
     *,
     all_ocr: bool,
     threshold: float,
+    fallback_reason: str | None,
 ) -> str:
     displayed_items = [item for item, _ in displayed]
     runeberg_values = [item for item in displayed_items if item.ocr_runeberg]
@@ -71,12 +72,13 @@ def _review_html(
         else:
             status = "Endast Tesseract"
             css_class = "tesseract-only"
+        probability_text = "–" if probability is None else f"{probability * 100:.1f}%"
         rows.append(
             '<tr class="%s" tabindex="0" role="button" '
             'data-left="%d" data-top="%d" data-width="%d" data-height="%d" '
             'onclick="focusObservation(this)" onkeydown="activateRow(event, this)">'
             '<td>%s</td><td>%s</td><td>%s</td><td>%s</td>'
-            '<td>%.1f%%</td><td>%d</td><td>%d</td><td>%.1f</td></tr>'
+            '<td>%s</td><td>%d</td><td>%d</td><td>%.1f</td></tr>'
             % (
                 css_class,
                 item.left,
@@ -87,7 +89,7 @@ def _review_html(
                 _escape(item.text),
                 _escape(item.ocr_tesseract),
                 _escape(item.ocr_runeberg),
-                probability * 100,
+                probability_text,
                 item.left,
                 item.top,
                 item.confidence,
@@ -105,7 +107,12 @@ def _review_html(
     image_data, image_width, image_height = _image_data_url(image_content)
     mode = "all OCR" if all_ocr else f"uppslagsord ≥ {threshold:.0%}"
     heading = "Alla OCR-observationer" if all_ocr else "Uppslagsordskandidater"
-    empty_message = "" if rows else '<tr><td colspan="8">Inga uppslagsordskandidater över vald tröskel.</td></tr>'
+    empty_message = '<tr><td colspan="8">Inga observationer att visa.</td></tr>'
+    warning = (
+        f'<div class="warning">{_escape(fallback_reason)}</div>'
+        if fallback_reason
+        else ""
+    )
 
     return f"""<!doctype html>
 <html lang="sv">
@@ -121,6 +128,7 @@ header h1 {{ margin: 0 0 8px; font-size: 1.25rem; }}
 .summary {{ display: flex; flex-wrap: wrap; gap: 8px; }}
 .badge {{ padding: 4px 9px; border-radius: 999px; background: #374151; font-size: .88rem; }}
 .badge.good {{ background: #166534; }} .badge.bad {{ background: #991b1b; }}
+.warning {{ margin-top: 10px; padding: 9px 12px; border-radius: 6px; background: #92400e; color: white; }}
 main {{ max-width: 1800px; margin: auto; padding: 18px; }}
 .grid {{ display: grid; grid-template-columns: minmax(360px, 48%) minmax(520px, 52%); gap: 18px; align-items: start; }}
 .panel {{ background: white; border: 1px solid #d1d5db; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px #0002; }}
@@ -157,12 +165,13 @@ a {{ color: inherit; }}
   <h1>OCR-granskning – sida {page}</h1>
   <div class="summary">
     <span class="badge">Läge: {_escape(mode)}</span>
-    <span class="badge">Kandidater: {len(displayed)}</span>
+    <span class="badge">Visade: {len(displayed)}</span>
     <span class="badge">Runeberg-kopplade: {len(runeberg_values)}</span>
     <span class="badge good">Accepterade: {len(accepted)}</span>
     <span class="badge bad">Konflikter: {len(conflicts)}</span>
     <span class="badge">Radsimilaritet: {mean_similarity:.3f}</span>
   </div>
+  {warning}
 </header>
 <main>
   <div class="grid">
@@ -173,7 +182,7 @@ a {{ color: inherit; }}
         <button type="button" onclick="fitImage()">Anpassa</button>
         <button type="button" onclick="changeZoom(0.25)">+</button>
         <span id="zoomLabel">100 %</span>
-        <span class="hint">Klicka på ett uppslagsord för att hitta det</span>
+        <span class="hint">Klicka på en rad för att hitta ordet</span>
       </div>
       <div class="image-wrap" id="imageWrap"><div class="scan-stage" id="scanStage">
         <img id="scanImage" src="{image_data}" alt="Skannad SAOL-sida {page}"><div class="marker" id="marker"></div>
@@ -250,8 +259,12 @@ def main() -> None:
         parser.error("--threshold måste ligga mellan 0 och 1")
 
     model = HeadwordModel.load()
-    if model is None and not args.all_ocr:
-        parser.error("Ingen tränad headword-modell finns. Träna modellen först eller kör med --all-ocr.")
+    fallback_reason: str | None = None
+    effective_all_ocr = args.all_ocr
+    if model is None and not effective_all_ocr:
+        fallback_reason = "Ingen tränad HeadwordModel hittades. Visar all OCR i stället."
+        print(f"Varning: {fallback_reason}")
+        effective_all_ocr = True
 
     source_url, image_url = page_urls(args.page)
     headers = {"User-Agent": "saol-tools/debug"}
@@ -271,11 +284,14 @@ def main() -> None:
     pairs = _align_lines(tesseract_lines, runeberg_normalized)
     corrected = reconcile_contextual_observations(observations, source_response.text)
 
-    probabilities = [model.probability(item) if model is not None else 0.0 for item in observations]
+    probabilities: list[float | None] = [
+        model.probability(item) if model is not None else None
+        for item in observations
+    ]
     displayed = [
         (item, probability)
         for item, probability in zip(corrected, probabilities)
-        if args.all_ocr or probability >= args.threshold
+        if effective_all_ocr or (probability is not None and probability >= args.threshold)
     ]
     displayed_items = [item for item, _ in displayed]
     conflicts = [item for item in displayed_items if item.ocr_conflict]
@@ -286,7 +302,7 @@ def main() -> None:
     print(f"OCR-bild: {tif_url}")
     print(f"Runeberg-token: {len(runeberg_tokens)}")
     print(f"Tesseract-token totalt: {len(observations)}")
-    print(f"Visade {'OCR-token' if args.all_ocr else 'uppslagsordskandidater'}: {len(displayed)}")
+    print(f"Visade {'OCR-token' if effective_all_ocr else 'uppslagsordskandidater'}: {len(displayed)}")
     print(f"Runeberg-kopplade bland visade: {len(runeberg_values)}")
     print(f"Automatiskt accepterade bland visade: {len(accepted)}")
     print(f"Konflikter bland visade: {len(conflicts)}")
@@ -305,8 +321,9 @@ def main() -> None:
                 observations,
                 displayed,
                 pairs,
-                all_ocr=args.all_ocr,
+                all_ocr=effective_all_ocr,
                 threshold=args.threshold,
+                fallback_reason=fallback_reason,
             ),
             encoding="utf-8",
         )
