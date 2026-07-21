@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 STATIC = ROOT / "static"
 TRAINING_PAGES = range(19, 29)
 
-app = FastAPI(title="SAOL-tools", version="0.5.0")
+app = FastAPI(title="SAOL-tools", version="0.6.0")
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
@@ -67,14 +67,54 @@ def page_payload(connection, page_number: int):
     return result
 
 
+def dictionary_body_observations(observations):
+    """Remove a running header before classification or training.
+
+    The scanned pages often repeat the last headword from the previous page in
+    the page head. We find the largest early vertical gap and treat everything
+    before it as page furniture. This avoids learning that running head as the
+    first entry while preserving the first real dictionary row.
+    """
+    if len(observations) < 3:
+        return observations
+
+    ordered = sorted(observations, key=lambda item: (item.top, item.left))
+    tops = sorted({item.top for item in ordered})
+    if len(tops) < 3:
+        return observations
+
+    min_top = tops[0]
+    max_bottom = max(item.top + item.height for item in ordered)
+    vertical_span = max(1, max_bottom - min_top)
+    median_height = sorted(item.height for item in ordered)[len(ordered) // 2]
+    early_limit = min_top + vertical_span * 0.30
+
+    gaps = [
+        (next_top - top, next_top)
+        for top, next_top in zip(tops, tops[1:])
+        if next_top <= early_limit
+    ]
+    if not gaps:
+        return observations
+
+    gap, body_top = max(gaps)
+    if gap < median_height * 1.5:
+        return observations
+    return [item for item in observations if item.top >= body_top]
+
+
 def observations_to_candidates(observations):
+    observations = dictionary_body_observations(observations)
     model = HeadwordModel.load()
     scored = []
     if model is None:
         densities = sorted(item.ink_density for item in observations)
         density_limit = densities[int(len(densities) * 0.62)] if densities else 0.0
         for item in observations:
-            if item.line_left < 0.003 and item.ink_density >= density_limit:
+            # Before training we deliberately keep dark candidates from both
+            # columns. Tesseract can merge the two printed columns into one OCR
+            # line, so requiring line_left == 0 loses the entire right column.
+            if item.ink_density >= density_limit:
                 scored.append((item.top, item.left, item, 0.5))
     else:
         for item in observations:
@@ -162,7 +202,7 @@ def train_headword_model():
         for page_number in TRAINING_PAGES:
             imported = fetch_page(page_number)
             labels = labels_by_page[page_number]
-            for observation in imported.observations:
+            for observation in dictionary_body_observations(imported.observations):
                 token = normalize_token(observation.text)
                 if len(token) >= 2:
                     samples.append((observation, int(token in labels)))
