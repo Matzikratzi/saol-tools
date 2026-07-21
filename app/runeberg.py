@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import io
+import re
 import shutil
 import subprocess
 import tempfile
@@ -36,6 +37,38 @@ def page_urls(page_number: int) -> tuple[str, str]:
         f"{BASE_URL}/{identifier}.html",
         f"https://runeberg.org/img/saol/11-6/{identifier}.3.png",
     )
+
+
+def _normalize_line_text(text: str) -> str:
+    return re.sub(r"[^a-zåäö]+", " ", text.casefold()).strip()
+
+
+def is_runeberg_instruction_line(text: str) -> bool:
+    """Recognize Runeberg's surrounding OCR/proofreading instructions.
+
+    Match complete lines by several characteristic words rather than banning
+    individual tokens. A real SAOL headword such as "från" must remain valid.
+    The tolerant stems also catch OCR errors such as "misstolkade".
+    """
+    normalized = _normalize_line_text(text)
+    words = set(normalized.split())
+
+    swedish_hits = 0
+    swedish_hits += bool(words & {"här", "har"})
+    swedish_hits += "nedan" in words
+    swedish_hits += any(word.startswith(("maskintolk", "misstolk")) for word in words)
+    swedish_hits += "texten" in words
+    swedish_hits += "från" in words or "fran" in words
+    swedish_hits += any(word.startswith("faksimil") for word in words)
+    swedish_hits += any(word.startswith("korrekturl") for word in words)
+    swedish_hits += "sidan" in words
+
+    english_hits = sum(
+        token in words
+        for token in ("below", "raw", "ocr", "scanned", "image", "proofread", "page")
+    )
+
+    return swedish_hits >= 3 or english_hits >= 4 or "project runeberg" in normalized
 
 
 def _run_tesseract_tsv(image_path: Path) -> str:
@@ -79,9 +112,12 @@ def extract_observations(image_bytes: bytes) -> list[WordObservation]:
     image = Image.open(io.BytesIO(image_bytes)).convert("L")
     gray = ImageOps.autocontrast(image)
     rows = list(csv.DictReader(io.StringIO(tsv), delimiter="\t"))
-    word_rows = []
-    heights = []
+
+    parsed_rows = []
+    line_text: dict[tuple[str, str, str, str], list[str]] = {}
     line_first: dict[tuple[str, str, str, str], int] = {}
+    heights = []
+
     for row in rows:
         text = (row.get("text") or "").strip()
         if row.get("level") != "5" or not text:
@@ -96,17 +132,33 @@ def extract_observations(image_bytes: bytes) -> list[WordObservation]:
             continue
         if confidence < 15 or width < 2 or height < 4:
             continue
-        key = (row.get("block_num", ""), row.get("par_num", ""), row.get("line_num", ""), row.get("page_num", ""))
+
+        key = (
+            row.get("page_num", ""),
+            row.get("block_num", ""),
+            row.get("par_num", ""),
+            row.get("line_num", ""),
+        )
+        line_text.setdefault(key, []).append(text)
         line_first[key] = min(left, line_first.get(key, left))
-        word_rows.append((text, left, top, width, height, confidence, key))
+        parsed_rows.append((text, left, top, width, height, confidence, key))
         heights.append(height)
 
     if not heights:
         return []
-    median_height = sorted(heights)[len(heights) // 2]
+
+    excluded_lines = {
+        key for key, tokens in line_text.items() if is_runeberg_instruction_line(" ".join(tokens))
+    }
+    usable_rows = [row for row in parsed_rows if row[-1] not in excluded_lines]
+    if not usable_rows:
+        return []
+
+    usable_heights = sorted(row[4] for row in usable_rows)
+    median_height = usable_heights[len(usable_heights) // 2]
     page_width = max(gray.width, 1)
     observations = []
-    for text, left, top, width, height, confidence, key in word_rows:
+    for text, left, top, width, height, confidence, key in usable_rows:
         observations.append(
             WordObservation(
                 text=text,
