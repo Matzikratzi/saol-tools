@@ -44,11 +44,10 @@ def _normalize_line_text(text: str) -> str:
 
 
 def is_runeberg_instruction_line(text: str) -> bool:
-    """Recognize Runeberg's surrounding OCR/proofreading instructions.
+    """Recognize Runeberg's OCR/proofreading overlay text.
 
-    Match complete lines by several characteristic words rather than banning
-    individual tokens. A real SAOL headword such as "från" must remain valid.
-    The tolerant stems also catch OCR errors such as "misstolkade".
+    This intentionally matches phrases, not isolated words. Legitimate SAOL
+    headwords such as "här" and "från" must therefore remain possible.
     """
     normalized = _normalize_line_text(text)
     words = set(normalized.split())
@@ -57,18 +56,42 @@ def is_runeberg_instruction_line(text: str) -> bool:
     swedish_hits += bool(words & {"här", "har"})
     swedish_hits += "nedan" in words
     swedish_hits += any(word.startswith(("maskintolk", "misstolk")) for word in words)
-    swedish_hits += "texten" in words
+    swedish_hits += "texten" in words or "text" in words
     swedish_hits += "från" in words or "fran" in words
     swedish_hits += any(word.startswith("faksimil") for word in words)
     swedish_hits += any(word.startswith("korrekturl") for word in words)
     swedish_hits += "sidan" in words
+    swedish_hits += "ovan" in words
 
     english_hits = sum(
         token in words
-        for token in ("below", "raw", "ocr", "scanned", "image", "proofread", "page")
+        for token in ("below", "raw", "ocr", "text", "scanned", "image", "proofread", "page")
     )
 
     return swedish_hits >= 3 or english_hits >= 4 or "project runeberg" in normalized
+
+
+def instruction_line_keys(
+    ordered_lines: list[tuple[tuple[str, str, str, str], int, str]],
+) -> set[tuple[str, str, str, str]]:
+    """Find overlay lines even when Tesseract splits the sentence.
+
+    Tesseract may divide Runeberg's explanatory sentence into two or three OCR
+    lines. We therefore inspect overlapping windows, but only remove the lines
+    in a window whose combined text clearly matches the instruction phrase.
+    """
+    excluded: set[tuple[str, str, str, str]] = set()
+    lines = sorted(ordered_lines, key=lambda item: item[1])
+
+    for index in range(len(lines)):
+        for window_size in (1, 2, 3, 4):
+            window = lines[index : index + window_size]
+            if len(window) != window_size:
+                continue
+            combined = " ".join(text for _, _, text in window)
+            if is_runeberg_instruction_line(combined):
+                excluded.update(key for key, _, _ in window)
+    return excluded
 
 
 def _run_tesseract_tsv(image_path: Path) -> str:
@@ -103,6 +126,15 @@ def _ink_density(gray: Image.Image, left: int, top: int, width: int, height: int
     return sum((255 - value) / 255.0 for value in pixels) / len(pixels)
 
 
+def _is_printed_page_number(text: str, top: int, height: int, image_height: int) -> bool:
+    """Remove isolated numeric folio/page numbers near a page edge."""
+    token = text.strip().strip(".,:;()[]")
+    if not token.isdigit() or len(token) > 4:
+        return False
+    center_y = top + height / 2
+    return center_y < image_height * 0.10 or center_y > image_height * 0.90
+
+
 def extract_observations(image_bytes: bytes) -> list[WordObservation]:
     with tempfile.TemporaryDirectory(prefix="saol-tools-") as directory:
         image_path = Path(directory) / "page.png"
@@ -115,6 +147,7 @@ def extract_observations(image_bytes: bytes) -> list[WordObservation]:
 
     parsed_rows = []
     line_text: dict[tuple[str, str, str, str], list[str]] = {}
+    line_top: dict[tuple[str, str, str, str], int] = {}
     line_first: dict[tuple[str, str, str, str], int] = {}
     heights = []
 
@@ -132,6 +165,8 @@ def extract_observations(image_bytes: bytes) -> list[WordObservation]:
             continue
         if confidence < 15 or width < 2 or height < 4:
             continue
+        if _is_printed_page_number(text, top, height, gray.height):
+            continue
 
         key = (
             row.get("page_num", ""),
@@ -140,6 +175,7 @@ def extract_observations(image_bytes: bytes) -> list[WordObservation]:
             row.get("line_num", ""),
         )
         line_text.setdefault(key, []).append(text)
+        line_top[key] = min(top, line_top.get(key, top))
         line_first[key] = min(left, line_first.get(key, left))
         parsed_rows.append((text, left, top, width, height, confidence, key))
         heights.append(height)
@@ -147,9 +183,10 @@ def extract_observations(image_bytes: bytes) -> list[WordObservation]:
     if not heights:
         return []
 
-    excluded_lines = {
-        key for key, tokens in line_text.items() if is_runeberg_instruction_line(" ".join(tokens))
-    }
+    ordered_lines = [
+        (key, line_top[key], " ".join(tokens)) for key, tokens in line_text.items()
+    ]
+    excluded_lines = instruction_line_keys(ordered_lines)
     usable_rows = [row for row in parsed_rows if row[-1] not in excluded_lines]
     if not usable_rows:
         return []
