@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 STATIC = ROOT / "static"
 TRAINING_PAGES = range(19, 29)
 
-app = FastAPI(title="SAOL-tools", version="0.4.0")
+app = FastAPI(title="SAOL-tools", version="0.5.0")
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
@@ -28,6 +28,10 @@ class ImportRequest(BaseModel):
 
 class WordInput(BaseModel):
     word: str = Field(min_length=1, max_length=100)
+    bbox_left: int | None = None
+    bbox_top: int | None = None
+    bbox_width: int | None = None
+    bbox_height: int | None = None
 
 
 class SaveRequest(BaseModel):
@@ -51,7 +55,11 @@ def page_payload(connection, page_number: int):
     if page is None:
         return None
     words = connection.execute(
-        "SELECT id, word, sort_order, suspicious FROM words WHERE page_number=? ORDER BY sort_order",
+        """
+        SELECT id, word, sort_order, suspicious,
+               bbox_left, bbox_top, bbox_width, bbox_height
+        FROM words WHERE page_number=? ORDER BY sort_order
+        """,
         (page_number,),
     ).fetchall()
     result = dict(page)
@@ -67,22 +75,31 @@ def observations_to_candidates(observations):
         density_limit = densities[int(len(densities) * 0.62)] if densities else 0.0
         for item in observations:
             if item.line_left < 0.003 and item.ink_density >= density_limit:
-                scored.append((item.top, item.left, item.text, 0.5))
+                scored.append((item.top, item.left, item, 0.5))
     else:
         for item in observations:
             probability = model.probability(item)
             if probability >= 0.50:
-                scored.append((item.top, item.left, item.text, probability))
+                scored.append((item.top, item.left, item, probability))
 
     result = []
     seen = set()
-    for _, _, text, probability in sorted(scored):
-        word = normalize_word(text)
+    for _, _, item, probability in sorted(scored, key=lambda value: (value[0], value[1])):
+        word = normalize_word(item.text)
         key = word.casefold()
         if len(word) < 2 or key in seen:
             continue
         seen.add(key)
-        result.append((word, probability < 0.72 or suspicious_word(word)))
+        result.append(
+            {
+                "word": word,
+                "suspicious": probability < 0.72 or suspicious_word(word),
+                "bbox_left": item.left,
+                "bbox_top": item.top,
+                "bbox_width": item.width,
+                "bbox_height": item.height,
+            }
+        )
     return result
 
 
@@ -188,8 +205,25 @@ def import_page(request: ImportRequest):
             connection.execute("DELETE FROM words WHERE page_number=?", (request.page_number,))
         if existing is None or request.force:
             connection.executemany(
-                "INSERT INTO words(page_number, word, sort_order, suspicious) VALUES (?, ?, ?, ?)",
-                [(imported.page_number, word, index, int(flag)) for index, (word, flag) in enumerate(candidates)],
+                """
+                INSERT INTO words(
+                    page_number, word, sort_order, suspicious,
+                    bbox_left, bbox_top, bbox_width, bbox_height
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    (
+                        imported.page_number,
+                        candidate["word"],
+                        index,
+                        int(candidate["suspicious"]),
+                        candidate["bbox_left"],
+                        candidate["bbox_top"],
+                        candidate["bbox_width"],
+                        candidate["bbox_height"],
+                    )
+                    for index, candidate in enumerate(candidates)
+                ],
             )
         result = page_payload(connection, request.page_number)
     return result
@@ -212,17 +246,35 @@ def save_page(page_number: int, request: SaveRequest):
     seen = set()
     for item in request.words:
         word = normalize_word(item.word)
-        if not word or word in seen:
+        key = word.casefold()
+        if not word or key in seen:
             continue
-        seen.add(word)
-        normalized.append(word)
+        seen.add(key)
+        normalized.append((word, item))
     with connect() as connection:
         if connection.execute("SELECT 1 FROM pages WHERE page_number=?", (page_number,)).fetchone() is None:
             raise HTTPException(status_code=404, detail="Sidan är inte importerad")
         connection.execute("DELETE FROM words WHERE page_number=?", (page_number,))
         connection.executemany(
-            "INSERT INTO words(page_number, word, sort_order, suspicious) VALUES (?, ?, ?, ?)",
-            [(page_number, word, index, int(suspicious_word(word))) for index, word in enumerate(normalized)],
+            """
+            INSERT INTO words(
+                page_number, word, sort_order, suspicious,
+                bbox_left, bbox_top, bbox_width, bbox_height
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    page_number,
+                    word,
+                    index,
+                    int(suspicious_word(word)),
+                    item.bbox_left,
+                    item.bbox_top,
+                    item.bbox_width,
+                    item.bbox_height,
+                )
+                for index, (word, item) in enumerate(normalized)
+            ],
         )
         connection.execute(
             "UPDATE pages SET status=?, verified_by=?, updated_at=CURRENT_TIMESTAMP WHERE page_number=?",
