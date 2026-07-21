@@ -42,6 +42,14 @@ def test_equal_headwords_with_different_numbers_remain_separate_articles():
     assert candidate_words("¹a\n²a\n³a") == ["a", "a", "a"]
 
 
+def test_inflection_labels_do_not_become_headwords():
+    assert split_headword_marker("best.") == (None, "")
+    assert split_headword_marker("pl.") == (None, "")
+    assert split_headword_marker("pres.") == (None, "")
+    assert split_headword_marker("någon.") == (None, "")
+    assert candidate_words("best.\npl.\n¹a\nabbé") == ["a", "abbé"]
+
+
 def test_game_forms_are_split_normalized_and_deduplicated():
     assert normalize_forms(["Katten, katter", "katterna; katten"]) == [
         "katten",
