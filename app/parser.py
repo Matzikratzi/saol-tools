@@ -13,6 +13,8 @@ SUPERSCRIPT_TRANSLATION = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹", "01234567
 SUPERSCRIPT_PREFIX = re.compile(r"^([⁰¹²³⁴⁵⁶⁷⁸⁹]+)\s*(.*)$")
 FLAT_SENSE_PREFIX = re.compile(r"^([1-9][0-9]?)\s*([a-zåäöàáé].*)$", re.IGNORECASE)
 APOSTROPHE_ONE_PREFIX = re.compile(r"^[\'’`´]\s*([a-zåäöàáé].*)$", re.IGNORECASE)
+STEM_BOUNDARY_MARKS = "|¦│ǀ"
+STEM_BOUNDARY_TRANSLATION = str.maketrans("", "", STEM_BOUNDARY_MARKS)
 
 # Very small raised digits are repeatedly misread in the first SAOL articles.
 # These aliases are only interpreted by split_headword_marker(), i.e. while a
@@ -52,7 +54,8 @@ ARTICLE_LABELS = {
 
 
 def normalize_word(word: str) -> str:
-    return re.sub(r"\s+", " ", word.strip().lstrip("^")).lower()
+    normalized = re.sub(r"\s+", " ", word.strip().lstrip("^")).lower()
+    return normalized.translate(STEM_BOUNDARY_TRANSLATION)
 
 
 def _is_article_label(text: str) -> bool:
@@ -68,6 +71,11 @@ def split_headword_marker(text: str) -> tuple[int | None, str]:
     printed entries ``²a`` and ``³a`` as ``åå`` and ``'&``. Since this function
     is called only for an article-start candidate, those known glyph confusions
     can safely be converted to homonym metadata here.
+
+    SAOL also prints a vertical stem boundary inside some headwords, for example
+    ``abborr|e``. The boundary guides inflection and compounds, but it is not a
+    character in the normalized headword, so common OCR variants of that mark
+    are removed by normalize_word().
     """
     normalized = normalize_word(text)
     if _is_article_label(normalized):
