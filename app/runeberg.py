@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import tempfile
 from dataclasses import dataclass, replace
+from difflib import SequenceMatcher
 from pathlib import Path
 
 import httpx
@@ -168,14 +169,43 @@ def _is_printed_page_number(text: str, top: int, height: int, image_height: int)
     return center_y < image_height * 0.10 or center_y > image_height * 0.90
 
 
+def _runeberg_ocr_text(html: str) -> str:
+    """Return Runeberg's raw OCR block, excluding navigation and instructions."""
+    soup = BeautifulSoup(html, "html.parser")
+    pre_blocks = [element.get_text("\n") for element in soup.find_all("pre")]
+    if pre_blocks:
+        return max(pre_blocks, key=len)
+
+    text = soup.get_text("\n")
+    markers = (
+        "This page has never been proofread.",
+        "Denna sida har aldrig korrekturlästs.",
+    )
+    starts = [text.find(marker) + len(marker) for marker in markers if marker in text]
+    if starts:
+        text = text[max(starts) :]
+    footer = text.find("Project Runeberg")
+    if footer >= 0:
+        text = text[:footer]
+    return text
+
+
+def _runeberg_ocr_tokens(html: str) -> list[str]:
+    """Return word-like Runeberg OCR tokens in the printed reading order."""
+    result: list[str] = []
+    for raw in _runeberg_ocr_text(html).split():
+        token = raw.strip(".,:;!?()[]{}<>\"“”")
+        if _word_letters(token):
+            result.append(token)
+    return result
+
+
 def _stem_marked_tokens(html: str) -> list[str]:
     """Return Runeberg OCR tokens that contain a printed SAOL stem boundary."""
-    text = BeautifulSoup(html, "html.parser").get_text(" ")
     result: list[str] = []
     seen: set[str] = set()
-    for raw in text.split():
-        token = raw.strip(".,:;!?()[]{}<>\"“”")
-        if not token or not any(mark in token for mark in STEM_BOUNDARY_MARKS):
+    for token in _runeberg_ocr_tokens(html):
+        if not any(mark in token for mark in STEM_BOUNDARY_MARKS):
             continue
         if token in seen:
             continue
@@ -209,6 +239,57 @@ def _edit_distance_at_most_one(left: str, right: str) -> bool:
             if differences > 1:
                 return False
     return True
+
+
+def _printed_order_indices(observations: list[WordObservation]) -> list[int]:
+    """Return Tesseract observations in SAOL's printed two-column order."""
+    if not observations:
+        return []
+    page_left = min(item.left for item in observations)
+    page_right = max(item.left + item.width for item in observations)
+    split = page_left + (page_right - page_left) / 2
+    left = [index for index, item in enumerate(observations) if item.left < split]
+    right = [index for index, item in enumerate(observations) if item.left >= split]
+    key = lambda index: (observations[index].top, observations[index].left)
+    return sorted(left, key=key) + sorted(right, key=key)
+
+
+def reconcile_contextual_observations(
+    observations: list[WordObservation], runeberg_tokens: list[str]
+) -> list[WordObservation]:
+    """Use Runeberg text to repair isolated Tesseract tokens by context.
+
+    Exact surrounding words anchor the two OCR streams. Only one-for-one
+    replacement regions are corrected. Geometry and typography always come
+    from Tesseract, while the replacement spelling comes from Runeberg.
+    """
+    order = _printed_order_indices(observations)
+    if not order or not runeberg_tokens:
+        return observations
+
+    tesseract_tokens = []
+    for sequence_index, observation_index in enumerate(order):
+        normalized = _word_letters(observations[observation_index].text)
+        tesseract_tokens.append(normalized or f"__unreadable_{sequence_index}")
+    runeberg_normalized = [_word_letters(token) for token in runeberg_tokens]
+
+    corrected = list(observations)
+    matcher = SequenceMatcher(None, tesseract_tokens, runeberg_normalized, autojunk=False)
+    for tag, left_start, left_end, right_start, right_end in matcher.get_opcodes():
+        if tag != "replace" or left_end - left_start != 1 or right_end - right_start != 1:
+            continue
+        runeberg_token = runeberg_tokens[right_start]
+        expected = runeberg_normalized[right_start]
+        if len(expected) < 3:
+            continue
+        observation_index = order[left_start]
+        actual = _word_letters(corrected[observation_index].text)
+        if actual and actual[0] != expected[0] and len(actual) >= 3:
+            continue
+        corrected[observation_index] = replace(
+            corrected[observation_index], text=runeberg_token
+        )
+    return corrected
 
 
 def reconcile_stem_marked_observations(
@@ -344,6 +425,8 @@ def fetch_page(page_number: int) -> ImportedPage:
             headers=headers,
         )
         source_response.raise_for_status()
+        runeberg_tokens = _runeberg_ocr_tokens(source_response.text)
+        observations = reconcile_contextual_observations(observations, runeberg_tokens)
         observations = reconcile_stem_marked_observations(
             observations, _stem_marked_tokens(source_response.text)
         )
