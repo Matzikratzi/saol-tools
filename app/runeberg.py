@@ -50,7 +50,6 @@ def _normalize_line_text(text: str) -> str:
 def _instruction_marker_count(text: str) -> int:
     normalized = _normalize_line_text(text)
     words = set(normalized.split())
-
     hits = 0
     hits += bool(words & {"här", "har"})
     hits += "nedan" in words
@@ -61,23 +60,14 @@ def _instruction_marker_count(text: str) -> int:
     hits += any(word.startswith("korrekturl") for word in words)
     hits += "sidan" in words
     hits += "ovan" in words
-    hits += sum(
-        token in words
-        for token in ("below", "raw", "ocr", "scanned", "image", "proofread", "page")
-    )
+    hits += sum(token in words for token in ("below", "raw", "ocr", "scanned", "image", "proofread", "page"))
     hits += int("project runeberg" in normalized)
     return hits
 
 
 def is_runeberg_instruction_line(text: str) -> bool:
-    """Recognize Runeberg's OCR/proofreading overlay text.
-
-    This intentionally matches phrases, not isolated words. Legitimate SAOL
-    headwords such as "här" and "från" must therefore remain possible.
-    """
     normalized = _normalize_line_text(text)
     words = set(normalized.split())
-
     swedish_hits = 0
     swedish_hits += bool(words & {"här", "har"})
     swedish_hits += "nedan" in words
@@ -88,25 +78,11 @@ def is_runeberg_instruction_line(text: str) -> bool:
     swedish_hits += any(word.startswith("korrekturl") for word in words)
     swedish_hits += "sidan" in words
     swedish_hits += "ovan" in words
-
-    english_hits = sum(
-        token in words
-        for token in ("below", "raw", "ocr", "text", "scanned", "image", "proofread", "page")
-    )
-
+    english_hits = sum(token in words for token in ("below", "raw", "ocr", "text", "scanned", "image", "proofread", "page"))
     return swedish_hits >= 3 or english_hits >= 4 or "project runeberg" in normalized
 
 
-def instruction_line_keys(
-    ordered_lines: list[tuple[tuple[str, str, str, str], int, str]],
-) -> set[tuple[str, str, str, str]]:
-    """Find overlay lines without consuming the first real dictionary line.
-
-    Runeberg's explanatory sentence may be split over several OCR lines. We
-    group adjacent lines that each contain at least one characteristic marker.
-    A normal dictionary line ends that group, even if a larger sliding window
-    would still contain enough earlier markers to look like the overlay.
-    """
+def instruction_line_keys(ordered_lines: list[tuple[tuple[str, str, str, str], int, str]]) -> set[tuple[str, str, str, str]]:
     excluded: set[tuple[str, str, str, str]] = set()
     lines = sorted(ordered_lines, key=lambda item: item[1])
     cluster: list[tuple[tuple[str, str, str, str], int, str]] = []
@@ -147,12 +123,7 @@ def _run_tesseract_tsv(image_path: Path) -> str:
 
 def _ink_density(gray: Image.Image, left: int, top: int, width: int, height: int) -> float:
     margin = 1
-    box = (
-        max(0, left - margin),
-        max(0, top - margin),
-        min(gray.width, left + width + margin),
-        min(gray.height, top + height + margin),
-    )
+    box = (max(0, left - margin), max(0, top - margin), min(gray.width, left + width + margin), min(gray.height, top + height + margin))
     crop = gray.crop(box)
     if crop.width == 0 or crop.height == 0:
         return 0.0
@@ -161,7 +132,6 @@ def _ink_density(gray: Image.Image, left: int, top: int, width: int, height: int
 
 
 def _is_printed_page_number(text: str, top: int, height: int, image_height: int) -> bool:
-    """Remove isolated numeric folio/page numbers near a page edge."""
     token = text.strip().strip(".,:;()[]")
     if not token.isdigit() or len(token) > 4:
         return False
@@ -170,20 +140,15 @@ def _is_printed_page_number(text: str, top: int, height: int, image_height: int)
 
 
 def _runeberg_ocr_text(html: str) -> str:
-    """Return Runeberg's raw OCR block, excluding navigation and instructions."""
     soup = BeautifulSoup(html, "html.parser")
     pre_blocks = [element.get_text("\n") for element in soup.find_all("pre")]
     if pre_blocks:
         return max(pre_blocks, key=len)
-
     text = soup.get_text("\n")
-    markers = (
-        "This page has never been proofread.",
-        "Denna sida har aldrig korrekturlästs.",
-    )
+    markers = ("This page has never been proofread.", "Denna sida har aldrig korrekturlästs.")
     starts = [text.find(marker) + len(marker) for marker in markers if marker in text]
     if starts:
-        text = text[max(starts) :]
+        text = text[max(starts):]
     footer = text.find("Project Runeberg")
     if footer >= 0:
         text = text[:footer]
@@ -191,7 +156,6 @@ def _runeberg_ocr_text(html: str) -> str:
 
 
 def _runeberg_ocr_tokens(html: str) -> list[str]:
-    """Return word-like Runeberg OCR tokens in the printed reading order."""
     result: list[str] = []
     for raw in _runeberg_ocr_text(html).split():
         token = raw.strip(".,:;!?()[]{}<>\"“”")
@@ -201,13 +165,10 @@ def _runeberg_ocr_tokens(html: str) -> list[str]:
 
 
 def _stem_marked_tokens(html: str) -> list[str]:
-    """Return Runeberg OCR tokens that contain a printed SAOL stem boundary."""
     result: list[str] = []
     seen: set[str] = set()
     for token in _runeberg_ocr_tokens(html):
-        if not any(mark in token for mark in STEM_BOUNDARY_MARKS):
-            continue
-        if token in seen:
+        if not any(mark in token for mark in STEM_BOUNDARY_MARKS) or token in seen:
             continue
         seen.add(token)
         result.append(token)
@@ -220,7 +181,6 @@ def _word_letters(text: str) -> str:
 
 
 def _edit_distance_at_most_one(left: str, right: str) -> bool:
-    """Return true when two tokens differ by no more than one edit."""
     if left == right:
         return True
     if abs(len(left) - len(right)) > 1:
@@ -242,7 +202,6 @@ def _edit_distance_at_most_one(left: str, right: str) -> bool:
 
 
 def _printed_order_indices(observations: list[WordObservation]) -> list[int]:
-    """Return Tesseract observations in SAOL's printed two-column order."""
     if not observations:
         return []
     page_left = min(item.left for item in observations)
@@ -254,25 +213,16 @@ def _printed_order_indices(observations: list[WordObservation]) -> list[int]:
     return sorted(left, key=key) + sorted(right, key=key)
 
 
-def reconcile_contextual_observations(
-    observations: list[WordObservation], runeberg_tokens: list[str]
-) -> list[WordObservation]:
-    """Use Runeberg text to repair isolated Tesseract tokens by context.
-
-    Exact surrounding words anchor the two OCR streams. Only one-for-one
-    replacement regions are corrected. Geometry and typography always come
-    from Tesseract, while the replacement spelling comes from Runeberg.
-    """
+def reconcile_contextual_observations(observations: list[WordObservation], runeberg_tokens: list[str]) -> list[WordObservation]:
+    """Align both OCR streams and retain genuine one-token disagreements."""
     order = _printed_order_indices(observations)
     if not order or not runeberg_tokens:
         return observations
-
     tesseract_tokens = []
     for sequence_index, observation_index in enumerate(order):
         normalized = _word_letters(observations[observation_index].text)
         tesseract_tokens.append(normalized or f"__unreadable_{sequence_index}")
     runeberg_normalized = [_word_letters(token) for token in runeberg_tokens]
-
     corrected = list(observations)
     matcher = SequenceMatcher(None, tesseract_tokens, runeberg_normalized, autojunk=False)
     for tag, left_start, left_end, right_start, right_end in matcher.get_opcodes():
@@ -283,25 +233,23 @@ def reconcile_contextual_observations(
         if len(expected) < 3:
             continue
         observation_index = order[left_start]
-        actual = _word_letters(corrected[observation_index].text)
+        original = corrected[observation_index]
+        tesseract_token = original.ocr_tesseract or original.text
+        actual = _word_letters(tesseract_token)
         if actual and actual[0] != expected[0] and len(actual) >= 3:
             continue
+        minor = bool(actual) and _edit_distance_at_most_one(actual, expected)
         corrected[observation_index] = replace(
-            corrected[observation_index], text=runeberg_token
+            original,
+            text=runeberg_token,
+            ocr_tesseract=tesseract_token,
+            ocr_runeberg=runeberg_token,
+            ocr_conflict=not minor and actual != expected,
         )
     return corrected
 
 
-def reconcile_stem_marked_observations(
-    observations: list[WordObservation], runeberg_tokens: list[str]
-) -> list[WordObservation]:
-    """Correct Tesseract words from Runeberg OCR while retaining image geometry.
-
-    Tesseract sometimes reads SAOL's thin stem boundary as a lower-case ``l``.
-    Runeberg's OCR often preserves it correctly, e.g. ``abbrevi|ation``. A
-    uniquely matching token within one edit replaces only the observation text;
-    its bounding box and typography features remain untouched.
-    """
+def reconcile_stem_marked_observations(observations: list[WordObservation], runeberg_tokens: list[str]) -> list[WordObservation]:
     corrected = list(observations)
     used_observations: set[int] = set()
     for runeberg_token in runeberg_tokens:
@@ -320,7 +268,7 @@ def reconcile_stem_marked_observations(
         if len(matches) != 1:
             continue
         index = matches[0]
-        corrected[index] = replace(corrected[index], text=runeberg_token)
+        corrected[index] = replace(corrected[index], text=runeberg_token, ocr_runeberg=corrected[index].ocr_runeberg or runeberg_token)
         used_observations.add(index)
     return corrected
 
@@ -330,108 +278,72 @@ def extract_observations(image_bytes: bytes) -> list[WordObservation]:
         image_path = Path(directory) / "page.png"
         image_path.write_bytes(image_bytes)
         tsv = _run_tesseract_tsv(image_path)
-
     image = Image.open(io.BytesIO(image_bytes)).convert("L")
     gray = ImageOps.autocontrast(image)
     rows = list(csv.DictReader(io.StringIO(tsv), delimiter="\t"))
-
     parsed_rows = []
     line_text: dict[tuple[str, str, str, str], list[str]] = {}
     line_top: dict[tuple[str, str, str, str], int] = {}
     line_first: dict[tuple[str, str, str, str], int] = {}
     heights = []
-
     for row in rows:
         text = (row.get("text") or "").strip()
         if row.get("level") != "5" or not text:
             continue
         try:
-            left = int(row["left"])
-            top = int(row["top"])
-            width = int(row["width"])
-            height = int(row["height"])
+            left, top, width, height = int(row["left"]), int(row["top"]), int(row["width"]), int(row["height"])
             confidence = float(row["conf"])
         except (ValueError, KeyError):
             continue
-        if confidence < 15 or width < 2 or height < 4:
+        if confidence < 15 or width < 2 or height < 4 or _is_printed_page_number(text, top, height, gray.height):
             continue
-        if _is_printed_page_number(text, top, height, gray.height):
-            continue
-
-        key = (
-            row.get("page_num", ""),
-            row.get("block_num", ""),
-            row.get("par_num", ""),
-            row.get("line_num", ""),
-        )
+        key = (row.get("page_num", ""), row.get("block_num", ""), row.get("par_num", ""), row.get("line_num", ""))
         line_text.setdefault(key, []).append(text)
         line_top[key] = min(top, line_top.get(key, top))
         line_first[key] = min(left, line_first.get(key, left))
         parsed_rows.append((text, left, top, width, height, confidence, key))
         heights.append(height)
-
     if not heights:
         return []
-
-    ordered_lines = [
-        (key, line_top[key], " ".join(tokens)) for key, tokens in line_text.items()
-    ]
+    ordered_lines = [(key, line_top[key], " ".join(tokens)) for key, tokens in line_text.items()]
     excluded_lines = instruction_line_keys(ordered_lines)
     usable_rows = [row for row in parsed_rows if row[-1] not in excluded_lines]
     if not usable_rows:
         return []
-
     usable_heights = sorted(row[4] for row in usable_rows)
     median_height = usable_heights[len(usable_heights) // 2]
     page_width = max(gray.width, 1)
     observations = []
     for text, left, top, width, height, confidence, key in usable_rows:
-        observations.append(
-            WordObservation(
-                text=text,
-                left=left,
-                top=top,
-                width=width,
-                height=height,
-                confidence=confidence,
-                ink_density=_ink_density(gray, left, top, width, height),
-                line_left=max(0.0, min(1.0, (left - line_first[key]) / page_width)),
-                relative_height=height / max(median_height, 1),
-            )
-        )
+        observations.append(WordObservation(
+            text=text,
+            left=left,
+            top=top,
+            width=width,
+            height=height,
+            confidence=confidence,
+            ink_density=_ink_density(gray, left, top, width, height),
+            line_left=max(0.0, min(1.0, (left - line_first[key]) / page_width)),
+            relative_height=height / max(median_height, 1),
+            ocr_tesseract=text,
+        ))
     return observations
 
 
 def fetch_page(page_number: int) -> ImportedPage:
     source_url, image_url = page_urls(page_number)
     headers = {"User-Agent": "saol-tools/0.4"}
-
-    image_response = httpx.get(
-        image_url,
-        timeout=60.0,
-        follow_redirects=True,
-        headers=headers,
-    )
+    image_response = httpx.get(image_url, timeout=60.0, follow_redirects=True, headers=headers)
     image_response.raise_for_status()
     observations = extract_observations(image_response.content)
     if not observations:
         raise ValueError("Inga OCR-ord hittades på sidan")
-
     try:
-        source_response = httpx.get(
-            source_url,
-            timeout=60.0,
-            follow_redirects=True,
-            headers=headers,
-        )
+        source_response = httpx.get(source_url, timeout=60.0, follow_redirects=True, headers=headers)
         source_response.raise_for_status()
         runeberg_tokens = _runeberg_ocr_tokens(source_response.text)
         observations = reconcile_contextual_observations(observations, runeberg_tokens)
-        observations = reconcile_stem_marked_observations(
-            observations, _stem_marked_tokens(source_response.text)
-        )
+        observations = reconcile_stem_marked_observations(observations, _stem_marked_tokens(source_response.text))
     except httpx.HTTPError:
-        # The image OCR is still usable if Runeberg's HTML is temporarily down.
         pass
-
     return ImportedPage(page_number, source_url, image_url, observations)
