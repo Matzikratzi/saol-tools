@@ -1,15 +1,23 @@
 from app.classifier import WordObservation, train_model
+from app.parser import normalize_word
 from app.runeberg import (
     _is_printed_page_number,
+    _stem_marked_tokens,
     instruction_line_keys,
     is_runeberg_instruction_line,
     page_urls,
+    reconcile_stem_marked_observations,
 )
 
 
-def observation(ink: float, line_left: float, height: float) -> WordObservation:
+def observation(
+    ink: float,
+    line_left: float,
+    height: float,
+    text: str = "ord",
+) -> WordObservation:
     return WordObservation(
-        text="ord",
+        text=text,
         left=10,
         top=10,
         width=30,
@@ -61,6 +69,25 @@ def test_page_number_is_removed_only_near_page_edge():
     assert _is_printed_page_number("20.", 930, 12, 1000)
     assert not _is_printed_page_number("19", 400, 12, 1000)
     assert not _is_printed_page_number("nitton", 5, 12, 1000)
+
+
+def test_runeberg_stem_marked_token_is_extracted_from_html():
+    html = "<html><body>OCR: abbrevi|ation och abborr|e.</body></html>"
+    assert _stem_marked_tokens(html) == ["abbrevi|ation", "abborr|e"]
+
+
+def test_runeberg_ocr_corrects_tesseract_l_without_losing_geometry():
+    original = observation(0.42, 0.0, 1.08, text="abbrevilation")
+    corrected = reconcile_stem_marked_observations(
+        [original], ["abbrevi|ation"]
+    )
+
+    assert corrected[0].text == "abbrevi|ation"
+    assert normalize_word(corrected[0].text) == "abbreviation"
+    assert corrected[0].left == original.left
+    assert corrected[0].top == original.top
+    assert corrected[0].width == original.width
+    assert corrected[0].height == original.height
 
 
 def test_model_learns_dark_left_aligned_words():
