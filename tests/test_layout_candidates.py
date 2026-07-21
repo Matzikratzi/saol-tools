@@ -61,8 +61,6 @@ def test_first_token_at_column_margin_gets_a_candidate_chance_even_when_thin():
 
 
 def test_small_indent_marks_a_continuation_line():
-    # Keep this layout compact enough to remain one synthetic column. Column
-    # splitting is verified separately below; this test isolates indentation.
     observations = [
         obs("'a", 50, 100, width=15, density=0.08),
         obs("artikeltext", 72, 100, width=38),
@@ -110,3 +108,26 @@ def test_left_column_is_completed_before_right_column():
         "gamma",
         "delta",
     ]
+
+
+def test_long_headword_stays_in_left_column():
+    observations = [
+        obs("abc", 40, 90, width=35, density=0.30),
+        obs("abc-stridsmedel", 40, 130, width=300, density=0.30),
+        obs("abdikera", 40, 170, width=70, density=0.30),
+        obs("abnorm", 400, 80, width=65, density=0.30),
+        obs("abonnent", 400, 120, width=75, density=0.30),
+        obs("abrupt", 400, 160, width=60, density=0.30),
+    ]
+
+    candidates = observations_to_candidates(observations)
+
+    assert [candidate["word"] for candidate in candidates] == [
+        "abc",
+        "abc-stridsmedel",
+        "abdikera",
+        "abnorm",
+        "abonnent",
+        "abrupt",
+    ]
+    assert [candidate["column"] for candidate in candidates] == [0, 0, 0, 1, 1, 1]
