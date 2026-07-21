@@ -1,4 +1,19 @@
-from app.runeberg import extract_bold_headwords, page_urls
+from app.classifier import WordObservation, train_model
+from app.runeberg import page_urls
+
+
+def observation(ink: float, line_left: float, height: float) -> WordObservation:
+    return WordObservation(
+        text="ord",
+        left=10,
+        top=10,
+        width=30,
+        height=12,
+        confidence=95.0,
+        ink_density=ink,
+        line_left=line_left,
+        relative_height=height,
+    )
 
 
 def test_page_urls():
@@ -7,31 +22,11 @@ def test_page_urls():
     assert image.endswith("/0019.3.png")
 
 
-def test_extracts_only_bold_groups_from_hocr():
-    hocr = """
-    <html><body>
-      <span class='ocr_line'>
-        <span class='ocrx_word'><strong>Abborre</strong></span>
-        <span class='ocrx_word'>-n</span>
-        <span class='ocrx_word'><strong>-fiske</strong></span>
-        <span class='ocrx_word'>förklaring</span>
-      </span>
-      <span class='ocr_line'>
-        <span class='ocrx_word'><strong>efter</strong></span>
-        <span class='ocrx_word'><strong>hand</strong></span>
-        <span class='ocrx_word'>adv.</span>
-      </span>
-    </body></html>
-    """
-    assert extract_bold_headwords(hocr) == ["Abborre", "-fiske", "efter hand"]
-
-
-def test_extra_bold_and_semibold_have_same_meaning():
-    hocr = """
-    <span class='ocr_line'>
-      <span class='ocrx_word'><b>Abakus</b></span>
-      <span class='ocrx_word'>-en</span>
-      <span class='ocrx_word'><strong>abandon</strong></span>
-    </span>
-    """
-    assert extract_bold_headwords(hocr) == ["Abakus", "abandon"]
+def test_model_learns_dark_left_aligned_words():
+    samples = []
+    for _ in range(30):
+        samples.append((observation(0.42, 0.0, 1.08), 1))
+        samples.append((observation(0.18, 0.08, 0.96), 0))
+    model = train_model(samples)
+    assert model.probability(observation(0.45, 0.0, 1.1)) > 0.7
+    assert model.probability(observation(0.16, 0.1, 0.9)) < 0.3
