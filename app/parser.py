@@ -12,10 +12,8 @@ RUNEberg_METADATA = re.compile(
 SUPERSCRIPT_TRANSLATION = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹", "0123456789")
 SUPERSCRIPT_PREFIX = re.compile(r"^([⁰¹²³⁴⁵⁶⁷⁸⁹]+)\s*(.*)$")
 FLAT_SENSE_PREFIX = re.compile(r"^([1-9][0-9]?)\s*([a-zåäöàáé].*)$", re.IGNORECASE)
+APOSTROPHE_ONE_PREFIX = re.compile(r"^[\'’`´]\s*([a-zåäöàáé].*)$", re.IGNORECASE)
 
-# These are grammatical labels and inflection markers printed inside SAOL
-# articles. They describe the preceding headword and must never start a new
-# dictionary article or enter the game word list.
 ARTICLE_LABELS = {
     "best.",
     "obest.",
@@ -53,8 +51,10 @@ def _is_article_label(text: str) -> bool:
 def split_headword_marker(text: str) -> tuple[int | None, str]:
     """Split a printed homonym number from a headword without losing either.
 
-    Grammatical abbreviations such as ``best.`` and ``pl.`` return an empty
-    headword because they belong to the preceding article.
+    Tesseract sometimes reads a tiny raised ``¹`` as an apostrophe, producing
+    tokens such as ``'a`` or ``’a``. At the beginning of a candidate article
+    row that punctuation is interpreted as homonym number 1, not as part of the
+    headword.
     """
     normalized = normalize_word(text)
     if _is_article_label(normalized):
@@ -66,6 +66,13 @@ def split_headword_marker(text: str) -> tuple[int | None, str]:
         if _is_article_label(word):
             return None, ""
         return int(match.group(1).translate(SUPERSCRIPT_TRANSLATION)), word
+
+    match = APOSTROPHE_ONE_PREFIX.match(normalized)
+    if match:
+        word = normalize_word(match.group(1))
+        if _is_article_label(word):
+            return None, ""
+        return 1, word
 
     match = FLAT_SENSE_PREFIX.match(normalized)
     if match:
