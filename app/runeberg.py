@@ -19,6 +19,7 @@ from .classifier import WordObservation
 BASE_URL = "https://runeberg.org/saol/11-6"
 STEM_BOUNDARY_MARKS = "|¦│ǀ"
 STEM_BOUNDARY_TRANSLATION = str.maketrans("", "", STEM_BOUNDARY_MARKS)
+TOKEN_STRIP = ".,:;!?()[]{}<>\"“”"
 
 
 @dataclass(frozen=True)
@@ -41,6 +42,10 @@ def page_urls(page_number: int) -> tuple[str, str]:
         f"{BASE_URL}/{identifier}.html",
         f"https://runeberg.org/img/saol/11-6/{identifier}.3.png",
     )
+
+
+def ocr_image_url(image_url: str) -> str:
+    return image_url.replace(".3.png", ".1.tif")
 
 
 def _normalize_line_text(text: str) -> str:
@@ -82,7 +87,9 @@ def is_runeberg_instruction_line(text: str) -> bool:
     return swedish_hits >= 3 or english_hits >= 4 or "project runeberg" in normalized
 
 
-def instruction_line_keys(ordered_lines: list[tuple[tuple[str, str, str, str], int, str]]) -> set[tuple[str, str, str, str]]:
+def instruction_line_keys(
+    ordered_lines: list[tuple[tuple[str, str, str, str], int, str]],
+) -> set[tuple[str, str, str, str]]:
     excluded: set[tuple[str, str, str, str]] = set()
     lines = sorted(ordered_lines, key=lambda item: item[1])
     cluster: list[tuple[tuple[str, str, str, str], int, str]] = []
@@ -123,7 +130,12 @@ def _run_tesseract_tsv(image_path: Path) -> str:
 
 def _ink_density(gray: Image.Image, left: int, top: int, width: int, height: int) -> float:
     margin = 1
-    box = (max(0, left - margin), max(0, top - margin), min(gray.width, left + width + margin), min(gray.height, top + height + margin))
+    box = (
+        max(0, left - margin),
+        max(0, top - margin),
+        min(gray.width, left + width + margin),
+        min(gray.height, top + height + margin),
+    )
     crop = gray.crop(box)
     if crop.width == 0 or crop.height == 0:
         return 0.0
@@ -139,29 +151,54 @@ def _is_printed_page_number(text: str, top: int, height: int, image_height: int)
     return center_y < image_height * 0.10 or center_y > image_height * 0.90
 
 
+def _runeberg_fragment(html: str) -> str:
+    start_match = re.search(r"<!--\s*mode=[^>]*-->", html, flags=re.IGNORECASE)
+    if not start_match:
+        return html
+    fragment = html[start_match.end():]
+    end_match = re.search(r"<!--\s*(?:NEWIMAGE\d*|####)\s*-->", fragment, flags=re.IGNORECASE)
+    if end_match:
+        fragment = fragment[:end_match.start()]
+    return fragment
+
+
 def _runeberg_ocr_text(html: str) -> str:
-    soup = BeautifulSoup(html, "html.parser")
-    pre_blocks = [element.get_text("\n") for element in soup.find_all("pre")]
-    if pre_blocks:
-        return max(pre_blocks, key=len)
-    text = soup.get_text("\n")
-    markers = ("This page has never been proofread.", "Denna sida har aldrig korrekturlästs.")
-    starts = [text.find(marker) + len(marker) for marker in markers if marker in text]
-    if starts:
-        text = text[max(starts):]
-    footer = text.find("Project Runeberg")
-    if footer >= 0:
-        text = text[:footer]
-    return text
+    fragment = _runeberg_fragment(html)
+    soup = BeautifulSoup(fragment, "html.parser")
+    for br in soup.find_all("br"):
+        br.replace_with("\n")
+    text = soup.get_text("", strip=False)
+    if fragment == html:
+        raw_marker = "Below is the raw OCR text"
+        start = text.find(raw_marker)
+        if start >= 0:
+            text = text[start + len(raw_marker):]
+        footer = text.rfind("Project Runeberg")
+        if footer >= 0:
+            text = text[:footer]
+    return text.strip()
 
 
-def _runeberg_ocr_tokens(html: str) -> list[str]:
+def _word_letters(text: str) -> str:
+    without_boundary = text.translate(STEM_BOUNDARY_TRANSLATION).casefold()
+    return re.sub(r"[^a-zåäöàáé-]+", "", without_boundary)
+
+
+def _tokenize_line(raw_line: str) -> list[str]:
     result: list[str] = []
-    for raw in _runeberg_ocr_text(html).split():
-        token = raw.strip(".,:;!?()[]{}<>\"“”")
+    for raw in raw_line.split():
+        token = raw.strip(TOKEN_STRIP)
         if _word_letters(token):
             result.append(token)
     return result
+
+
+def _runeberg_ocr_lines(html: str) -> list[list[str]]:
+    return [tokens for raw in _runeberg_ocr_text(html).splitlines() if (tokens := _tokenize_line(raw))]
+
+
+def _runeberg_ocr_tokens(html: str) -> list[str]:
+    return [token for line in _runeberg_ocr_lines(html) for token in line]
 
 
 def _stem_marked_tokens(html: str) -> list[str]:
@@ -175,11 +212,6 @@ def _stem_marked_tokens(html: str) -> list[str]:
     return result
 
 
-def _word_letters(text: str) -> str:
-    without_boundary = text.translate(STEM_BOUNDARY_TRANSLATION).casefold()
-    return re.sub(r"[^a-zåäöàáé-]+", "", without_boundary)
-
-
 def _edit_distance_at_most_one(left: str, right: str) -> bool:
     if left == right:
         return True
@@ -188,29 +220,161 @@ def _edit_distance_at_most_one(left: str, right: str) -> bool:
     if len(left) == len(right):
         return sum(a != b for a, b in zip(left, right)) <= 1
     shorter, longer = (left, right) if len(left) < len(right) else (right, left)
-    index_short = index_long = differences = 0
-    while index_short < len(shorter) and index_long < len(longer):
-        if shorter[index_short] == longer[index_long]:
-            index_short += 1
-            index_long += 1
+    i = j = differences = 0
+    while i < len(shorter) and j < len(longer):
+        if shorter[i] == longer[j]:
+            i += 1
+            j += 1
         else:
             differences += 1
-            index_long += 1
+            j += 1
             if differences > 1:
                 return False
     return True
 
 
 def _printed_order_indices(observations: list[WordObservation]) -> list[int]:
+    return [index for line in _observation_line_indices(observations) for index in line]
+
+
+def _observation_line_indices(observations: list[WordObservation]) -> list[list[int]]:
     if not observations:
         return []
     page_left = min(item.left for item in observations)
     page_right = max(item.left + item.width for item in observations)
     split = page_left + (page_right - page_left) / 2
-    left = [index for index, item in enumerate(observations) if item.left < split]
-    right = [index for index, item in enumerate(observations) if item.left >= split]
-    key = lambda index: (observations[index].top, observations[index].left)
-    return sorted(left, key=key) + sorted(right, key=key)
+    median_height = sorted(item.height for item in observations)[len(observations) // 2]
+    tolerance = max(3, int(median_height * 0.55))
+    result: list[list[int]] = []
+    for predicate in (
+        lambda item: item.left < split,
+        lambda item: item.left >= split,
+    ):
+        column = [index for index, item in enumerate(observations) if predicate(item)]
+        ordered = sorted(column, key=lambda index: (observations[index].top, observations[index].left))
+        groups: list[list[int]] = []
+        centers: list[float] = []
+        for index in ordered:
+            item = observations[index]
+            center = item.top + item.height / 2
+            if groups and abs(center - centers[-1]) <= tolerance:
+                groups[-1].append(index)
+                centers[-1] = sum(observations[i].top + observations[i].height / 2 for i in groups[-1]) / len(groups[-1])
+            else:
+                groups.append([index])
+                centers.append(center)
+        result.extend(sorted(group, key=lambda index: observations[index].left) for group in groups)
+    return result
+
+
+def _normalized_observation_line(observations: list[WordObservation], indices: list[int]) -> list[str]:
+    return [token for index in indices if (token := _word_letters(observations[index].text))]
+
+
+def _line_similarity(left: list[str], right: list[str]) -> float:
+    if not left or not right:
+        return 0.0
+    left_text = " ".join(left)
+    right_text = " ".join(right)
+    character_score = SequenceMatcher(None, left_text, right_text, autojunk=False).ratio()
+    token_score = SequenceMatcher(None, left, right, autojunk=False).ratio()
+    return 0.65 * character_score + 0.35 * token_score
+
+
+def _align_lines(
+    tesseract_lines: list[list[str]],
+    runeberg_lines: list[list[str]],
+) -> list[tuple[int, int, float]]:
+    rows = len(tesseract_lines)
+    columns = len(runeberg_lines)
+    gap_penalty = -0.32
+    minimum_pair_score = 0.28
+    scores = [[float("-inf")] * (columns + 1) for _ in range(rows + 1)]
+    moves = [[""] * (columns + 1) for _ in range(rows + 1)]
+    scores[0][0] = 0.0
+    for i in range(1, rows + 1):
+        scores[i][0] = scores[i - 1][0] + gap_penalty
+        moves[i][0] = "up"
+    for j in range(1, columns + 1):
+        scores[0][j] = scores[0][j - 1] + gap_penalty
+        moves[0][j] = "left"
+    similarities = [
+        [_line_similarity(tesseract_lines[i], runeberg_lines[j]) for j in range(columns)]
+        for i in range(rows)
+    ]
+    for i in range(1, rows + 1):
+        for j in range(1, columns + 1):
+            similarity = similarities[i - 1][j - 1]
+            diagonal = scores[i - 1][j - 1] + (2.2 * similarity - 0.72)
+            up = scores[i - 1][j] + gap_penalty
+            left = scores[i][j - 1] + gap_penalty
+            best = max(diagonal, up, left)
+            scores[i][j] = best
+            moves[i][j] = "diag" if best == diagonal else ("up" if best == up else "left")
+    pairs: list[tuple[int, int, float]] = []
+    i, j = rows, columns
+    while i > 0 or j > 0:
+        move = moves[i][j]
+        if move == "diag":
+            similarity = similarities[i - 1][j - 1]
+            if similarity >= minimum_pair_score:
+                pairs.append((i - 1, j - 1, similarity))
+            i -= 1
+            j -= 1
+        elif move == "up":
+            i -= 1
+        else:
+            j -= 1
+    pairs.reverse()
+    return pairs
+
+
+def _only_leading_hyphen_differs(left: str, right: str) -> bool:
+    """Return true when normalized words differ only by one leading hyphen."""
+    return left.lstrip("-") == right.lstrip("-") and left.startswith("-") != right.startswith("-")
+
+
+def _runeberg_l_as_i_error(actual: str, expected: str) -> bool:
+    """Detect Runeberg's recurring OCR confusion where lowercase l becomes i.
+
+    The source repeatedly contains ``tiii`` where the printed word is ``til`` or
+    ``till``. Keep the Tesseract value and do not create a conflict for these
+    known variants. The conservative fallback only accepts an i-to-l rewrite
+    when it becomes at most one edit away from Tesseract.
+    """
+    if expected == "tiii" and actual in {"til", "till"}:
+        return True
+    if "i" not in expected or "l" not in actual:
+        return False
+    candidate = expected.replace("i", "l")
+    return candidate == actual or _edit_distance_at_most_one(candidate, actual)
+
+
+def _stem_boundary_variant(tesseract_token: str, runeberg_token: str, actual: str, expected: str) -> bool:
+    """Accept a close Runeberg form when it contains an explicit stem boundary.
+
+    Stem markers are removed by ``_word_letters`` before comparison. Requiring
+    a marker in Runeberg plus a high normalized similarity keeps this rule from
+    accepting unrelated ordinary OCR disagreements.
+    """
+    if not any(mark in runeberg_token for mark in STEM_BOUNDARY_MARKS):
+        return False
+    if not actual or not expected:
+        return False
+    similarity = SequenceMatcher(None, actual.lstrip("-"), expected.lstrip("-"), autojunk=False).ratio()
+    return similarity >= 0.80
+
+
+def _leading_compound_i_variant(actual: str, expected: str) -> bool:
+    """Recognize Runeberg's leading ``-i`` compound notation, e.g. hop/-ihop."""
+    return expected.startswith("-i") and expected[2:] == actual.lstrip("-")
+
+
+def _strong_length_mismatch(left: str, right: str) -> bool:
+    """Return true when one aligned token is more than twice as long as the other."""
+    shorter = min(len(left), len(right))
+    longer = max(len(left), len(right))
+    return shorter > 0 and longer > 2 * shorter
 
 
 def _apply_contextual_replacement(
@@ -219,55 +383,93 @@ def _apply_contextual_replacement(
     runeberg_token: str,
     expected: str,
 ) -> None:
-    if len(expected) < 3:
-        return
+    """Merge one aligned token pair without letting weak Runeberg OCR win.
+
+    Small differences, explicit stem-boundary forms and leading ``-i`` compound
+    notation are accepted automatically. Runeberg's recurring l/i confusion is
+    ignored. Strong length mismatches and other plausible disagreements retain
+    Tesseract as display text while preserving both OCR readings as a conflict.
+    """
     original = corrected[observation_index]
     tesseract_token = original.ocr_tesseract or original.text
     actual = _word_letters(tesseract_token)
-    if actual and actual[0] != expected[0] and len(actual) >= 3:
+    expected = _word_letters(expected)
+    if len(actual) < 3 or len(expected) < 3 or actual == expected:
         return
-    minor = bool(actual) and _edit_distance_at_most_one(actual, expected)
+
+    if _runeberg_l_as_i_error(actual, expected):
+        return
+
+    minor = _edit_distance_at_most_one(actual, expected)
+    hyphen_variant = _only_leading_hyphen_differs(actual, expected)
+    stem_variant = _stem_boundary_variant(tesseract_token, runeberg_token, actual, expected)
+    compound_i_variant = _leading_compound_i_variant(actual, expected)
+    accepted = minor or hyphen_variant or stem_variant or compound_i_variant
+
+    if accepted:
+        corrected[observation_index] = replace(
+            original,
+            text=runeberg_token,
+            ocr_tesseract=tesseract_token,
+            ocr_runeberg=runeberg_token,
+            ocr_conflict=False,
+        )
+        return
+
+    similarity = SequenceMatcher(None, actual, expected, autojunk=False).ratio()
+    plausible = _strong_length_mismatch(actual, expected) or actual[0] == expected[0] or similarity >= 0.58
+    if not plausible:
+        return
+
     corrected[observation_index] = replace(
         original,
-        text=runeberg_token,
+        text=tesseract_token,
         ocr_tesseract=tesseract_token,
         ocr_runeberg=runeberg_token,
-        ocr_conflict=not minor and actual != expected,
+        ocr_conflict=True,
     )
 
 
-def reconcile_contextual_observations(observations: list[WordObservation], runeberg_tokens: list[str]) -> list[WordObservation]:
-    """Align both OCR streams and retain genuine one-token disagreements."""
-    order = _printed_order_indices(observations)
-    if not order or not runeberg_tokens:
+def reconcile_contextual_observations(
+    observations: list[WordObservation],
+    runeberg: str | list[str] | list[list[str]],
+) -> list[WordObservation]:
+    if isinstance(runeberg, str):
+        runeberg_lines = _runeberg_ocr_lines(runeberg)
+    elif runeberg and isinstance(runeberg[0], list):
+        runeberg_lines = runeberg  # type: ignore[assignment]
+    else:
+        # Compatibility fallback for older callers. A flat token stream is one line
+        # and is deliberately conservative.
+        runeberg_lines = [runeberg] if runeberg else []  # type: ignore[list-item]
+    observation_lines = _observation_line_indices(observations)
+    if not observation_lines or not runeberg_lines:
         return observations
-    tesseract_tokens = []
-    for sequence_index, observation_index in enumerate(order):
-        normalized = _word_letters(observations[observation_index].text)
-        tesseract_tokens.append(normalized or f"__unreadable_{sequence_index}")
-    runeberg_normalized = [_word_letters(token) for token in runeberg_tokens]
+    tesseract_lines = [_normalized_observation_line(observations, line) for line in observation_lines]
+    runeberg_normalized = [[_word_letters(token) for token in line if _word_letters(token)] for line in runeberg_lines]
     corrected = list(observations)
-    matcher = SequenceMatcher(None, tesseract_tokens, runeberg_normalized, autojunk=False)
-    for tag, left_start, left_end, right_start, right_end in matcher.get_opcodes():
-        if tag != "replace":
-            continue
-        left_count = left_end - left_start
-        right_count = right_end - right_start
-        if left_count != right_count:
-            continue
-        for offset in range(left_count):
-            observation_index = order[left_start + offset]
-            runeberg_index = right_start + offset
+    for observation_line_index, runeberg_line_index, _ in _align_lines(tesseract_lines, runeberg_normalized):
+        observation_indices = observation_lines[observation_line_index]
+        left_tokens = [_word_letters(observations[index].text) for index in observation_indices]
+        right_tokens = runeberg_normalized[runeberg_line_index]
+        right_original = runeberg_lines[runeberg_line_index]
+        matcher = SequenceMatcher(None, left_tokens, right_tokens, autojunk=False)
+        for tag, left_start, left_end, right_start, right_end in matcher.get_opcodes():
+            if tag != "replace" or left_end - left_start != 1 or right_end - right_start != 1:
+                continue
             _apply_contextual_replacement(
                 corrected,
-                observation_index,
-                runeberg_tokens[runeberg_index],
-                runeberg_normalized[runeberg_index],
+                observation_indices[left_start],
+                right_original[right_start],
+                right_tokens[right_start],
             )
     return corrected
 
 
-def reconcile_stem_marked_observations(observations: list[WordObservation], runeberg_tokens: list[str]) -> list[WordObservation]:
+def reconcile_stem_marked_observations(
+    observations: list[WordObservation],
+    runeberg_tokens: list[str],
+) -> list[WordObservation]:
     corrected = list(observations)
     used_observations: set[int] = set()
     for runeberg_token in runeberg_tokens:
@@ -286,14 +488,18 @@ def reconcile_stem_marked_observations(observations: list[WordObservation], rune
         if len(matches) != 1:
             continue
         index = matches[0]
-        corrected[index] = replace(corrected[index], text=runeberg_token, ocr_runeberg=corrected[index].ocr_runeberg or runeberg_token)
+        corrected[index] = replace(
+            corrected[index],
+            text=runeberg_token,
+            ocr_runeberg=corrected[index].ocr_runeberg or runeberg_token,
+        )
         used_observations.add(index)
     return corrected
 
 
 def extract_observations(image_bytes: bytes) -> list[WordObservation]:
     with tempfile.TemporaryDirectory(prefix="saol-tools-") as directory:
-        image_path = Path(directory) / "page.png"
+        image_path = Path(directory) / "page.tif"
         image_path.write_bytes(image_bytes)
         tsv = _run_tesseract_tsv(image_path)
     image = Image.open(io.BytesIO(image_bytes)).convert("L")
@@ -309,7 +515,10 @@ def extract_observations(image_bytes: bytes) -> list[WordObservation]:
         if row.get("level") != "5" or not text:
             continue
         try:
-            left, top, width, height = int(row["left"]), int(row["top"]), int(row["width"]), int(row["height"])
+            left = int(row["left"])
+            top = int(row["top"])
+            width = int(row["width"])
+            height = int(row["height"])
             confidence = float(row["conf"])
         except (ValueError, KeyError):
             continue
@@ -350,8 +559,8 @@ def extract_observations(image_bytes: bytes) -> list[WordObservation]:
 
 def fetch_page(page_number: int) -> ImportedPage:
     source_url, image_url = page_urls(page_number)
-    headers = {"User-Agent": "saol-tools/0.4"}
-    image_response = httpx.get(image_url, timeout=60.0, follow_redirects=True, headers=headers)
+    headers = {"User-Agent": "saol-tools/0.5"}
+    image_response = httpx.get(ocr_image_url(image_url), timeout=60.0, follow_redirects=True, headers=headers)
     image_response.raise_for_status()
     observations = extract_observations(image_response.content)
     if not observations:
@@ -359,8 +568,7 @@ def fetch_page(page_number: int) -> ImportedPage:
     try:
         source_response = httpx.get(source_url, timeout=60.0, follow_redirects=True, headers=headers)
         source_response.raise_for_status()
-        runeberg_tokens = _runeberg_ocr_tokens(source_response.text)
-        observations = reconcile_contextual_observations(observations, runeberg_tokens)
+        observations = reconcile_contextual_observations(observations, source_response.text)
         observations = reconcile_stem_marked_observations(observations, _stem_marked_tokens(source_response.text))
     except httpx.HTTPError:
         pass
