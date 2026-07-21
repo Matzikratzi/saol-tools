@@ -213,6 +213,29 @@ def _printed_order_indices(observations: list[WordObservation]) -> list[int]:
     return sorted(left, key=key) + sorted(right, key=key)
 
 
+def _apply_contextual_replacement(
+    corrected: list[WordObservation],
+    observation_index: int,
+    runeberg_token: str,
+    expected: str,
+) -> None:
+    if len(expected) < 3:
+        return
+    original = corrected[observation_index]
+    tesseract_token = original.ocr_tesseract or original.text
+    actual = _word_letters(tesseract_token)
+    if actual and actual[0] != expected[0] and len(actual) >= 3:
+        return
+    minor = bool(actual) and _edit_distance_at_most_one(actual, expected)
+    corrected[observation_index] = replace(
+        original,
+        text=runeberg_token,
+        ocr_tesseract=tesseract_token,
+        ocr_runeberg=runeberg_token,
+        ocr_conflict=not minor and actual != expected,
+    )
+
+
 def reconcile_contextual_observations(observations: list[WordObservation], runeberg_tokens: list[str]) -> list[WordObservation]:
     """Align both OCR streams and retain genuine one-token disagreements."""
     order = _printed_order_indices(observations)
@@ -226,26 +249,21 @@ def reconcile_contextual_observations(observations: list[WordObservation], runeb
     corrected = list(observations)
     matcher = SequenceMatcher(None, tesseract_tokens, runeberg_normalized, autojunk=False)
     for tag, left_start, left_end, right_start, right_end in matcher.get_opcodes():
-        if tag != "replace" or left_end - left_start != 1 or right_end - right_start != 1:
+        if tag != "replace":
             continue
-        runeberg_token = runeberg_tokens[right_start]
-        expected = runeberg_normalized[right_start]
-        if len(expected) < 3:
+        left_count = left_end - left_start
+        right_count = right_end - right_start
+        if left_count != right_count:
             continue
-        observation_index = order[left_start]
-        original = corrected[observation_index]
-        tesseract_token = original.ocr_tesseract or original.text
-        actual = _word_letters(tesseract_token)
-        if actual and actual[0] != expected[0] and len(actual) >= 3:
-            continue
-        minor = bool(actual) and _edit_distance_at_most_one(actual, expected)
-        corrected[observation_index] = replace(
-            original,
-            text=runeberg_token,
-            ocr_tesseract=tesseract_token,
-            ocr_runeberg=runeberg_token,
-            ocr_conflict=not minor and actual != expected,
-        )
+        for offset in range(left_count):
+            observation_index = order[left_start + offset]
+            runeberg_index = right_start + offset
+            _apply_contextual_replacement(
+                corrected,
+                observation_index,
+                runeberg_tokens[runeberg_index],
+                runeberg_normalized[runeberg_index],
+            )
     return corrected
 
 
