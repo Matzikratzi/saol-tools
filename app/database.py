@@ -26,6 +26,10 @@ CREATE TABLE IF NOT EXISTS words (
     word TEXT NOT NULL,
     sort_order INTEGER NOT NULL,
     suspicious INTEGER NOT NULL DEFAULT 0,
+    bbox_left INTEGER,
+    bbox_top INTEGER,
+    bbox_width INTEGER,
+    bbox_height INTEGER,
     FOREIGN KEY(page_number) REFERENCES pages(page_number) ON DELETE CASCADE
 );
 
@@ -33,11 +37,29 @@ CREATE UNIQUE INDEX IF NOT EXISTS words_page_order
 ON words(page_number, sort_order);
 """
 
+BBOX_COLUMNS = {
+    "bbox_left": "INTEGER",
+    "bbox_top": "INTEGER",
+    "bbox_width": "INTEGER",
+    "bbox_height": "INTEGER",
+}
+
+
+def _migrate_words_table(connection: sqlite3.Connection) -> None:
+    existing = {
+        row[1]
+        for row in connection.execute("PRAGMA table_info(words)").fetchall()
+    }
+    for column, column_type in BBOX_COLUMNS.items():
+        if column not in existing:
+            connection.execute(f"ALTER TABLE words ADD COLUMN {column} {column_type}")
+
 
 def init_db() -> None:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(DB_PATH) as connection:
         connection.executescript(SCHEMA)
+        _migrate_words_table(connection)
 
 
 @contextmanager
