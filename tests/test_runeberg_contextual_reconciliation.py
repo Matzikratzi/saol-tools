@@ -55,3 +55,24 @@ def test_contextual_repair_preserves_unrelated_readable_word_as_conflict():
     assert conflict.ocr_runeberg == "abnorm"
     assert conflict.ocr_tesseract == "abborre"
     assert conflict.ocr_conflict is True
+
+
+def test_contextual_repair_handles_equal_sized_multi_token_replacement_block():
+    observations = [
+        observation("ablativ", 100),
+        observation("—", 120),
+        observation("felord", 140),
+        observation("abolition", 160),
+    ]
+
+    corrected = reconcile_contextual_observations(
+        observations,
+        ["ablativ", "abnorm", "rättord", "abolition"],
+    )
+
+    assert corrected[1].text == "abnorm"
+    assert corrected[1].ocr_tesseract == "—"
+    assert corrected[1].ocr_runeberg == "abnorm"
+    assert corrected[1].ocr_conflict is True
+    assert corrected[2].text == "felord"
+    assert corrected[2].ocr_runeberg == ""
