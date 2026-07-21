@@ -29,13 +29,16 @@ def test_runeberg_repairs_isolated_unreadable_word_by_context():
     )
 
     assert [item.text for item in corrected] == ["ablativ", "abnorm", "abolition"]
+    assert corrected[1].ocr_tesseract == "—"
+    assert corrected[1].ocr_runeberg == "abnorm"
+    assert corrected[1].ocr_conflict is True
     assert corrected[1].left == observations[1].left
     assert corrected[1].top == observations[1].top
     assert corrected[1].width == observations[1].width
     assert corrected[1].height == observations[1].height
 
 
-def test_contextual_repair_does_not_replace_unrelated_readable_word():
+def test_contextual_repair_preserves_unrelated_readable_word_as_conflict():
     observations = [
         observation("ablativ", 100),
         observation("abborre", 120),
@@ -47,4 +50,8 @@ def test_contextual_repair_does_not_replace_unrelated_readable_word():
         ["ablativ", "abnorm", "abolition"],
     )
 
-    assert corrected[1].text == "abborre"
+    conflict = corrected[1]
+    assert conflict.text == "abnorm"
+    assert conflict.ocr_runeberg == "abnorm"
+    assert conflict.ocr_tesseract == "abborre"
+    assert conflict.ocr_conflict is True
