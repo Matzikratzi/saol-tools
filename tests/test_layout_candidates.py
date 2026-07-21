@@ -33,6 +33,19 @@ def test_separate_superscript_number_and_one_letter_headword_are_joined():
     assert all(candidate["word"] != "a-n" for candidate in candidates)
 
 
+def test_apostrophe_misread_of_superscript_one_is_metadata():
+    observations = [
+        obs("'a", 50, 100, width=15, density=0.08),
+        obs("a-n", 90, 100, width=30, density=0.30),
+        obs("abakus", 50, 135, width=58, density=0.30),
+    ]
+
+    candidates = observations_to_candidates(observations)
+
+    assert candidates[0]["word"] == "a"
+    assert candidates[0]["sense_number"] == 1
+
+
 def test_first_token_at_column_margin_gets_a_candidate_chance_even_when_thin():
     observations = [
         obs("a", 50, 100, width=10, density=0.03),
@@ -45,6 +58,23 @@ def test_first_token_at_column_margin_gets_a_candidate_chance_even_when_thin():
 
     assert [candidate["word"] for candidate in candidates][:2] == ["a", "abakus"]
     assert candidates[0]["suspicious"] is True
+
+
+def test_small_indent_marks_a_continuation_line():
+    observations = [
+        obs("'a", 50, 100, width=15, density=0.08),
+        obs("artikeltext", 80, 100, width=80),
+        obs("det", 60, 130, width=25, density=0.30),
+        obs("fortsätter", 95, 130, width=75),
+        obs("²a", 50, 165, width=18, density=0.08),
+    ]
+
+    candidates = observations_to_candidates(observations)
+
+    assert [(item["sense_number"], item["word"]) for item in candidates] == [
+        (1, "a"),
+        (2, "a"),
+    ]
 
 
 def test_indented_continuation_line_does_not_start_an_article():
