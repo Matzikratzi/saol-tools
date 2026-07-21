@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 STATIC = ROOT / "static"
 TRAINING_PAGES = range(19, 29)
 
-app = FastAPI(title="SAOL-tools", version="0.8.0")
+app = FastAPI(title="SAOL-tools", version="0.7.0")
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
@@ -82,11 +82,18 @@ def page_payload(connection, page_number: int):
 
 
 def dictionary_body_observations(observations):
-    if len(observations) < 3:
+    """Remove a genuine running header from a full OCR page.
+
+    Sparse inputs do not contain enough line-spacing evidence to distinguish a
+    running header from ordinary dictionary rows. In those cases every OCR box
+    is preserved. Real SAOL pages contain hundreds of observations, so requiring
+    a modest amount of evidence does not weaken header removal there.
+    """
+    if len(observations) < 12:
         return observations
     ordered = sorted(observations, key=lambda item: (item.top, item.left))
     tops = sorted({item.top for item in ordered})
-    if len(tops) < 3:
+    if len(tops) < 8:
         return observations
     min_top = tops[0]
     max_bottom = max(item.top + item.height for item in ordered)
@@ -117,12 +124,7 @@ def _median(values):
 
 
 def _split_printed_columns(observations):
-    """Split OCR observations at the widest central horizontal whitespace.
-
-    Dictionary pages are read as two independent columns. The split is based on
-    token centres, but only gaps in the middle 60 percent of the page are
-    considered so that short words at a page edge do not create a false column.
-    """
+    """Split OCR observations at the widest central horizontal whitespace."""
     if len(observations) < 4:
         return [sorted(observations, key=lambda item: (item.top, item.left))]
 
@@ -197,12 +199,7 @@ def _union_box(items):
 
 
 def _row_headword(row):
-    """Return the possible article start from the beginning of a printed row.
-
-    Tesseract often separates a raised homonym number from a one-letter
-    headword. In that case the first two boxes are joined logically, while the
-    number remains metadata and never becomes part of the exported word.
-    """
+    """Return the possible article start from the beginning of a printed row."""
     if not row:
         return None
     first = row[0]
@@ -242,12 +239,7 @@ def _column_margin(rows, median_height):
 
 
 def observations_to_candidates(observations):
-    """Find article starts in printed reading order: left column, then right.
-
-    Every non-indented printed row gets a headword chance regardless of ink
-    density. Boldness/model probability remains supporting evidence. This is
-    essential for tiny headwords such as raised ``¹`` followed by ``a``.
-    """
+    """Find article starts in printed reading order: left column, then right."""
     observations = dictionary_body_observations(observations)
     model = HeadwordModel.load()
     result = []
