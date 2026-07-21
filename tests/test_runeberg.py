@@ -1,5 +1,10 @@
 from app.classifier import WordObservation, train_model
-from app.runeberg import is_runeberg_instruction_line, page_urls
+from app.runeberg import (
+    _is_printed_page_number,
+    instruction_line_keys,
+    is_runeberg_instruction_line,
+    page_urls,
+)
 
 
 def observation(ink: float, line_left: float, height: float) -> WordObservation:
@@ -31,9 +36,31 @@ def test_runeberg_instruction_line_is_removed_as_a_phrase():
     )
 
 
+def test_split_runeberg_overlay_is_removed_as_one_window():
+    lines = [
+        (("1", "1", "1", "1"), 10, "Här nedan syns"),
+        (("1", "1", "1", "2"), 25, "misstolkade texten"),
+        (("1", "1", "1", "3"), 40, "från faksimilbilden ovan"),
+        (("1", "1", "1", "4"), 100, "abakus -en"),
+    ]
+    excluded = instruction_line_keys(lines)
+    assert excluded == {
+        ("1", "1", "1", "1"),
+        ("1", "1", "1", "2"),
+        ("1", "1", "1", "3"),
+    }
+
+
 def test_single_real_headword_is_not_removed():
     assert not is_runeberg_instruction_line("från")
     assert not is_runeberg_instruction_line("här")
+
+
+def test_page_number_is_removed_only_near_page_edge():
+    assert _is_printed_page_number("19", 5, 12, 1000)
+    assert _is_printed_page_number("20.", 930, 12, 1000)
+    assert not _is_printed_page_number("19", 400, 12, 1000)
+    assert not _is_printed_page_number("nitton", 5, 12, 1000)
 
 
 def test_model_learns_dark_left_aligned_words():
