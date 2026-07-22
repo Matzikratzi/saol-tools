@@ -376,7 +376,7 @@ def _source() -> str:
         "            # En mycket h\u00f6g, felaktigt sammanslagen OCR-ruta kan sk\u00e4ra flera\n"
         "            # tryckta rader. Den f\u00e5r inte hindra att de verkliga raderna \u00e5terskapas.\n"
         "            if any(\n"
-        "                line.height <= median_height * 1.60\n"
+        "                line.bottom - line.top <= median_height * 1.60\n"
         "                and abs((line.top + line.bottom) / 2 - band_center) <= median_height * 0.38\n"
         "                for line in existing\n"
         "            ):\n"
