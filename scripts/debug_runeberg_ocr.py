@@ -5,9 +5,8 @@ from __future__ import annotations
 The implementation is materialised from the preceding rebuilt commit and then
 patched so dictionary text starts immediately below the rule. The midpoint of
 the detected rule is used as the boundary between the columns. For this
-experiment, the left column's A guide is placed just to the left of the
-leftmost printed OCR character. F is the next typical x position for printed
-line starts; H remains hidden there until A and F are settled.
+experiment, the left column shows its three leftmost recurring line-start
+levels without assigning A/F/H meanings to them yet.
 """
 
 import subprocess
@@ -40,6 +39,7 @@ def _source() -> str:
         "_BODY_TOP_Y: float | None = None\n"
         "_COLUMN_SPLIT_X: float | None = None\n"
         "_LEFT_A_X: float | None = None\n"
+        "_LEFT_LEVELS: list[float] = []\n"
     )
     if old_globals not in source:
         raise RuntimeError("Kunde inte lägga till geometrins globala positioner")
@@ -123,7 +123,7 @@ def _source() -> str:
         "    models = {}\n"
     )
     new_result_start = (
-        "    global _LEFT_A_X\n"
+        "    global _LEFT_A_X, _LEFT_LEVELS\n"
         "    # Experimental A: two pixels immediately left of the leftmost OCR\n"
         "    # character in the left column. No clustering and no F/H influence.\n"
         "    _LEFT_A_X = (\n"
@@ -131,6 +131,7 @@ def _source() -> str:
         "        if raw[1]\n"
         "        else None\n"
         "    )\n"
+        "    _LEFT_LEVELS = []\n"
         "\n"
         "    result = []\n"
         "    models = {}\n"
@@ -145,28 +146,27 @@ def _source() -> str:
     )
     new_positions = (
         "        article_x, continuation_x = _split_two_positions(lexical_x, median_height)\n"
-        "        if column == 1 and _LEFT_A_X is not None:\n"
-        "            article_x = _LEFT_A_X\n"
-        "            # The first recurring position to the right of the guide is\n"
-        "            # the printed A start itself (and can also contain H digits).\n"
-        "            # Skip it and the first following level, then test whether\n"
-        "            # one more recurring position appears farther right as F.\n"
+        "        if column == 1:\n"
+        "            # Measure raw row starts so separate homonym digits remain\n"
+        "            # visible as a possible level. Keep the three leftmost\n"
+        "            # recurring clusters neutral until several pages agree.\n"
+        "            raw_starts = [\n"
+        "                float(line.raw_start_x) for line, _x, _word, _marker, text in prepared\n"
+        "                if LETTER_RE.search(text)\n"
+        "            ]\n"
         "            tolerance = max(2.5, median_height * 0.20)\n"
         "            clusters = []\n"
-        "            for value in sorted(lexical_x):\n"
+        "            for value in sorted(raw_starts):\n"
         "                if clusters and value - clusters[-1][-1] <= tolerance:\n"
         "                    clusters[-1].append(value)\n"
         "                else:\n"
         "                    clusters.append([value])\n"
-        "            minimum_count = max(2, round(len(lexical_x) * 0.04))\n"
-        "            minimum_offset = max(4.0, median_height * 0.35)\n"
-        "            typical_right = [\n"
-        "                cluster for cluster in clusters\n"
+        "            minimum_count = max(2, round(len(raw_starts) * 0.04))\n"
+        "            recurring = [\n"
+        "                float(statistics.median(cluster)) for cluster in clusters\n"
         "                if len(cluster) >= minimum_count\n"
-        "                and statistics.median(cluster) > article_x + minimum_offset\n"
         "            ]\n"
-        "            if len(typical_right) >= 3:\n"
-        "                continuation_x = float(statistics.median(typical_right[2]))\n"
+        "            _LEFT_LEVELS = recurring[:3]\n"
         "        boundary_x = (article_x + continuation_x) / 2\n"
     )
     if old_positions not in source:
@@ -181,6 +181,15 @@ def _source() -> str:
         "        '<div class=\"x-guide x-guide-column-split\" data-x=\"%.3f\" ' \n"
         "        'style=\"--guide-color:#2563eb\"></div>' % split_x\n"
         "    ]\n"
+        "    level_colors = ('#7c3aed', '#16a34a', '#ea580c')\n"
+        "    for index, position in enumerate(_LEFT_LEVELS, start=1):\n"
+        "        x = max(0.0, min(float(image_width), float(position)))\n"
+        "        delta = '' if index == 1 else ' · Δ=%.1f' % (position - _LEFT_LEVELS[index - 2])\n"
+        "        result.append(\n"
+        "            '<div class=\"x-guide x-guide-level\" data-x=\"%.3f\" ' \n"
+        "            'style=\"--guide-color:%s\"><span class=\"x-guide-label\">N%d · x=%.1f%s</span></div>'\n"
+        "            % (x, level_colors[index - 1], index, x, delta)\n"
+        "        )\n"
     )
     if old_guides not in source:
         raise RuntimeError("Kunde inte lägga till kolumngränsen i HTML-rapporten")
@@ -192,19 +201,23 @@ def _source() -> str:
     )
     new_guide_loop = (
         "        for kind, color in definitions:\n"
-        "            # Keep H hidden in the left column while A and F are tuned.\n"
-        "            if column == 1 and kind == \"homonym\":\n"
+        "            # The left column uses neutral N1/N2/N3 measurement guides.\n"
+        "            if column == 1:\n"
         "                continue\n"
         "            position = positions[kind]\n"
     )
     if old_guide_loop not in source:
-        raise RuntimeError("Kunde inte dölja H i vänsterspalten")
+        raise RuntimeError("Kunde inte ersätta vänsterspaltens semantiska hjälplinjer")
     source = source.replace(old_guide_loop, new_guide_loop, 1)
 
     old_css = ".x-guide-continuation { border-left-style:dashed; }\n.marker { z-index:40; }"
     new_css = (
         ".x-guide-continuation { border-left-style:dashed; }\n"
         ".x-guide-column-split { border-left-width:4px; border-left-style:solid; opacity:1; }\n"
+        ".x-guide-level { border-left-width:2px; }\n"
+        ".x-guide-label { position:absolute; top:8px; left:4px; padding:2px 4px; "
+        "border-radius:3px; background:var(--guide-color); color:white; "
+        "font:700 11px/1.1 system-ui,sans-serif; white-space:nowrap; }\n"
         ".x-guide-article { border-left-width:2px; }\n"
         ".marker { z-index:40; }"
     )
