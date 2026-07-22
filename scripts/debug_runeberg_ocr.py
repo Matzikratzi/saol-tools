@@ -556,6 +556,12 @@ def _source() -> str:
         raise RuntimeError("Kunde inte aktivera webbläget")
     source = source.replace(old_main_start, new_main_start, 1)
 
+    old_marker_padding = "const padX=Math.max(12,h*.35),padY=Math.max(9,h*.22);"
+    new_marker_padding = "const padX=12,padY=9;"
+    if old_marker_padding not in source:
+        raise RuntimeError("Kunde inte ta bort höjdberoende rektangelmarginal")
+    source = source.replace(old_marker_padding, new_marker_padding, 1)
+
     old_console_summary = "    module.main()\n"
     new_console_summary = (
         "    module.main()\n"
