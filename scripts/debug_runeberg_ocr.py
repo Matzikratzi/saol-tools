@@ -75,6 +75,22 @@ def _source() -> str:
         raise RuntimeError("Kunde inte mäta streckets vänster- och högerände")
     source = source.replace(old_peak, new_peak, 1)
 
+    old_rotation = (
+        "        deskewed = image.rotate(\n"
+        "            -angle,\n"
+        "            resample=Image.Resampling.BICUBIC,\n"
+    )
+    new_rotation = (
+        "        # Image y increases downwards, so a rule descending to the right\n"
+        "        # must be rotated by the measured positive angle to become level.\n"
+        "        deskewed = image.rotate(\n"
+        "            angle,\n"
+        "            resample=Image.Resampling.BICUBIC,\n"
+    )
+    if old_rotation not in source:
+        raise RuntimeError("Kunde inte rätta rotationsriktningen för deskew")
+    source = source.replace(old_rotation, new_rotation, 1)
+
     old_body = (
         "    body_top = _BODY_TOP_Y if _BODY_TOP_Y is not None else image_height * 0.03\n"
         "    body_top += max(1.0, median_height * 0.10)\n"
