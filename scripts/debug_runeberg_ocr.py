@@ -5,8 +5,9 @@ from __future__ import annotations
 The implementation is materialised from the preceding rebuilt commit and then
 patched so dictionary text starts immediately below the rule. The midpoint of
 the detected rule is used as the boundary between the columns. For this
-experiment, the left column shows its three leftmost recurring line-start
-levels without assigning A/F/H meanings to them yet.
+experiment, the left column first shows a guide just before its leftmost OCR
+character and then its two leftmost recurring line-start levels, without
+assigning A/F/H meanings to them yet.
 """
 
 import subprocess
@@ -147,9 +148,9 @@ def _source() -> str:
     new_positions = (
         "        article_x, continuation_x = _split_two_positions(lexical_x, median_height)\n"
         "        if column == 1:\n"
-        "            # Measure raw row starts so separate homonym digits remain\n"
-        "            # visible as a possible level. Keep the three leftmost\n"
-        "            # recurring clusters neutral until several pages agree.\n"
+        "            # N1 is the guide just before the leftmost OCR character.\n"
+        "            # Measure raw row starts after it so separate homonym digits\n"
+        "            # remain visible, and keep the next two clusters neutral.\n"
         "            raw_starts = [\n"
         "                float(line.raw_start_x) for line, _x, _word, _marker, text in prepared\n"
         "                if LETTER_RE.search(text)\n"
@@ -166,7 +167,7 @@ def _source() -> str:
         "                float(statistics.median(cluster)) for cluster in clusters\n"
         "                if len(cluster) >= minimum_count\n"
         "            ]\n"
-        "            _LEFT_LEVELS = recurring[:3]\n"
+        "            _LEFT_LEVELS = ([_LEFT_A_X] if _LEFT_A_X is not None else []) + recurring[:2]\n"
         "        boundary_x = (article_x + continuation_x) / 2\n"
     )
     if old_positions not in source:
