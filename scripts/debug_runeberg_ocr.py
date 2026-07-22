@@ -87,24 +87,61 @@ def _source() -> str:
         raise RuntimeError("Kunde inte förbereda mätning av streckets mittpunkt")
     source = source.replace(old_header_start, new_header_start, 1)
 
-    old_peak = (
+    old_row_detection = (
+        "        row_scores: list[tuple[int, int, int]] = []\n"
+        "        for y in range(y0, y1):\n"
+        "            dark_x = [x for x in range(x0, x1) if pixels[x, y] < 160]\n"
+        "            if not dark_x:\n"
+        "                continue\n"
+        "            span = dark_x[-1] - dark_x[0]\n"
+        "            row_scores.append((span, len(dark_x), y))\n"
+        "        if not row_scores:\n"
+        "            return None\n"
+        "\n"
         "        span, dark_count, peak_y = max(row_scores)\n"
         "        if span < width * 0.60 or dark_count < width * 0.16:\n"
         "            return None\n"
     )
-    new_peak = (
-        "        span, dark_count, peak_y = max(row_scores)\n"
+    new_row_detection = (
+        "        # Score contiguous dark horizontal runs, not merely the distance\n"
+        "        # between a row's leftmost and rightmost dark text pixels.\n"
+        "        row_scores: list[tuple[int, int, int, int, int]] = []\n"
+        "        for y in range(y0, y1):\n"
+        "            dark_x = [x for x in range(x0, x1) if pixels[x, y] < 160]\n"
+        "            if not dark_x:\n"
+        "                continue\n"
+        "            runs = []\n"
+        "            run = [dark_x[0]]\n"
+        "            for x in dark_x[1:]:\n"
+        "                if x - run[-1] <= 3:\n"
+        "                    run.append(x)\n"
+        "                else:\n"
+        "                    runs.append(run)\n"
+        "                    run = [x]\n"
+        "            runs.append(run)\n"
+        "            longest = max(runs, key=lambda values: (values[-1] - values[0], len(values)))\n"
+        "            run_span = longest[-1] - longest[0]\n"
+        "            row_scores.append((run_span, len(longest), -y, longest[0], longest[-1]))\n"
+        "        if not row_scores:\n"
+        "            return None\n"
+        "\n"
+        "        span, dark_count, negative_y, rule_x0, rule_x1 = max(row_scores)\n"
+        "        peak_y = -negative_y\n"
         "        if span < width * 0.60 or dark_count < width * 0.16:\n"
         "            return None\n"
         "\n"
-        "        # Use the detected rule's actual endpoints, not the image edges.\n"
-        "        peak_dark_x = [x for x in range(x0, x1) if pixels[x, peak_y] < 160]\n"
-        "        if peak_dark_x:\n"
-        "            _COLUMN_SPLIT_X = (peak_dark_x[0] + peak_dark_x[-1]) / 2\n"
+        "        # Use the contiguous rule's endpoints, not unrelated dark text.\n"
+        "        _COLUMN_SPLIT_X = (rule_x0 + rule_x1) / 2\n"
     )
-    if old_peak not in source:
-        raise RuntimeError("Kunde inte mäta streckets vänster- och högerände")
-    source = source.replace(old_peak, new_peak, 1)
+    if old_row_detection not in source:
+        raise RuntimeError("Kunde inte ersätta textspann med sammanhängande linjedetektering")
+    source = source.replace(old_row_detection, new_row_detection, 1)
+
+    old_point_loop = "        for x in range(x0, x1, step):\n"
+    new_point_loop = "        for x in range(rule_x0, rule_x1 + 1, step):\n"
+    if old_point_loop not in source:
+        raise RuntimeError("Kunde inte begränsa vinkelmätningen till själva strecket")
+    source = source.replace(old_point_loop, new_point_loop, 1)
 
     old_point_pick = (
         "            if ys:\n"
