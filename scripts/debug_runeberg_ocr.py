@@ -93,6 +93,74 @@ def _source() -> str:
         raise RuntimeError("Kunde inte isolera sidhuvudsstrecket från närliggande text")
     source = source.replace(old_point_pick, new_point_pick, 1)
 
+    rule_deskew_marker = "def _rule_deskew(module, content: bytes, observations: list) -> tuple[bytes, float]:\n"
+    horizontal_y_helper = '''def _horizontal_rule_y(content: bytes) -> float | None:
+    """Find the physical horizontal rule after deskewing, without changing angle."""
+    with Image.open(io.BytesIO(content)) as source:
+        gray = source.convert("L")
+        width, height = gray.size
+        pixels = gray.load()
+        x0 = max(0, round(width * 0.04))
+        x1 = min(width, round(width * 0.96))
+        y0 = max(0, round(height * 0.025))
+        y1 = min(height, round(height * 0.24))
+        candidates = []
+        for y in range(y0, y1):
+            dark_x = [x for x in range(x0, x1) if pixels[x, y] < 160]
+            if not dark_x:
+                continue
+            run_start = dark_x[0]
+            previous = dark_x[0]
+            best_span = 0
+            for x in dark_x[1:]:
+                if x - previous > 3:
+                    best_span = max(best_span, previous - run_start)
+                    run_start = x
+                previous = x
+            best_span = max(best_span, previous - run_start)
+            candidates.append((best_span, -y))
+        if not candidates:
+            return None
+        span, negative_y = max(candidates)
+        if span < width * 0.35:
+            return None
+        return float(-negative_y)
+
+
+'''
+    if rule_deskew_marker not in source:
+        raise RuntimeError("Kunde inte lägga till separat y-mätning efter upprätning")
+    source = source.replace(rule_deskew_marker, horizontal_y_helper + rule_deskew_marker, 1)
+
+    old_unrotated_y = (
+        "    if abs(angle) < 0.03:\n"
+        "        _BODY_TOP_Y = rule_y\n"
+        "        return content, 0.0\n"
+    )
+    new_unrotated_y = (
+        "    if abs(angle) < 0.03:\n"
+        "        horizontal_y = _horizontal_rule_y(content)\n"
+        "        _BODY_TOP_Y = horizontal_y if horizontal_y is not None else rule_y\n"
+        "        return content, 0.0\n"
+    )
+    if old_unrotated_y not in source:
+        raise RuntimeError("Kunde inte mäta startlinjen på en redan vågrät bild")
+    source = source.replace(old_unrotated_y, new_unrotated_y, 1)
+
+    old_after_y = (
+        "    after = _header_rule(result)\n"
+        "    _BODY_TOP_Y = after[1] if after is not None else rule_y\n"
+        "    return result, angle\n"
+    )
+    new_after_y = (
+        "    horizontal_y = _horizontal_rule_y(result)\n"
+        "    _BODY_TOP_Y = horizontal_y if horizontal_y is not None else rule_y\n"
+        "    return result, angle\n"
+    )
+    if old_after_y not in source:
+        raise RuntimeError("Kunde inte mäta startlinjen efter upprätning")
+    source = source.replace(old_after_y, new_after_y, 1)
+
     # Keep Pillow's original sign convention from the rebuilt implementation.
     # Changing -angle to +angle doubles the skew instead of removing it.
 
