@@ -176,16 +176,30 @@ def _source() -> str:
     # Keep Pillow's original sign convention from the rebuilt implementation.
     # Changing -angle to +angle doubles the skew instead of removing it.
 
+    old_unrotated_boundary = (
+        "    if abs(angle) < 0.03:\n"
+        "        _BODY_TOP_Y = rule_y\n"
+        "        return content, 0.0\n"
+    )
+    new_unrotated_boundary = (
+        "    if abs(angle) < 0.03:\n"
+        "        _BODY_TOP_Y = rule_y + 3.0\n"
+        "        return content, 0.0\n"
+    )
+    if old_unrotated_boundary not in source:
+        raise RuntimeError("Kunde inte lägga artikelstarten under ett oroterat streck")
+    source = source.replace(old_unrotated_boundary, new_unrotated_boundary, 1)
+
     old_redetection = (
         "    after = _header_rule(result)\n"
         "    _BODY_TOP_Y = after[1] if after is not None else rule_y\n"
         "    return result, angle\n"
     )
     new_redetection = (
-        "    # Keep the exact rule selected for deskewing as the body boundary.\n"
+        "    # Start the body three pixels below the exact deskew rule.\n"
         "    # A second detection pass can mistake a lower horizontal structure\n"
         "    # for the header rule and move the article start too far down.\n"
-        "    _BODY_TOP_Y = rule_y\n"
+        "    _BODY_TOP_Y = rule_y + 3.0\n"
         "    return result, angle\n"
     )
     if old_redetection not in source:
