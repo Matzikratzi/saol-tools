@@ -25,34 +25,30 @@ def _load_base_module():
 
 
 def _prefix_geometry(module, line, median_height: float):
-    """Return (word_x, word_object, stripped_text, geometric_candidate).
-
-    Candidate classification is deliberately geometry-first. OCR does not need
-    to have recognised the raised glyph as a digit.
-    """
+    """Return (word_x, word_object, stripped_text, geometric_candidate)."""
     items = line.items
     first = items[0]
     token = first.text.strip()
 
-    # Separate raised glyph followed by the actual headword.
+    # Separate, small and raised glyph before the real word. OCR does not need
+    # to have recognised the glyph as a digit.
     if len(items) >= 2:
         second = items[1]
         second_text = second.text.strip()
         if module.WORD_RE.match(second_text):
             gap = second.left - (first.left + first.width)
-            small = first.height <= max(median_height * 0.88, second.height * 0.86)
+            small = first.height <= max(median_height * 0.92, second.height * 0.90)
             raised = (
                 first.top < second.top
-                or first.top + first.height <= second.top + second.height * 0.82
+                or first.top + first.height <= second.top + second.height * 0.86
             )
-            narrow = first.width <= max(second.height * 0.90, median_height * 0.85)
-            close = -3.0 <= gap <= max(12.0, second.height * 0.95)
-            isolated = len(token) <= 2
+            narrow = first.width <= max(second.height, median_height * 0.95)
+            close = -3.0 <= gap <= max(14.0, second.height * 1.10)
+            isolated = 0 < len(token) <= 2
             if small and raised and narrow and close and isolated:
                 return float(second.left), second, second_text, True
 
-    # OCR may have joined index and word. This remains a weaker candidate;
-    # the first-pass A position must confirm it later.
+    # Joined OCR, for example "oa" instead of superscript 2 + "a".
     if len(token) >= 2 and token[0] in AMBIGUOUS_PREFIXES:
         rest = token[1:]
         if module.WORD_RE.match(rest):
@@ -62,13 +58,70 @@ def _prefix_geometry(module, line, median_height: float):
     return float(line.letter_start_x), line.first, line.first.text.strip(), False
 
 
-def _anchored_median(values: list[float], anchor: float, radius: float) -> float:
-    nearby = [value for value in values if abs(value - anchor) <= radius]
-    return statistics.median(nearby) if nearby else anchor
+def _remove_outliers(values: list[float], median_height: float) -> list[float]:
+    """Remove rare extreme x positions with a robust MAD filter."""
+    if len(values) < 6:
+        return values[:]
+
+    centre = statistics.median(values)
+    deviations = [abs(value - centre) for value in values]
+    mad = statistics.median(deviations)
+
+    if mad <= 0:
+        # Repeated x positions are normal here. Keep a generous physical band.
+        radius = max(10.0, median_height * 4.0)
+    else:
+        radius = max(median_height * 1.5, 4.5 * 1.4826 * mad)
+
+    filtered = [value for value in values if abs(value - centre) <= radius]
+    return filtered if len(filtered) >= 4 else values[:]
+
+
+def _largest_gap_centres(
+    values: list[float],
+    median_height: float,
+    fallback_a: float,
+    fallback_f: float,
+) -> tuple[float, float]:
+    """Split A/F at the largest credible gap after robust outlier removal."""
+    clean = sorted(_remove_outliers(values, median_height))
+    if len(clean) < 4:
+        return fallback_a, fallback_f
+
+    # Each side must contain a meaningful number of rows. A is often the
+    # smaller cluster, so do not require balanced groups.
+    minimum_side = max(2, round(len(clean) * 0.06))
+    candidates: list[tuple[float, int]] = []
+    for index in range(minimum_side - 1, len(clean) - minimum_side):
+        gap = clean[index + 1] - clean[index]
+        if gap >= max(2.5, median_height * 0.22):
+            candidates.append((gap, index))
+
+    if not candidates:
+        return fallback_a, fallback_f
+
+    _gap, split_index = max(candidates, key=lambda item: item[0])
+    left = clean[: split_index + 1]
+    right = clean[split_index + 1 :]
+    article_x = float(statistics.median(left))
+    continuation_x = float(statistics.median(right))
+
+    if continuation_x - article_x < max(3.0, median_height * 0.35):
+        return fallback_a, fallback_f
+    return article_x, continuation_x
+
+
+def _filter_h_positions(values: list[float], median_height: float) -> list[float]:
+    """H samples are few; reject only obviously isolated positions."""
+    if len(values) <= 2:
+        return values
+    centre = statistics.median(values)
+    radius = max(4.0, median_height * 0.8)
+    nearby = [value for value in values if abs(value - centre) <= radius]
+    return nearby if nearby else values
 
 
 def _geometry_build_lines(module, original_build_lines, observations, image_width, image_height):
-    # Pass 1: retain the base implementation's A/F estimate as stable anchors.
     original_lines, preliminary_models = original_build_lines(
         observations, image_width, image_height
     )
@@ -90,28 +143,40 @@ def _geometry_build_lines(module, original_build_lines, observations, image_widt
             continue
 
         preliminary = preliminary_models[column]
-        preliminary_a = float(preliminary.article_x)
-        preliminary_f = float(preliminary.continuation_x)
-        separation = max(median_height * 0.7, preliminary_f - preliminary_a)
-        article_radius = max(median_height * 1.15, separation * 0.48)
-        continuation_radius = max(median_height * 1.30, separation * 0.55)
-        minimum_prefix_gap = max(2.0, median_height * 0.12)
-        maximum_prefix_gap = max(median_height * 1.35, separation * 0.75)
-
+        fallback_a = float(preliminary.article_x)
+        fallback_f = float(preliminary.continuation_x)
         geometry = [_prefix_geometry(module, line, median_height) for line in column_lines]
+
+        # First determine A/F. For possible H rows, use the corrected word start,
+        # never the raw position of the raised prefix.
+        lexical_x = [
+            word_x
+            for word_x, _word, stripped, _candidate in geometry
+            if module.WORD_RE.search(stripped)
+        ]
+        article_x, continuation_x = _largest_gap_centres(
+            lexical_x, median_height, fallback_a, fallback_f
+        )
+        boundary_x = (article_x + continuation_x) / 2
+
+        # Only now classify H. Therefore rare H rows cannot move A or F.
+        minimum_prefix_gap = max(1.5, median_height * 0.10)
+        maximum_prefix_gap = max(
+            median_height * 1.8,
+            (continuation_x - article_x) * 0.85,
+        )
+        article_tolerance = max(
+            median_height * 0.9,
+            (continuation_x - article_x) * 0.30,
+        )
         prepared = []
-        article_samples: list[float] = []
-        continuation_samples: list[float] = []
         accepted_prefix_x: list[float] = []
 
-        # Pass 2a: identify raised-prefix rows relative to preliminary A,
-        # and collect only samples close to the first-pass anchors.
         for line, (word_x, word_object, stripped, candidate) in zip(column_lines, geometry):
-            raw_gap = word_x - line.raw_start_x
-            near_article = abs(word_x - preliminary_a) <= article_radius
+            raw_gap = word_x - float(line.raw_start_x)
             geometric_homonym = (
                 candidate
-                and near_article
+                and abs(word_x - article_x) <= article_tolerance
                 and minimum_prefix_gap <= raw_gap <= maximum_prefix_gap
             )
 
@@ -124,27 +189,10 @@ def _geometry_build_lines(module, original_build_lines, observations, image_widt
                 )
                 accepted_prefix_x.append(float(line.raw_start_x))
 
-            lexical = bool(module.WORD_RE.search(headword_object.text))
-            if lexical:
-                if abs(word_x - preliminary_a) <= article_radius:
-                    article_samples.append(word_x)
-                elif abs(word_x - preliminary_f) <= continuation_radius:
-                    continuation_samples.append(word_x)
-
             prepared.append((line, word_x, headword_object, geometric_homonym))
 
-        # Pass 2b: refine around the anchors. Outliers cannot move either line.
-        article_x = _anchored_median(article_samples, preliminary_a, article_radius)
-        continuation_x = _anchored_median(
-            continuation_samples, preliminary_f, continuation_radius
-        )
-        if continuation_x <= article_x + max(3.0, median_height * 0.35):
-            continuation_x = preliminary_f
-        boundary_x = (article_x + continuation_x) / 2
-
-        # H is unusual: require at least one strong geometric candidate, but do
-        # not require OCR to call the raised glyph a digit.
-        homonym_x = statistics.median(accepted_prefix_x) if accepted_prefix_x else None
+        h_samples = _filter_h_positions(accepted_prefix_x, median_height)
+        homonym_x = float(statistics.median(h_samples)) if h_samples else None
         models[column] = module.ColumnXModel(
             homonym_x,
             article_x,
@@ -188,7 +236,6 @@ def _geometry_build_lines(module, original_build_lines, observations, image_widt
 
 
 def _geometry_group_articles(module, lines, threshold: float):
-    """Group articles from the final A/F classification."""
     articles = []
     for column in (1, 2):
         current = []
