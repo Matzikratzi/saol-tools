@@ -7,7 +7,8 @@ patched so dictionary text starts immediately below the rule. The midpoint of
 the detected rule is used as the boundary between the columns. For this
 experiment, the left column first shows a guide just before its leftmost OCR
 character and then its two leftmost recurring line-start levels, without
-assigning A/F/H meanings to them yet.
+assigning A/F/H meanings to them yet. Their midpoint T is used as the article
+start threshold in the left column.
 """
 
 import subprocess
@@ -41,6 +42,7 @@ def _source() -> str:
         "_COLUMN_SPLIT_X: float | None = None\n"
         "_LEFT_A_X: float | None = None\n"
         "_LEFT_LEVELS: list[float] = []\n"
+        "_LEFT_THRESHOLD_X: float | None = None\n"
     )
     if old_globals not in source:
         raise RuntimeError("Kunde inte lägga till geometrins globala positioner")
@@ -124,7 +126,7 @@ def _source() -> str:
         "    models = {}\n"
     )
     new_result_start = (
-        "    global _LEFT_A_X, _LEFT_LEVELS\n"
+        "    global _LEFT_A_X, _LEFT_LEVELS, _LEFT_THRESHOLD_X\n"
         "    # Experimental A: two pixels immediately left of the leftmost OCR\n"
         "    # character in the left column. No clustering and no F/H influence.\n"
         "    _LEFT_A_X = (\n"
@@ -133,6 +135,7 @@ def _source() -> str:
         "        else None\n"
         "    )\n"
         "    _LEFT_LEVELS = []\n"
+        "    _LEFT_THRESHOLD_X = None\n"
         "\n"
         "    result = []\n"
         "    models = {}\n"
@@ -168,11 +171,33 @@ def _source() -> str:
         "                if len(cluster) >= minimum_count\n"
         "            ]\n"
         "            _LEFT_LEVELS = ([_LEFT_A_X] if _LEFT_A_X is not None else []) + recurring[:2]\n"
+        "            if len(recurring) >= 2:\n"
+        "                article_x = recurring[0]\n"
+        "                continuation_x = recurring[1]\n"
+        "                _LEFT_THRESHOLD_X = (article_x + continuation_x) / 2\n"
         "        boundary_x = (article_x + continuation_x) / 2\n"
     )
     if old_positions not in source:
         raise RuntimeError("Kunde inte använda vänstraste tecknet som A-position")
     source = source.replace(old_positions, new_positions, 1)
+
+    old_article_decision = (
+        "            is_article = bool(LETTER_RE.search(word_text)) and (\n"
+        "                clearly_at_article or (ambiguous_left and bold_score >= 0.45)\n"
+        "            )\n"
+    )
+    new_article_decision = (
+        "            if column == 1 and _LEFT_THRESHOLD_X is not None:\n"
+        "                # In the left column T is the sole article threshold.\n"
+        "                is_article = bool(LETTER_RE.search(word_text)) and line.raw_start_x < _LEFT_THRESHOLD_X\n"
+        "            else:\n"
+        "                is_article = bool(LETTER_RE.search(word_text)) and (\n"
+        "                    clearly_at_article or (ambiguous_left and bold_score >= 0.45)\n"
+        "                )\n"
+    )
+    if old_article_decision not in source:
+        raise RuntimeError("Kunde inte använda T som artikeltröskel")
+    source = source.replace(old_article_decision, new_article_decision, 1)
 
     old_guides = "def _guides_html(x_models: dict, image_width: int) -> str:\n    result: list[str] = []\n"
     new_guides = (
@@ -190,6 +215,13 @@ def _source() -> str:
         "            '<div class=\"x-guide x-guide-level\" data-x=\"%.3f\" ' \n"
         "            'style=\"--guide-color:%s\"><span class=\"x-guide-label\">N%d · x=%.1f%s</span></div>'\n"
         "            % (x, level_colors[index - 1], index, x, delta)\n"
+        "        )\n"
+        "    if _LEFT_THRESHOLD_X is not None:\n"
+        "        x = max(0.0, min(float(image_width), float(_LEFT_THRESHOLD_X)))\n"
+        "        result.append(\n"
+        "            '<div class=\"x-guide x-guide-threshold\" data-x=\"%.3f\" ' \n"
+        "            'style=\"--guide-color:#dc2626\"><span class=\"x-guide-label\">T · x=%.1f</span></div>'\n"
+        "            % (x, x)\n"
         "        )\n"
     )
     if old_guides not in source:
@@ -216,6 +248,7 @@ def _source() -> str:
         ".x-guide-continuation { border-left-style:dashed; }\n"
         ".x-guide-column-split { border-left-width:4px; border-left-style:solid; opacity:1; }\n"
         ".x-guide-level { border-left-width:2px; }\n"
+        ".x-guide-threshold { border-left-width:2px; border-left-style:dashed; }\n"
         ".x-guide-label { position:absolute; top:8px; left:4px; padding:2px 4px; "
         "border-radius:3px; background:var(--guide-color); color:white; "
         "font:700 11px/1.1 system-ui,sans-serif; white-space:nowrap; }\n"
