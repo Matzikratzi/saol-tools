@@ -294,7 +294,9 @@ def _source() -> str:
     )
     new_article_decision = (
         "            if column == 1 and _LEFT_THRESHOLD_X is not None:\n"
-        "                is_article = bool(LETTER_RE.search(word_text)) and line.raw_start_x < _LEFT_THRESHOLD_X\n"
+        "                # Classify by the first normal letter, not raw OCR debris\n"
+        "                # or a separate homonym digit to its left.\n"
+        "                is_article = bool(LETTER_RE.search(word_text)) and word_x < _LEFT_THRESHOLD_X\n"
         "            else:\n"
         "                is_article = bool(LETTER_RE.search(word_text)) and (\n"
         "                    clearly_at_article or (ambiguous_left and bold_score >= 0.45)\n"
