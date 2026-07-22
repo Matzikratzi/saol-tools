@@ -100,6 +100,22 @@ def _source() -> str:
     # Keep Pillow's original sign convention from the rebuilt implementation.
     # Changing -angle to +angle doubles the skew instead of removing it.
 
+    old_redetection = (
+        "    after = _header_rule(result)\n"
+        "    _BODY_TOP_Y = after[1] if after is not None else rule_y\n"
+        "    return result, angle\n"
+    )
+    new_redetection = (
+        "    # Keep the exact rule selected for deskewing as the body boundary.\n"
+        "    # A second detection pass can mistake a lower horizontal structure\n"
+        "    # for the header rule and move the article start too far down.\n"
+        "    _BODY_TOP_Y = rule_y\n"
+        "    return result, angle\n"
+    )
+    if old_redetection not in source:
+        raise RuntimeError("Kunde inte låsa artikelstarten till upprätningslinjen")
+    source = source.replace(old_redetection, new_redetection, 1)
+
     old_body = (
         "    body_top = _BODY_TOP_Y if _BODY_TOP_Y is not None else image_height * 0.03\n"
         "    body_top += max(1.0, median_height * 0.10)\n"
