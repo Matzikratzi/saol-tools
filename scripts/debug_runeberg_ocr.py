@@ -39,6 +39,7 @@ def _source() -> str:
         "_BODY_TOP_Y: float | None = None\n"
         "_COLUMN_SPLIT_X: float | None = None\n"
         "_LEFT_A_X: float | None = None\n"
+        "_LEFT_LEVELS: list[float] = []\n"
     )
     if old_globals not in source:
         raise RuntimeError("Kunde inte lägga till geometrins globala positioner")
@@ -190,7 +191,7 @@ def _source() -> str:
         "    models = {}\n"
     )
     new_result_start = (
-        "    global _LEFT_A_X\n"
+        "    global _LEFT_A_X, _LEFT_LEVELS\n"
         "    # Experimental A: two pixels immediately left of the leftmost OCR\n"
         "    # character in the left column. No clustering and no F/H influence.\n"
         "    _LEFT_A_X = (\n"
@@ -198,6 +199,20 @@ def _source() -> str:
         "        if raw[1]\n"
         "        else None\n"
         "    )\n"
+        "    raw_starts = sorted(float(line.raw_start_x) for line, _x, _word, _marker, _text in raw[1])\n"
+        "    tolerance = max(2.5, median_height * 0.20)\n"
+        "    clusters = []\n"
+        "    for value in raw_starts:\n"
+        "        if clusters and value - clusters[-1][-1] <= tolerance:\n"
+        "            clusters[-1].append(value)\n"
+        "        else:\n"
+        "            clusters.append([value])\n"
+        "    minimum_count = max(2, round(len(raw_starts) * 0.04))\n"
+        "    recurring = [\n"
+        "        float(statistics.median(cluster)) for cluster in clusters\n"
+        "        if len(cluster) >= minimum_count\n"
+        "    ]\n"
+        "    _LEFT_LEVELS = ([_LEFT_A_X] if _LEFT_A_X is not None else []) + recurring[:2]\n"
         "\n"
         "    result = []\n"
         "    models = {}\n"
@@ -234,6 +249,14 @@ def _source() -> str:
         "            '<div class=\"y-guide y-guide-body-start\" style=\"top:%.6f%%\"></div>'\n"
         "            % (100.0 * start_y / image_height)\n"
         "        )\n"
+        "    level_colors = ('#16a34a', '#7c3aed', '#ea580c')\n"
+        "    for index, position in enumerate(_LEFT_LEVELS, start=1):\n"
+        "        x = max(0.0, min(float(image_width), float(position)))\n"
+        "        result.append(\n"
+        "            '<div class=\"x-guide x-guide-level\" data-x=\"%.3f\" ' \n"
+        "            'style=\"--guide-color:%s\"><span style=\"top:%dpx\">N%d</span></div>'\n"
+        "            % (x, level_colors[index - 1], 8 + (index - 1) * 22, index)\n"
+        "        )\n"
     )
     if old_guides not in source:
         raise RuntimeError("Kunde inte lägga till kolumngränsen i HTML-rapporten")
@@ -245,13 +268,13 @@ def _source() -> str:
     )
     new_guide_loop = (
         "        for kind, color in definitions:\n"
-        "            # For the left column, show only A while we tune it.\n"
-        "            if column == 1 and kind != \"article\":\n"
+        "            # The left column uses neutral N1/N2/N3 guides.\n"
+        "            if column == 1:\n"
         "                continue\n"
         "            position = positions[kind]\n"
     )
     if old_guide_loop not in source:
-        raise RuntimeError("Kunde inte dölja F och H i vänsterspalten")
+        raise RuntimeError("Kunde inte ersätta vänsterspaltens semantiska linjer")
     source = source.replace(old_guide_loop, new_guide_loop, 1)
 
     old_css = ".x-guide-continuation { border-left-style:dashed; }\n.marker { z-index:40; }"
@@ -259,6 +282,10 @@ def _source() -> str:
         ".x-guide-continuation { border-left-style:dashed; }\n"
         ".x-guide-column-split { border-left-width:4px; border-left-style:solid; opacity:1; }\n"
         ".x-guide-article { border-left-width:2px; }\n"
+        ".x-guide-level { border-left-width:2px; }\n"
+        ".x-guide-level span { position:absolute; left:4px; padding:2px 4px; "
+        "border-radius:3px; background:var(--guide-color); color:white; "
+        "font:700 11px/1.1 system-ui,sans-serif; white-space:nowrap; }\n"
         ".y-guide { position:absolute; left:0; right:0; height:0; z-index:35; "
         "border-top:3px solid #0891b2; pointer-events:none; }\n"
         ".marker { z-index:40; }"
