@@ -41,6 +41,7 @@ def _source() -> str:
         "_LEFT_A_X: float | None = None\n"
         "_LEFT_LEVELS: list[float] = []\n"
         "_LEFT_LEVEL_COUNTS: list[int | None] = []\n"
+        "_LEFT_IGNORED_HEADINGS: list[str] = []\n"
     )
     if old_globals not in source:
         raise RuntimeError("Kunde inte lägga till geometrins globala positioner")
@@ -192,7 +193,7 @@ def _source() -> str:
         "    models = {}\n"
     )
     new_result_start = (
-        "    global _LEFT_A_X, _LEFT_LEVELS, _LEFT_LEVEL_COUNTS\n"
+        "    global _LEFT_A_X, _LEFT_LEVELS, _LEFT_LEVEL_COUNTS, _LEFT_IGNORED_HEADINGS\n"
         "    # Experimental A: two pixels immediately left of the leftmost OCR\n"
         "    # character in the left column. No clustering and no F/H influence.\n"
         "    _LEFT_A_X = (\n"
@@ -200,7 +201,20 @@ def _source() -> str:
         "        if raw[1]\n"
         "        else None\n"
         "    )\n"
-        "    raw_starts = sorted(float(line.raw_start_x) for line, _x, _word, _marker, _text in raw[1])\n"
+        "    raw_starts = []\n"
+        "    _LEFT_IGNORED_HEADINGS = []\n"
+        "    for line, _x, word, _marker, text in raw[1]:\n"
+        "        letters = re.sub(r'[^A-Za-zÅÄÖåäö]', '', text)\n"
+        "        is_chapter_heading = (\n"
+        "            1 <= len(letters) <= 3\n"
+        "            and letters[0].isupper()\n"
+        "            and word.height >= median_height * 1.60\n"
+        "        )\n"
+        "        if is_chapter_heading:\n"
+        "            _LEFT_IGNORED_HEADINGS.append(text.strip())\n"
+        "            continue\n"
+        "        raw_starts.append(float(line.raw_start_x))\n"
+        "    raw_starts.sort()\n"
         "    tolerance = max(2.5, median_height * 0.20)\n"
         "    clusters = []\n"
         "    for value in raw_starts:\n"
@@ -307,11 +321,12 @@ def _source() -> str:
         "    start_y = _BODY_TOP_Y + 3.0 if _BODY_TOP_Y is not None else None\n"
         "    value = lambda number: '–' if number is None else f'{number:.1f}'\n"
         "    count = lambda number: '–' if number is None else str(number)\n"
+        "    headings = ','.join(_LEFT_IGNORED_HEADINGS) or '–'\n"
         "    print(\n"
         "        f'MÄTVÄRDEN start_y={value(start_y)} '\n"
         "        f'N1={value(n1)} N2={value(n2)}(rader={count(counts[1])}) '\n"
         "        f'N3={value(n3)}(rader={count(counts[2])}) '\n"
-        "        f'Δ12={value(d12)} Δ23={value(d23)}'\n"
+        "        f'Δ12={value(d12)} Δ23={value(d23)} rubriker={headings}'\n"
         "    )\n"
     )
     if old_console_summary not in source:
