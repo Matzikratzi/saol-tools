@@ -20,6 +20,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_REF = "origin/agent/complete-saol-tool"
 CACHE_ROOT = REPOSITORY_ROOT / ".debug-runeberg-ocr-runtime"
 BASE_PATH = CACHE_ROOT / "scripts" / "debug_runeberg_ocr_base.py"
+MARKER_PREFIXES = set("123456789Iil|oO°.'`,:")
 
 
 def _git(*args: str, capture: bool = False) -> subprocess.CompletedProcess[bytes]:
@@ -62,14 +63,7 @@ def _materialize_runtime() -> None:
 
 
 def _body_top_y(observations: list, image_height: int, median_height: float) -> float:
-    """Keep the first OCR row immediately below the header separator.
-
-    The separator itself is normally not returned as OCR text.  Its position is
-    therefore represented by the first substantial vertical gap near the top of
-    the page.  Scan gaps from top to bottom instead of selecting the largest one:
-    a later, unusually large dictionary line gap must never remove the first
-    headword.  The cutoff is placed just above the first row below that gap.
-    """
+    """Place the body cutoff immediately above the first row below the header rule."""
     centres: list[float] = []
     for indices in _observation_line_indices(observations):
         items = [observations[index] for index in indices]
@@ -81,26 +75,79 @@ def _body_top_y(observations: list, image_height: int, median_height: float) -> 
         if centre <= image_height * 0.25:
             centres.append(float(centre))
 
-    # Multiple OCR engines can produce almost identical rows.  Collapse those
-    # before looking for the whitespace directly below the header rule.
     centres.sort()
-    distinct: list[float] = []
-    merge_distance = max(1.0, median_height * 0.35)
-    for centre in centres:
-        if not distinct or centre - distinct[-1] > merge_distance:
-            distinct.append(centre)
-        else:
-            distinct[-1] = (distinct[-1] + centre) / 2
+    if len(centres) >= 2:
+        for index in range(len(centres) - 1):
+            gap = centres[index + 1] - centres[index]
+            if gap >= max(median_height * 1.4, image_height * 0.008):
+                return centres[index + 1] - max(1.0, median_height * 0.55)
 
-    minimum_gap = max(median_height * 1.4, image_height * 0.008)
-    for upper, lower in zip(distinct, distinct[1:]):
-        if lower - upper >= minimum_gap:
-            # The lower item is the first printed row below the separator.  Put
-            # the cutoff above its bounding-box centre so that the row survives.
-            return max(0.0, lower - median_height * 0.75)
-
-    # Conservative fallback: retain substantially more than the old 7 % rule.
     return image_height * 0.03
+
+
+def _install_robust_prefix_geometry() -> None:
+    """Make article detection independent of Tesseract's token splitting.
+
+    The geometry wrapper used to inspect mainly the first OCR token.  A normal
+    headword could therefore be missed when punctuation, dust or a homonym
+    number occupied that token.  Scan the first few boxes for the first actual
+    word and detect a homonym marker separately, including merged forms such as
+    ``2abstrakt``.
+    """
+    this_path = Path(__file__).resolve()
+    for parent in tuple(sys.modules.values()):
+        if parent is None or not hasattr(parent, "_prefix_geometry"):
+            continue
+        parent_base = getattr(parent, "BASE", None)
+        if parent_base is None or Path(parent_base).resolve() != this_path:
+            continue
+
+        old_prefix_geometry = parent._prefix_geometry
+
+        def robust_prefix_geometry(module, line, median_height: float, _old=old_prefix_geometry):
+            items = tuple(sorted(line.items, key=lambda item: item.left))
+            for index, item in enumerate(items[:5]):
+                token = item.text.strip()
+                if not token:
+                    continue
+
+                word = token.lstrip("123456789Iil|oO°.'`,:")
+                prefix_length = len(token) - len(word)
+                if prefix_length and module.WORD_RE.match(word):
+                    character_width = max(
+                        item.width / max(2, len(token)),
+                        item.height * 0.20,
+                    )
+                    return (
+                        float(item.left + character_width * prefix_length),
+                        item,
+                        word,
+                        True,
+                    )
+
+                if not module.WORD_RE.match(token):
+                    continue
+
+                if index > 0:
+                    marker = items[index - 1]
+                    marker_text = marker.text.strip()
+                    gap = item.left - (marker.left + marker.width)
+                    markerish = (
+                        0 < len(marker_text) <= 2
+                        and all(character in MARKER_PREFIXES for character in marker_text)
+                    )
+                    small = marker.height <= max(median_height * 1.15, item.height * 1.10)
+                    narrow = marker.width <= max(item.height * 1.10, median_height)
+                    close = -3.0 <= gap <= max(16.0, item.height * 1.25)
+                    if markerish and small and narrow and close:
+                        return float(item.left), item, token, True
+
+                return float(item.left), item, token, False
+
+            return _old(module, line, median_height)
+
+        parent._prefix_geometry = robust_prefix_geometry
+        return
 
 
 _materialize_runtime()
@@ -118,3 +165,4 @@ if old_filter not in source:
     raise RuntimeError("Kunde inte ersätta den fasta sidhuvudsgränsen i OCR-basmodulen")
 source = source.replace(old_filter, new_filter, 1)
 exec(compile(source, str(BASE_PATH), "exec"), globals(), globals())
+_install_robust_prefix_geometry()
