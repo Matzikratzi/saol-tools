@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import io
+import math
 import statistics
 import sys
 from dataclasses import replace
@@ -30,8 +31,6 @@ def _prefix_geometry(module, line, median_height: float):
     first = items[0]
     token = first.text.strip()
 
-    # Separate, small and raised glyph before the real word. OCR does not need
-    # to have recognised the glyph as a digit.
     if len(items) >= 2:
         second = items[1]
         second_text = second.text.strip()
@@ -48,7 +47,6 @@ def _prefix_geometry(module, line, median_height: float):
             if small and raised and narrow and close and isolated:
                 return float(second.left), second, second_text, True
 
-    # Joined OCR, for example "oa" instead of superscript 2 + "a".
     if len(token) >= 2 and token[0] in AMBIGUOUS_PREFIXES:
         rest = token[1:]
         if module.WORD_RE.match(rest):
@@ -59,20 +57,14 @@ def _prefix_geometry(module, line, median_height: float):
 
 
 def _remove_outliers(values: list[float], median_height: float) -> list[float]:
-    """Remove rare extreme x positions with a robust MAD filter."""
     if len(values) < 6:
         return values[:]
-
     centre = statistics.median(values)
-    deviations = [abs(value - centre) for value in values]
-    mad = statistics.median(deviations)
-
+    mad = statistics.median(abs(value - centre) for value in values)
     if mad <= 0:
-        # Repeated x positions are normal here. Keep a generous physical band.
         radius = max(10.0, median_height * 4.0)
     else:
         radius = max(median_height * 1.5, 4.5 * 1.4826 * mad)
-
     filtered = [value for value in values if abs(value - centre) <= radius]
     return filtered if len(filtered) >= 4 else values[:]
 
@@ -83,13 +75,10 @@ def _largest_gap_centres(
     fallback_a: float,
     fallback_f: float,
 ) -> tuple[float, float]:
-    """Split A/F at the largest credible gap after robust outlier removal."""
     clean = sorted(_remove_outliers(values, median_height))
     if len(clean) < 4:
         return fallback_a, fallback_f
 
-    # Each side must contain a meaningful number of rows. A is often the
-    # smaller cluster, so do not require balanced groups.
     minimum_side = max(2, round(len(clean) * 0.06))
     candidates: list[tuple[float, int]] = []
     for index in range(minimum_side - 1, len(clean) - minimum_side):
@@ -101,18 +90,19 @@ def _largest_gap_centres(
         return fallback_a, fallback_f
 
     _gap, split_index = max(candidates, key=lambda item: item[0])
-    left = clean[: split_index + 1]
-    right = clean[split_index + 1 :]
-    article_x = float(statistics.median(left))
-    continuation_x = float(statistics.median(right))
-
+    article_x = float(statistics.median(clean[: split_index + 1]))
+    continuation_x = float(statistics.median(clean[split_index + 1 :]))
     if continuation_x - article_x < max(3.0, median_height * 0.35):
         return fallback_a, fallback_f
     return article_x, continuation_x
 
 
-def _filter_h_positions(values: list[float], median_height: float) -> list[float]:
-    """H samples are few; reject only obviously isolated positions."""
+def _filter_h_positions(
+    values: list[float], median_height: float, article_x: float
+) -> list[float]:
+    # H is a separate, sparse cluster and must be strictly left of A.
+    margin = max(1.5, median_height * 0.10)
+    values = [value for value in values if value < article_x - margin]
     if len(values) <= 2:
         return values
     centre = statistics.median(values)
@@ -143,23 +133,20 @@ def _geometry_build_lines(module, original_build_lines, observations, image_widt
             continue
 
         preliminary = preliminary_models[column]
-        fallback_a = float(preliminary.article_x)
-        fallback_f = float(preliminary.continuation_x)
         geometry = [_prefix_geometry(module, line, median_height) for line in column_lines]
-
-        # First determine A/F. For possible H rows, use the corrected word start,
-        # never the raw position of the raised prefix.
         lexical_x = [
             word_x
             for word_x, _word, stripped, _candidate in geometry
             if module.WORD_RE.search(stripped)
         ]
         article_x, continuation_x = _largest_gap_centres(
-            lexical_x, median_height, fallback_a, fallback_f
+            lexical_x,
+            median_height,
+            float(preliminary.article_x),
+            float(preliminary.continuation_x),
         )
         boundary_x = (article_x + continuation_x) / 2
 
-        # Only now classify H. Therefore rare H rows cannot move A or F.
         minimum_prefix_gap = max(1.5, median_height * 0.10)
         maximum_prefix_gap = max(
             median_height * 1.8,
@@ -173,9 +160,11 @@ def _geometry_build_lines(module, original_build_lines, observations, image_widt
         accepted_prefix_x: list[float] = []
 
         for line, (word_x, word_object, stripped, candidate) in zip(column_lines, geometry):
-            raw_gap = word_x - float(line.raw_start_x)
+            raw_x = float(line.raw_start_x)
+            raw_gap = word_x - raw_x
             geometric_homonym = (
                 candidate
+                and raw_x < article_x - minimum_prefix_gap
                 and abs(word_x - article_x) <= article_tolerance
                 and minimum_prefix_gap <= raw_gap <= maximum_prefix_gap
             )
@@ -187,12 +176,15 @@ def _geometry_build_lines(module, original_build_lines, observations, image_widt
                     text=stripped,
                     ocr_tesseract=stripped,
                 )
-                accepted_prefix_x.append(float(line.raw_start_x))
+                accepted_prefix_x.append(raw_x)
 
             prepared.append((line, word_x, headword_object, geometric_homonym))
 
-        h_samples = _filter_h_positions(accepted_prefix_x, median_height)
+        h_samples = _filter_h_positions(accepted_prefix_x, median_height, article_x)
         homonym_x = float(statistics.median(h_samples)) if h_samples else None
+        if homonym_x is not None and homonym_x >= article_x:
+            homonym_x = None
+
         models[column] = module.ColumnXModel(
             homonym_x,
             article_x,
@@ -273,12 +265,50 @@ def _geometry_group_articles(module, lines, threshold: float):
     return articles
 
 
+def _wide_deskew(module, content: bytes, observations: list) -> tuple[bytes, float]:
+    # The base implementation clamps at 2 degrees. Old scans can need more.
+    slopes: list[float] = []
+    for indices in module._observation_line_indices(observations):
+        items = sorted((observations[index] for index in indices), key=lambda item: item.left)
+        if len(items) < 3:
+            continue
+        span = (items[-1].left + items[-1].width) - items[0].left
+        median_height = statistics.median(item.height for item in items)
+        if span < max(80.0, median_height * 5):
+            continue
+        points = [
+            (item.left + item.width / 2, item.top + item.height / 2)
+            for item in items
+        ]
+        slope = module._linear_slope(points)
+        if slope is not None and abs(slope) < math.tan(math.radians(7.0)):
+            slopes.append(slope)
+
+    if not slopes:
+        return content, 0.0
+    skew_degrees = max(-6.0, min(6.0, math.degrees(math.atan(statistics.median(slopes)))))
+    if abs(skew_degrees) < 0.03:
+        return content, 0.0
+
+    with Image.open(io.BytesIO(content)) as source:
+        image = source.convert("RGB")
+        deskewed = image.rotate(
+            -skew_degrees,
+            resample=Image.Resampling.BICUBIC,
+            expand=False,
+            fillcolor="white",
+        )
+        output = io.BytesIO()
+        deskewed.save(output, format="PNG", optimize=True)
+    return output.getvalue(), skew_degrees
+
+
 def _guides_html(x_models: dict, image_width: int) -> str:
     result: list[str] = []
     definitions = (
-        ("homonym", "H", "#7c3aed", 4),
-        ("article", "A", "#16a34a", 24),
-        ("continuation", "F", "#ea580c", 44),
+        ("homonym", "#7c3aed"),
+        ("article", "#16a34a"),
+        ("continuation", "#ea580c"),
     )
     for column in (1, 2):
         model = x_models[column]
@@ -287,15 +317,14 @@ def _guides_html(x_models: dict, image_width: int) -> str:
             "article": model.article_x,
             "continuation": model.continuation_x,
         }
-        for kind, short, color, label_top in definitions:
-            if positions[kind] is None:
+        for kind, color in definitions:
+            position = positions[kind]
+            if position is None:
                 continue
-            x = max(0.0, min(float(image_width), float(positions[kind])))
+            x = max(0.0, min(float(image_width), float(position)))
             result.append(
-                '<div class="x-guide x-guide-%s" data-x="%.3f" style="--guide-color:%s">'
-                '<span class="x-guide-label" style="top:%dpx">%s%d · x=%.1f</span>'
-                "</div>"
-                % (kind, x, color, label_top, short, column, x)
+                '<div class="x-guide x-guide-%s" data-x="%.3f" '
+                'style="--guide-color:%s"></div>' % (kind, x, color)
             )
     return "".join(result)
 
@@ -305,6 +334,9 @@ def main() -> None:
     original_build_lines = module._build_lines
     original_review_html = module._review_html
 
+    module._deskew_image = lambda content, observations: _wide_deskew(
+        module, content, observations
+    )
     module._build_lines = lambda observations, image_width, image_height: _geometry_build_lines(
         module,
         original_build_lines,
@@ -331,6 +363,7 @@ def main() -> None:
         threshold,
         skew_degrees,
     ):
+        # image_content is the deskewed image used for the second OCR pass.
         report = original_review_html(
             page,
             source_url,
@@ -354,30 +387,11 @@ def main() -> None:
 .x-guide-homonym { border-left-style:dotted; }
 .x-guide-article { border-left-style:solid; }
 .x-guide-continuation { border-left-style:dashed; }
-.x-guide-label { position:absolute; left:4px; padding:2px 4px; border-radius:3px;
-  background:var(--guide-color); color:white; font:700 11px/1.1 system-ui,sans-serif;
-  white-space:nowrap; }
 .marker { z-index:40; }
-.guide-legend { margin-left:14px; font-weight:700; }
-.guide-legend .h { color:#7c3aed; }
-.guide-legend .a { color:#16a34a; }
-.guide-legend .f { color:#ea580c; }
 </style>
 """
-        legend = (
-            '<span class="guide-legend">'
-            '<span class="h">H = homonym</span> · '
-            '<span class="a">A = artikelstart</span> · '
-            '<span class="f">F = fortsättning</span>'
-            "</span>"
-        )
         guides = _guides_html(x_models, image_width)
         report = report.replace("</head>", css + "</head>", 1)
-        report = report.replace(
-            '<span id="zoomLabel">100 %</span>',
-            '<span id="zoomLabel">100 %</span>' + legend,
-            1,
-        )
         report = report.replace(
             '<div class="marker" id="marker"></div>',
             guides + '<div class="marker" id="marker"></div>',
