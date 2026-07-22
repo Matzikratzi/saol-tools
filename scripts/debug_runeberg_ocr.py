@@ -36,6 +36,16 @@ def _source() -> str:
     )
     source = result.stdout
 
+    # Preserve the original, slope-tolerant detector for the first pass. The
+    # _header_rule function below is then rewritten into a strict detector for
+    # the already deskewed image.
+    header_start = source.index("def _header_rule(")
+    header_end = source.index("\ndef _rule_deskew(", header_start)
+    skew_detector = source[header_start:header_end].replace(
+        "def _header_rule(", "def _skew_header_rule(", 1
+    )
+    source = source[:header_end] + "\n\n" + skew_detector + source[header_end:]
+
     old_globals = "_BODY_TOP_Y: float | None = None\n"
     new_globals = (
         "_BODY_TOP_Y: float | None = None\n"
@@ -58,20 +68,11 @@ def _source() -> str:
         "    global _BODY_TOP_Y, _DESKEW_RULE_Y\n"
         "    _DESKEW_RULE_Y = None\n"
         "\n"
-        "    detected = _header_rule(content)\n"
+        "    detected = _skew_header_rule(content)\n"
     )
     if old_deskew_start not in source:
         raise RuntimeError("Kunde inte spara upprätningslinjens y-position")
     source = source.replace(old_deskew_start, new_deskew_start, 1)
-
-    old_rule_result = "    angle, rule_y = detected\n"
-    new_rule_result = (
-        "    angle, rule_y = detected\n"
-        "    _DESKEW_RULE_Y = rule_y\n"
-    )
-    if old_rule_result not in source:
-        raise RuntimeError("Kunde inte registrera vald upprätningslinje")
-    source = source.replace(old_rule_result, new_rule_result, 1)
 
     old_header_start = (
         "def _header_rule(content: bytes) -> tuple[float, float] | None:\n"
@@ -183,7 +184,10 @@ def _source() -> str:
     )
     new_unrotated_boundary = (
         "    if abs(angle) < 0.03:\n"
-        "        _BODY_TOP_Y = rule_y + 3.0\n"
+        "        straight = _header_rule(content)\n"
+        "        straight_y = straight[1] if straight is not None else rule_y\n"
+        "        _DESKEW_RULE_Y = straight_y\n"
+        "        _BODY_TOP_Y = straight_y + 3.0\n"
         "        return content, 0.0\n"
     )
     if old_unrotated_boundary not in source:
@@ -196,10 +200,11 @@ def _source() -> str:
         "    return result, angle\n"
     )
     new_redetection = (
-        "    # Start the body three pixels below the exact deskew rule.\n"
-        "    # A second detection pass can mistake a lower horizontal structure\n"
-        "    # for the header rule and move the article start too far down.\n"
-        "    _BODY_TOP_Y = rule_y + 3.0\n"
+        "    # Find the now-horizontal physical rule on the deskewed image.\n"
+        "    after = _header_rule(result)\n"
+        "    straight_y = after[1] if after is not None else rule_y\n"
+        "    _DESKEW_RULE_Y = straight_y\n"
+        "    _BODY_TOP_Y = straight_y + 3.0\n"
         "    return result, angle\n"
     )
     if old_redetection not in source:
