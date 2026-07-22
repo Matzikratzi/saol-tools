@@ -34,6 +34,18 @@ def _source() -> str:
     )
     source = result.stdout
 
+    old_imports = "import sys\n"
+    new_imports = (
+        "import sys\n"
+        "import subprocess\n"
+        "import webbrowser\n"
+        "from http.server import BaseHTTPRequestHandler, HTTPServer\n"
+        "from urllib.parse import urlparse\n"
+    )
+    if old_imports not in source:
+        raise RuntimeError("Kunde inte lägga till webbläsarstegringens standardbibliotek")
+    source = source.replace(old_imports, new_imports, 1)
+
     old_globals = "_BODY_TOP_Y: float | None = None\n"
     new_globals = (
         "_BODY_TOP_Y: float | None = None\n"
@@ -43,6 +55,8 @@ def _source() -> str:
         "_LEFT_LEVEL_COUNTS: list[int | None] = []\n"
         "_LEFT_IGNORED_HEADINGS: list[str] = []\n"
         "_LEFT_PREFIX_PAIRS: list[tuple[float, float]] = []\n"
+        "_HAF_LEVELS: tuple[float, float, float] | None = None\n"
+        "_LEFT_THRESHOLD_X: float | None = None\n"
     )
     if old_globals not in source:
         raise RuntimeError("Kunde inte lägga till geometrins globala positioner")
@@ -194,7 +208,7 @@ def _source() -> str:
         "    models = {}\n"
     )
     new_result_start = (
-        "    global _LEFT_A_X, _LEFT_LEVELS, _LEFT_LEVEL_COUNTS, _LEFT_IGNORED_HEADINGS, _LEFT_PREFIX_PAIRS\n"
+        "    global _LEFT_A_X, _LEFT_LEVELS, _LEFT_LEVEL_COUNTS, _LEFT_IGNORED_HEADINGS, _LEFT_PREFIX_PAIRS, _HAF_LEVELS, _LEFT_THRESHOLD_X\n"
         "    # Experimental A: two pixels immediately left of the leftmost OCR\n"
         "    # character in the left column. No clustering and no F/H influence.\n"
         "    _LEFT_A_X = (\n"
@@ -235,6 +249,20 @@ def _source() -> str:
         "    ]\n"
         "    _LEFT_LEVELS = ([_LEFT_A_X] if _LEFT_A_X is not None else []) + [value for value, _count in recurring[:3]]\n"
         "    _LEFT_LEVEL_COUNTS = ([None] if _LEFT_A_X is not None else []) + [count for _value, count in recurring[:3]]\n"
+        "    matches = []\n"
+        "    for first in range(len(_LEFT_LEVELS) - 2):\n"
+        "        for second in range(first + 1, len(_LEFT_LEVELS) - 1):\n"
+        "            for third in range(second + 1, len(_LEFT_LEVELS)):\n"
+        "                h, a, f = (_LEFT_LEVELS[first], _LEFT_LEVELS[second], _LEFT_LEVELS[third])\n"
+        "                delta_ha, delta_af = a - h, f - a\n"
+        "                if abs(delta_ha - 23.0) <= 8.0 and abs(delta_af - 40.0) <= 10.0:\n"
+        "                    matches.append((abs(delta_ha - 23.0) + abs(delta_af - 40.0), h, a, f))\n"
+        "    _HAF_LEVELS = tuple(min(matches)[1:]) if matches else None\n"
+        "    _LEFT_THRESHOLD_X = (\n"
+        "        (_HAF_LEVELS[1] + _HAF_LEVELS[2]) / 2\n"
+        "        if _HAF_LEVELS is not None\n"
+        "        else None\n"
+        "    )\n"
         "\n"
         "    result = []\n"
         "    models = {}\n"
@@ -249,13 +277,32 @@ def _source() -> str:
     )
     new_positions = (
         "        article_x, continuation_x = _split_two_positions(lexical_x, median_height)\n"
-        "        if column == 1 and _LEFT_A_X is not None:\n"
+        "        if column == 1 and _HAF_LEVELS is not None:\n"
+        "            _h_x, article_x, continuation_x = _HAF_LEVELS\n"
+        "        elif column == 1 and _LEFT_A_X is not None:\n"
         "            article_x = _LEFT_A_X\n"
         "        boundary_x = (article_x + continuation_x) / 2\n"
     )
     if old_positions not in source:
         raise RuntimeError("Kunde inte använda vänstraste tecknet som A-position")
     source = source.replace(old_positions, new_positions, 1)
+
+    old_article_decision = (
+        "            is_article = bool(LETTER_RE.search(word_text)) and (\n"
+        "                clearly_at_article or (ambiguous_left and bold_score >= 0.45)\n"
+        "            )\n"
+    )
+    new_article_decision = (
+        "            if column == 1 and _LEFT_THRESHOLD_X is not None:\n"
+        "                is_article = bool(LETTER_RE.search(word_text)) and line.raw_start_x < _LEFT_THRESHOLD_X\n"
+        "            else:\n"
+        "                is_article = bool(LETTER_RE.search(word_text)) and (\n"
+        "                    clearly_at_article or (ambiguous_left and bold_score >= 0.45)\n"
+        "                )\n"
+    )
+    if old_article_decision not in source:
+        raise RuntimeError("Kunde inte använda T som gräns för fortsättningstext")
+    source = source.replace(old_article_decision, new_article_decision, 1)
 
     old_guides = "def _guides_html(x_models: dict, image_width: int) -> str:\n    result: list[str] = []\n"
     new_guides = (
@@ -271,13 +318,20 @@ def _source() -> str:
         "            '<div class=\"y-guide y-guide-body-start\" style=\"top:%.6f%%\"></div>'\n"
         "            % (100.0 * start_y / image_height)\n"
         "        )\n"
-        "    level_colors = ('#16a34a', '#7c3aed', '#ea580c', '#0891b2')\n"
-        "    for index, position in enumerate(_LEFT_LEVELS, start=1):\n"
-        "        x = max(0.0, min(float(image_width), float(position)))\n"
+        "    if _HAF_LEVELS is not None:\n"
+        "        for index, (label, color, position) in enumerate(zip(('H', 'A', 'F'), ('#7c3aed', '#16a34a', '#ea580c'), _HAF_LEVELS)):\n"
+        "            x = max(0.0, min(float(image_width), float(position)))\n"
+        "            result.append(\n"
+        "                '<div class=\"x-guide x-guide-level\" data-x=\"%.3f\" ' \n"
+        "                'style=\"--guide-color:%s\"><span style=\"top:%dpx\">%s</span></div>'\n"
+        "                % (x, color, 8 + index * 22, label)\n"
+        "            )\n"
+        "    if _LEFT_THRESHOLD_X is not None:\n"
+        "        x = max(0.0, min(float(image_width), float(_LEFT_THRESHOLD_X)))\n"
         "        result.append(\n"
-        "            '<div class=\"x-guide x-guide-level\" data-x=\"%.3f\" ' \n"
-        "            'style=\"--guide-color:%s\"><span style=\"top:%dpx\">N%d</span></div>'\n"
-        "            % (x, level_colors[index - 1], 8 + (index - 1) * 22, index)\n"
+        "            '<div class=\"x-guide x-guide-threshold\" data-x=\"%.3f\" ' \n"
+        "            'style=\"--guide-color:#dc2626\"><span style=\"top:74px\">T</span></div>'\n"
+        "            % x\n"
         "        )\n"
     )
     if old_guides not in source:
@@ -299,15 +353,40 @@ def _source() -> str:
         raise RuntimeError("Kunde inte ersätta vänsterspaltens semantiska linjer")
     source = source.replace(old_guide_loop, new_guide_loop, 1)
 
+    old_report_image = "        with Image.open(io.BytesIO(image_content)) as image:\n"
+    new_report_image = (
+        "        previous_page = max(1, page - 1)\n"
+        "        navigation = (\n"
+        "            f'<a class=\"page-step\" href=\"/page/{previous_page}\">← Sida {previous_page}</a>'\n"
+        "            f'<a class=\"page-step\" href=\"/page/{page + 1}\">Sida {page + 1} →</a>'\n"
+        "        )\n"
+        "        report = report.replace(\n"
+        "            '<span id=\"zoomLabel\">100 %</span>',\n"
+        "            '<span id=\"zoomLabel\">100 %</span>' + navigation,\n"
+        "            1,\n"
+        "        )\n"
+        "        with Image.open(io.BytesIO(image_content)) as image:\n"
+    )
+    if old_report_image not in source:
+        raise RuntimeError("Kunde inte lägga till sidknappar i rapporten")
+    source = source.replace(old_report_image, new_report_image, 1)
+
     old_css = ".x-guide-continuation { border-left-style:dashed; }\n.marker { z-index:40; }"
     new_css = (
         ".x-guide-continuation { border-left-style:dashed; }\n"
         ".x-guide-column-split { border-left-width:4px; border-left-style:solid; opacity:1; }\n"
         ".x-guide-article { border-left-width:2px; }\n"
         ".x-guide-level { border-left-width:2px; }\n"
+        ".x-guide-threshold { border-left-width:2px; border-left-style:dashed; }\n"
+        ".x-guide-threshold span { position:absolute; left:4px; padding:2px 4px; "
+        "border-radius:3px; background:var(--guide-color); color:white; "
+        "font:700 11px/1.1 system-ui,sans-serif; white-space:nowrap; }\n"
         ".x-guide-level span { position:absolute; left:4px; padding:2px 4px; "
         "border-radius:3px; background:var(--guide-color); color:white; "
         "font:700 11px/1.1 system-ui,sans-serif; white-space:nowrap; }\n"
+        ".page-step { display:inline-block; margin-left:8px; padding:4px 8px; "
+        "border-radius:4px; background:#2563eb; color:white; text-decoration:none; "
+        "font-weight:700; }\n"
         ".y-guide { position:absolute; left:0; right:0; height:0; z-index:35; "
         "border-top:3px solid #0891b2; pointer-events:none; }\n"
         ".marker { z-index:40; }"
@@ -315,6 +394,81 @@ def _source() -> str:
     if old_css not in source:
         raise RuntimeError("Kunde inte formatera hjälplinjerna i HTML-rapporten")
     source = source.replace(old_css, new_css, 1)
+
+    main_marker = "def main() -> None:\n"
+    server_helper = '''def _serve_reviews(initial_page: int, open_browser: bool) -> None:
+    cache = REPOSITORY_ROOT / ".page-review-cache"
+    cache.mkdir(exist_ok=True)
+
+    class ReviewHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            path = urlparse(self.path).path
+            if path == "/":
+                self.send_response(302)
+                self.send_header("Location", f"/page/{initial_page}")
+                self.end_headers()
+                return
+            match = re.fullmatch(r"/page/(\\d+)", path)
+            if match is None:
+                self.send_error(404)
+                return
+            page = max(1, int(match.group(1)))
+            output = cache / f"page{page:04d}-review.html"
+            command = [
+                sys.executable,
+                str(Path(__file__).resolve()),
+                str(page),
+                "--html",
+                str(output),
+            ]
+            try:
+                subprocess.run(command, cwd=REPOSITORY_ROOT, check=True)
+                content = output.read_bytes()
+            except Exception as exc:
+                self.send_error(500, str(exc))
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(content)))
+            self.end_headers()
+            self.wfile.write(content)
+
+        def log_message(self, format, *args):
+            return
+
+    url = f"http://127.0.0.1:8001/page/{initial_page}"
+    server = HTTPServer(("127.0.0.1", 8001), ReviewHandler)
+    print(f"Sidgranskning: {url}")
+    if open_browser:
+        webbrowser.open(url)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+
+
+'''
+    if main_marker not in source:
+        raise RuntimeError("Kunde inte lägga till lokalt webbläge")
+    source = source.replace(main_marker, server_helper + main_marker, 1)
+
+    old_main_start = (
+        "def main() -> None:\n"
+        "    module = _load_base_module()\n"
+    )
+    new_main_start = (
+        "def main() -> None:\n"
+        "    if '--serve' in sys.argv:\n"
+        "        page = next((int(value) for value in sys.argv[1:] if value.isdigit()), 19)\n"
+        "        _serve_reviews(page, '--open' in sys.argv)\n"
+        "        return\n"
+        "    module = _load_base_module()\n"
+    )
+    if old_main_start not in source:
+        raise RuntimeError("Kunde inte aktivera webbläget")
+    source = source.replace(old_main_start, new_main_start, 1)
 
     old_console_summary = "    module.main()\n"
     new_console_summary = (
@@ -330,13 +484,15 @@ def _source() -> str:
         "    count = lambda number: '–' if number is None else str(number)\n"
         "    headings = ','.join(_LEFT_IGNORED_HEADINGS) or '–'\n"
         "    prefix_pairs = ','.join(f'{left:.1f}→{word:.1f}' for left, word in _LEFT_PREFIX_PAIRS) or '–'\n"
+        "    haf = '–' if _HAF_LEVELS is None else '/'.join(f'{value:.1f}' for value in _HAF_LEVELS)\n"
+        "    threshold = value(_LEFT_THRESHOLD_X)\n"
         "    print(\n"
         "        f'MÄTVÄRDEN start_y={value(start_y)} '\n"
         "        f'N1={value(n1)} N2={value(n2)}(rader={count(counts[1])}) '\n"
         "        f'N3={value(n3)}(rader={count(counts[2])}) '\n"
         "        f'N4={value(n4)}(rader={count(counts[3])}) '\n"
         "        f'Δ12={value(d12)} Δ23={value(d23)} Δ34={value(d34)} '\n"
-        "        f'rubriker={headings} prefixpar={prefix_pairs}'\n"
+        "        f'rubriker={headings} prefixpar={prefix_pairs} H/A/F={haf} T={threshold}'\n"
         "    )\n"
     )
     if old_console_summary not in source:
