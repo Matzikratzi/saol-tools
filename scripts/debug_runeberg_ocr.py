@@ -3,9 +3,10 @@ from __future__ import annotations
 """Run the rebuilt OCR classifier with geometry derived from the header rule.
 
 The implementation is materialised from the preceding rebuilt commit and then
-patched so dictionary text starts immediately below the rule.  The midpoint of
-the detected rule is also used as the boundary between the two text columns and
-is drawn as a thick blue guide in the HTML report.
+patched so dictionary text starts immediately below the rule. The midpoint of
+the detected rule is used as the boundary between the columns. For this
+experiment, the left column's A guide is placed just to the left of the
+leftmost printed OCR character; F and H are hidden there until A is settled.
 """
 
 import subprocess
@@ -37,9 +38,10 @@ def _source() -> str:
     new_globals = (
         "_BODY_TOP_Y: float | None = None\n"
         "_COLUMN_SPLIT_X: float | None = None\n"
+        "_LEFT_A_X: float | None = None\n"
     )
     if old_globals not in source:
-        raise RuntimeError("Kunde inte lägga till kolumngränsens globala position")
+        raise RuntimeError("Kunde inte lägga till geometrins globala positioner")
     source = source.replace(old_globals, new_globals, 1)
 
     old_header_start = (
@@ -92,7 +94,7 @@ def _source() -> str:
     source = source.replace(old_point_pick, new_point_pick, 1)
 
     # Keep Pillow's original sign convention from the rebuilt implementation.
-    # The previous experiment changed -angle to +angle and doubled the skew.
+    # Changing -angle to +angle doubles the skew instead of removing it.
 
     old_body = (
         "    body_top = _BODY_TOP_Y if _BODY_TOP_Y is not None else image_height * 0.03\n"
@@ -115,6 +117,41 @@ def _source() -> str:
         raise RuntimeError("Kunde inte använda streckets mittpunkt som kolumngräns")
     source = source.replace(old_split, new_split, 1)
 
+    old_result_start = (
+        "    result = []\n"
+        "    models = {}\n"
+    )
+    new_result_start = (
+        "    global _LEFT_A_X\n"
+        "    # Experimental A: two pixels immediately left of the leftmost OCR\n"
+        "    # character in the left column. No clustering and no F/H influence.\n"
+        "    _LEFT_A_X = (\n"
+        "        min(line.left for line, _x, _word, _marker, _text in raw[1]) - 2.0\n"
+        "        if raw[1]\n"
+        "        else None\n"
+        "    )\n"
+        "\n"
+        "    result = []\n"
+        "    models = {}\n"
+    )
+    if old_result_start not in source:
+        raise RuntimeError("Kunde inte mäta vänsterspaltens vänstraste tecken")
+    source = source.replace(old_result_start, new_result_start, 1)
+
+    old_positions = (
+        "        article_x, continuation_x = _split_two_positions(lexical_x, median_height)\n"
+        "        boundary_x = (article_x + continuation_x) / 2\n"
+    )
+    new_positions = (
+        "        article_x, continuation_x = _split_two_positions(lexical_x, median_height)\n"
+        "        if column == 1 and _LEFT_A_X is not None:\n"
+        "            article_x = _LEFT_A_X\n"
+        "        boundary_x = (article_x + continuation_x) / 2\n"
+    )
+    if old_positions not in source:
+        raise RuntimeError("Kunde inte använda vänstraste tecknet som A-position")
+    source = source.replace(old_positions, new_positions, 1)
+
     old_guides = "def _guides_html(x_models: dict, image_width: int) -> str:\n    result: list[str] = []\n"
     new_guides = (
         "def _guides_html(x_models: dict, image_width: int) -> str:\n"
@@ -128,14 +165,30 @@ def _source() -> str:
         raise RuntimeError("Kunde inte lägga till kolumngränsen i HTML-rapporten")
     source = source.replace(old_guides, new_guides, 1)
 
+    old_guide_loop = (
+        "        for kind, color in definitions:\n"
+        "            position = positions[kind]\n"
+    )
+    new_guide_loop = (
+        "        for kind, color in definitions:\n"
+        "            # For the left column, show only A while we tune it.\n"
+        "            if column == 1 and kind != \"article\":\n"
+        "                continue\n"
+        "            position = positions[kind]\n"
+    )
+    if old_guide_loop not in source:
+        raise RuntimeError("Kunde inte dölja F och H i vänsterspalten")
+    source = source.replace(old_guide_loop, new_guide_loop, 1)
+
     old_css = ".x-guide-continuation { border-left-style:dashed; }\n.marker { z-index:40; }"
     new_css = (
         ".x-guide-continuation { border-left-style:dashed; }\n"
         ".x-guide-column-split { border-left-width:4px; border-left-style:solid; opacity:1; }\n"
+        ".x-guide-article { border-left-width:2px; }\n"
         ".marker { z-index:40; }"
     )
     if old_css not in source:
-        raise RuntimeError("Kunde inte formatera kolumngränsen i HTML-rapporten")
+        raise RuntimeError("Kunde inte formatera hjälplinjerna i HTML-rapporten")
     return source.replace(old_css, new_css, 1)
 
 
