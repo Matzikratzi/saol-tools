@@ -201,7 +201,7 @@ def _source() -> str:
 
     old_guides = "def _guides_html(x_models: dict, image_width: int) -> str:\n    result: list[str] = []\n"
     new_guides = (
-        "def _guides_html(x_models: dict, image_width: int) -> str:\n"
+        "def _guides_html(x_models: dict, image_width: int, image_height: int) -> str:\n"
         "    split_x = _COLUMN_SPLIT_X if _COLUMN_SPLIT_X is not None else image_width / 2\n"
         "    result: list[str] = [\n"
         "        '<div class=\"x-guide x-guide-column-split\" data-x=\"%.3f\" ' \n"
@@ -222,6 +222,14 @@ def _source() -> str:
         "            '<div class=\"x-guide x-guide-threshold\" data-x=\"%.3f\" ' \n"
         "            'style=\"--guide-color:#dc2626\"><span class=\"x-guide-label\">T · x=%.1f</span></div>'\n"
         "            % (x, x)\n"
+        "        )\n"
+        "    if _BODY_TOP_Y is not None and image_height > 0:\n"
+        "        y = max(0.0, min(float(image_height), float(_BODY_TOP_Y)))\n"
+        "        top_percent = 100.0 * y / image_height\n"
+        "        result.append(\n"
+        "            '<div class=\"y-guide y-guide-body-start\" style=\"--guide-y:%.6f%%\">'\n"
+        "            '<span class=\"y-guide-label\">Artikelkontroll börjar här · y=%.1f</span></div>'\n"
+        "            % (top_percent, y)\n"
         "        )\n"
     )
     if old_guides not in source:
@@ -252,12 +260,32 @@ def _source() -> str:
         ".x-guide-label { position:absolute; top:8px; left:4px; padding:2px 4px; "
         "border-radius:3px; background:var(--guide-color); color:white; "
         "font:700 11px/1.1 system-ui,sans-serif; white-space:nowrap; }\n"
+        ".y-guide { position:absolute; left:0; right:0; top:var(--guide-y); height:0; "
+        "z-index:35; border-top:3px solid #0891b2; pointer-events:none; }\n"
+        ".y-guide-label { position:absolute; top:4px; left:8px; padding:2px 5px; "
+        "border-radius:3px; background:#0891b2; color:white; "
+        "font:700 11px/1.1 system-ui,sans-serif; white-space:nowrap; }\n"
         ".x-guide-article { border-left-width:2px; }\n"
         ".marker { z-index:40; }"
     )
     if old_css not in source:
         raise RuntimeError("Kunde inte formatera hjälplinjerna i HTML-rapporten")
-    return source.replace(old_css, new_css, 1)
+    source = source.replace(old_css, new_css, 1)
+
+    old_image_size = "            image_width = image.width\n"
+    new_image_size = (
+        "            image_width = image.width\n"
+        "            image_height = image.height\n"
+    )
+    if old_image_size not in source:
+        raise RuntimeError("Kunde inte läsa bildhöjden för den vågräta hjälplinjen")
+    source = source.replace(old_image_size, new_image_size, 1)
+
+    old_guides_call = "        guides = _guides_html(x_models, image_width)\n"
+    new_guides_call = "        guides = _guides_html(x_models, image_width, image_height)\n"
+    if old_guides_call not in source:
+        raise RuntimeError("Kunde inte skicka bildhöjden till hjälplinjerna")
+    return source.replace(old_guides_call, new_guides_call, 1)
 
 
 exec(compile(_source(), str(Path(__file__).resolve()), "exec"), globals(), globals())
