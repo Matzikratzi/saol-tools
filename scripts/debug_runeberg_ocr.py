@@ -11,7 +11,7 @@ from PIL import Image
 
 
 BASE = Path(__file__).with_name("debug_runeberg_ocr_base.py")
-AMBIGUOUS_PREFIXES = set("123456789Iil|oO°.")
+AMBIGUOUS_PREFIXES = set("123456789Iil|oO°.'`,:")
 
 
 def _load_base_module():
@@ -25,61 +25,55 @@ def _load_base_module():
 
 
 def _prefix_geometry(module, line, median_height: float):
-    """Return (letter_x, word_object, stripped_text, is_prefix_candidate)."""
+    """Return (word_x, word_object, stripped_text, geometric_candidate).
+
+    Candidate classification is deliberately geometry-first. OCR does not need
+    to have recognised the raised glyph as a digit.
+    """
     items = line.items
     first = items[0]
     token = first.text.strip()
 
-    # OCR has kept the index as a separate token, e.g. "o" + "a".
+    # Separate raised glyph followed by the actual headword.
     if len(items) >= 2:
         second = items[1]
         second_text = second.text.strip()
-        gap = second.left - (first.left + first.width)
-        small_prefix = first.height <= max(median_height * 0.95, second.height * 0.95)
-        short_prefix = len(token) <= 2 and token and token[0] in AMBIGUOUS_PREFIXES
-        close_enough = -3 <= gap <= max(12.0, median_height * 1.25)
-        if short_prefix and small_prefix and close_enough and module.WORD_RE.match(second_text):
-            return float(second.left), second, second_text, True
+        if module.WORD_RE.match(second_text):
+            gap = second.left - (first.left + first.width)
+            small = first.height <= max(median_height * 0.88, second.height * 0.86)
+            raised = (
+                first.top < second.top
+                or first.top + first.height <= second.top + second.height * 0.82
+            )
+            narrow = first.width <= max(second.height * 0.90, median_height * 0.85)
+            close = -3.0 <= gap <= max(12.0, second.height * 0.95)
+            isolated = len(token) <= 2
+            if small and raised and narrow and close and isolated:
+                return float(second.left), second, second_text, True
 
-    # OCR has joined index and word, e.g. "oa" instead of "2a".
-    if len(token) >= 2 and token[0] in AMBIGUOUS_PREFIXES and module.WORD_RE.match(token[1:]):
-        character_width = max(first.width / max(2, len(token)), first.height * 0.20)
-        return float(first.left + character_width), first, token[1:], True
+    # OCR may have joined index and word. This remains a weaker candidate;
+    # the first-pass A position must confirm it later.
+    if len(token) >= 2 and token[0] in AMBIGUOUS_PREFIXES:
+        rest = token[1:]
+        if module.WORD_RE.match(rest):
+            character_width = max(first.width / max(2, len(token)), first.height * 0.20)
+            return float(first.left + character_width), first, rest, True
 
-    return float(line.letter_start_x), line.first, line.first.text.strip(), line.has_homonym_marker
+    return float(line.letter_start_x), line.first, line.first.text.strip(), False
 
 
-def _estimate_article_positions(module, geometry, column_lines, median_height: float):
-    """Estimate A/F without allowing homonym-prefix positions to pull A left."""
-    normal_x = [
-        letter_x
-        for line, (letter_x, _word, stripped, candidate) in zip(column_lines, geometry)
-        if module.WORD_RE.search(stripped) and not candidate
-    ]
-    all_letter_x = [
-        letter_x
-        for line, (letter_x, _word, stripped, _candidate) in zip(column_lines, geometry)
-        if module.WORD_RE.search(stripped)
-    ]
-
-    # Prefer ordinary rows. If the page fragment contains only homonym rows,
-    # fall back to their corrected word starts, never their raw prefix starts.
-    samples = normal_x if len(normal_x) >= 2 else all_letter_x
-    article_x, continuation_x = module._kmeans_1d_two(samples)
-    minimum_separation = max(3.0, median_height * 0.35)
-    if continuation_x - article_x < minimum_separation:
-        article_x = statistics.median(samples) if samples else column_lines[0].left
-        continuation_x = article_x + max(8.0, median_height * 0.8)
-    return article_x, continuation_x
+def _anchored_median(values: list[float], anchor: float, radius: float) -> float:
+    nearby = [value for value in values if abs(value - anchor) <= radius]
+    return statistics.median(nearby) if nearby else anchor
 
 
 def _geometry_build_lines(module, original_build_lines, observations, image_width, image_height):
-    original_lines, _ = original_build_lines(observations, image_width, image_height)
+    # Pass 1: retain the base implementation's A/F estimate as stable anchors.
+    original_lines, preliminary_models = original_build_lines(
+        observations, image_width, image_height
+    )
     if not original_lines:
-        return original_lines, {
-            1: module.ColumnXModel(None, 0.0, 0.0, 0.0),
-            2: module.ColumnXModel(None, 0.0, 0.0, 0.0),
-        }
+        return original_lines, preliminary_models
 
     heights = [item.height for line in original_lines for item in line.items]
     median_height = statistics.median(heights) if heights else 1.0
@@ -95,20 +89,31 @@ def _geometry_build_lines(module, original_build_lines, observations, image_widt
             models[column] = module.ColumnXModel(None, 0.0, 0.0, 0.0)
             continue
 
+        preliminary = preliminary_models[column]
+        preliminary_a = float(preliminary.article_x)
+        preliminary_f = float(preliminary.continuation_x)
+        separation = max(median_height * 0.7, preliminary_f - preliminary_a)
+        article_radius = max(median_height * 1.15, separation * 0.48)
+        continuation_radius = max(median_height * 1.30, separation * 0.55)
+        minimum_prefix_gap = max(2.0, median_height * 0.12)
+        maximum_prefix_gap = max(median_height * 1.35, separation * 0.75)
+
         geometry = [_prefix_geometry(module, line, median_height) for line in column_lines]
-        article_x, continuation_x = _estimate_article_positions(
-            module, geometry, column_lines, median_height
-        )
-        boundary_x = (article_x + continuation_x) / 2
-
-        prefix_gap = max(3.0, (continuation_x - article_x) * 0.28, median_height * 0.22)
-        accepted_prefix_x = []
         prepared = []
+        article_samples: list[float] = []
+        continuation_samples: list[float] = []
+        accepted_prefix_x: list[float] = []
 
-        for line, (letter_x, word_object, stripped, candidate) in zip(column_lines, geometry):
-            raw_gap = letter_x - line.raw_start_x
-            in_article_zone = letter_x <= boundary_x
-            geometric_homonym = candidate and in_article_zone and raw_gap >= prefix_gap
+        # Pass 2a: identify raised-prefix rows relative to preliminary A,
+        # and collect only samples close to the first-pass anchors.
+        for line, (word_x, word_object, stripped, candidate) in zip(column_lines, geometry):
+            raw_gap = word_x - line.raw_start_x
+            near_article = abs(word_x - preliminary_a) <= article_radius
+            geometric_homonym = (
+                candidate
+                and near_article
+                and minimum_prefix_gap <= raw_gap <= maximum_prefix_gap
+            )
 
             headword_object = word_object
             if geometric_homonym and stripped:
@@ -117,11 +122,28 @@ def _geometry_build_lines(module, original_build_lines, observations, image_widt
                     text=stripped,
                     ocr_tesseract=stripped,
                 )
-                accepted_prefix_x.append(line.raw_start_x)
+                accepted_prefix_x.append(float(line.raw_start_x))
 
-            prepared.append((line, letter_x, headword_object, geometric_homonym))
+            lexical = bool(module.WORD_RE.search(headword_object.text))
+            if lexical:
+                if abs(word_x - preliminary_a) <= article_radius:
+                    article_samples.append(word_x)
+                elif abs(word_x - preliminary_f) <= continuation_radius:
+                    continuation_samples.append(word_x)
 
-        # H exists only when there is actual homonym evidence on this column.
+            prepared.append((line, word_x, headword_object, geometric_homonym))
+
+        # Pass 2b: refine around the anchors. Outliers cannot move either line.
+        article_x = _anchored_median(article_samples, preliminary_a, article_radius)
+        continuation_x = _anchored_median(
+            continuation_samples, preliminary_f, continuation_radius
+        )
+        if continuation_x <= article_x + max(3.0, median_height * 0.35):
+            continuation_x = preliminary_f
+        boundary_x = (article_x + continuation_x) / 2
+
+        # H is unusual: require at least one strong geometric candidate, but do
+        # not require OCR to call the raised glyph a digit.
         homonym_x = statistics.median(accepted_prefix_x) if accepted_prefix_x else None
         models[column] = module.ColumnXModel(
             homonym_x,
@@ -132,7 +154,7 @@ def _geometry_build_lines(module, original_build_lines, observations, image_widt
 
         lexical_objects = [
             headword
-            for line, _letter_x, headword, _homonym in prepared
+            for _line, _word_x, headword, _homonym in prepared
             if module.WORD_RE.search(headword.text) and headword.ink_density > 0
         ]
         inks = [item.ink_density for item in lexical_objects]
@@ -145,17 +167,17 @@ def _geometry_build_lines(module, original_build_lines, observations, image_widt
             1e-6,
         )
 
-        for line, letter_x, headword, geometric_homonym in prepared:
+        for line, word_x, headword, geometric_homonym in prepared:
             ink_ratio = headword.ink_density / bold_reference
             bold_score = max(0.0, min(1.0, (ink_ratio - 0.70) / 0.34))
-            x_class = "article" if letter_x <= boundary_x else "continuation"
+            x_class = "article" if word_x <= boundary_x else "continuation"
             if geometric_homonym:
                 x_class = "homonym+article"
             result.append(
                 replace(
                     line,
                     first=headword,
-                    letter_start_x=letter_x,
+                    letter_start_x=word_x,
                     has_homonym_marker=geometric_homonym,
                     x_class=x_class,
                     bold_score=bold_score,
@@ -166,16 +188,14 @@ def _geometry_build_lines(module, original_build_lines, observations, image_widt
 
 
 def _geometry_group_articles(module, lines, threshold: float):
-    """Group articles using the midpoint as the sole start-zone boundary."""
+    """Group articles from the final A/F classification."""
     articles = []
     for column in (1, 2):
         current = []
         current_score = 0.0
         for line in (line for line in lines if line.column == column):
             lexical = bool(module.WORD_RE.search(line.first.text))
-            at_article_x = line.x_class.endswith("article")
-            is_start = lexical and at_article_x
-
+            is_start = lexical and line.x_class.endswith("article")
             if is_start:
                 if current:
                     first = current[0]
@@ -192,7 +212,6 @@ def _geometry_group_articles(module, lines, threshold: float):
                 current_score = line.bold_score
             elif current:
                 current.append(line)
-
         if current:
             first = current[0]
             articles.append(
@@ -210,9 +229,9 @@ def _geometry_group_articles(module, lines, threshold: float):
 def _guides_html(x_models: dict, image_width: int) -> str:
     result: list[str] = []
     definitions = (
-        ("homonym", "H", "Homonymindex", "#7c3aed", 4),
-        ("article", "A", "Artikelstart", "#16a34a", 24),
-        ("continuation", "F", "Fortsättningsrad", "#ea580c", 44),
+        ("homonym", "H", "#7c3aed", 4),
+        ("article", "A", "#16a34a", 24),
+        ("continuation", "F", "#ea580c", 44),
     )
     for column in (1, 2):
         model = x_models[column]
@@ -221,14 +240,14 @@ def _guides_html(x_models: dict, image_width: int) -> str:
             "article": model.article_x,
             "continuation": model.continuation_x,
         }
-        for kind, short, _label, color, label_top in definitions:
+        for kind, short, color, label_top in definitions:
             if positions[kind] is None:
                 continue
             x = max(0.0, min(float(image_width), float(positions[kind])))
             result.append(
                 '<div class="x-guide x-guide-%s" data-x="%.3f" style="--guide-color:%s">'
                 '<span class="x-guide-label" style="top:%dpx">%s%d · x=%.1f</span>'
-                '</div>'
+                "</div>"
                 % (kind, x, color, label_top, short, column, x)
             )
     return "".join(result)
@@ -283,34 +302,19 @@ def main() -> None:
 
         css = """
 <style>
-.x-guide {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 0;
-    z-index: 30;
-    border-left: 1px solid var(--guide-color);
-    pointer-events: none;
-    opacity: .95;
-}
-.x-guide-homonym { border-left-style: dotted; }
-.x-guide-article { border-left-style: solid; }
-.x-guide-continuation { border-left-style: dashed; }
-.x-guide-label {
-    position: absolute;
-    left: 4px;
-    padding: 2px 4px;
-    border-radius: 3px;
-    background: var(--guide-color);
-    color: white;
-    font: 700 11px/1.1 system-ui, sans-serif;
-    white-space: nowrap;
-}
-.marker { z-index: 40; }
-.guide-legend { margin-left: 14px; font-weight: 700; }
-.guide-legend .h { color: #7c3aed; }
-.guide-legend .a { color: #16a34a; }
-.guide-legend .f { color: #ea580c; }
+.x-guide { position:absolute; top:0; bottom:0; width:0; z-index:30;
+  border-left:1px solid var(--guide-color); pointer-events:none; opacity:.95; }
+.x-guide-homonym { border-left-style:dotted; }
+.x-guide-article { border-left-style:solid; }
+.x-guide-continuation { border-left-style:dashed; }
+.x-guide-label { position:absolute; left:4px; padding:2px 4px; border-radius:3px;
+  background:var(--guide-color); color:white; font:700 11px/1.1 system-ui,sans-serif;
+  white-space:nowrap; }
+.marker { z-index:40; }
+.guide-legend { margin-left:14px; font-weight:700; }
+.guide-legend .h { color:#7c3aed; }
+.guide-legend .a { color:#16a34a; }
+.guide-legend .f { color:#ea580c; }
 </style>
 """
         legend = (
@@ -318,7 +322,7 @@ def main() -> None:
             '<span class="h">H = homonym</span> · '
             '<span class="a">A = artikelstart</span> · '
             '<span class="f">F = fortsättning</span>'
-            '</span>'
+            "</span>"
         )
         guides = _guides_html(x_models, image_width)
         report = report.replace("</head>", css + "</head>", 1)
