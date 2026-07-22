@@ -100,7 +100,6 @@ def _largest_gap_centres(
 def _filter_h_positions(
     values: list[float], median_height: float, article_x: float
 ) -> list[float]:
-    # H is a separate, sparse cluster and must be strictly left of A.
     margin = max(1.5, median_height * 0.10)
     values = [value for value in values if value < article_x - margin]
     if len(values) <= 2:
@@ -265,8 +264,96 @@ def _geometry_group_articles(module, lines, threshold: float):
     return articles
 
 
-def _wide_deskew(module, content: bytes, observations: list) -> tuple[bytes, float]:
-    # The base implementation clamps at 2 degrees. Old scans can need more.
+def _linear_fit(points: list[tuple[float, float]]) -> tuple[float, float] | None:
+    if len(points) < 3:
+        return None
+    mean_x = statistics.fmean(x for x, _ in points)
+    mean_y = statistics.fmean(y for _, y in points)
+    denominator = sum((x - mean_x) ** 2 for x, _ in points)
+    if denominator <= 1e-9:
+        return None
+    slope = sum((x - mean_x) * (y - mean_y) for x, y in points) / denominator
+    return slope, mean_y - slope * mean_x
+
+
+def _header_rule_skew_degrees(content: bytes) -> float | None:
+    """Measure the long rule directly below the page number."""
+    with Image.open(io.BytesIO(content)) as source:
+        gray = source.convert("L")
+        width, height = gray.size
+        pixels = gray.load()
+
+        # The page number and running head are above this band; body text starts
+        # below it. This deliberately targets the separating rule, not text.
+        x0 = max(0, round(width * 0.04))
+        x1 = min(width, round(width * 0.96))
+        y0 = max(0, round(height * 0.09))
+        y1 = min(height, round(height * 0.23))
+        if x1 - x0 < 100 or y1 - y0 < 20:
+            return None
+
+        # Find the row with the greatest horizontal dark coverage. The rule spans
+        # most of the page, unlike the page number and running head.
+        row_scores: list[tuple[int, int, int]] = []
+        for y in range(y0, y1):
+            dark_x = [x for x in range(x0, x1) if pixels[x, y] < 160]
+            if not dark_x:
+                continue
+            span = dark_x[-1] - dark_x[0]
+            row_scores.append((span, len(dark_x), y))
+        if not row_scores:
+            return None
+        span, dark_count, peak_y = max(row_scores)
+        if span < width * 0.60 or dark_count < width * 0.18:
+            return None
+
+        # For each sampled x, take the median dark y close to the detected rule.
+        # A generous vertical band still follows a visibly skewed rule.
+        half_band = max(8, round(height * 0.018))
+        step = max(1, width // 1400)
+        points: list[tuple[float, float]] = []
+        for x in range(x0, x1, step):
+            ys = [
+                y
+                for y in range(max(y0, peak_y - half_band), min(y1, peak_y + half_band + 1))
+                if pixels[x, y] < 160
+            ]
+            if ys:
+                points.append((float(x), float(statistics.median(ys))))
+
+        if len(points) < 50 or points[-1][0] - points[0][0] < width * 0.55:
+            return None
+
+        fit = _linear_fit(points)
+        if fit is None:
+            return None
+        slope, intercept = fit
+
+        # Remove page-number/running-head fragments and dust that happen to fall
+        # inside the band, then fit the rule once more.
+        residuals = [abs(y - (slope * x + intercept)) for x, y in points]
+        median_residual = statistics.median(residuals)
+        mad = statistics.median(abs(value - median_residual) for value in residuals)
+        tolerance = max(1.5, median_residual + 4.0 * 1.4826 * mad)
+        clean = [
+            point
+            for point, residual in zip(points, residuals)
+            if residual <= tolerance
+        ]
+        if len(clean) < 40 or clean[-1][0] - clean[0][0] < width * 0.55:
+            return None
+
+        fit = _linear_fit(clean)
+        if fit is None:
+            return None
+        slope, _intercept = fit
+        angle = math.degrees(math.atan(slope))
+        if abs(angle) > 7.0:
+            return None
+        return angle
+
+
+def _text_skew_degrees(module, observations: list) -> float | None:
     slopes: list[float] = []
     for indices in module._observation_line_indices(observations):
         items = sorted((observations[index] for index in indices), key=lambda item: item.left)
@@ -283,10 +370,19 @@ def _wide_deskew(module, content: bytes, observations: list) -> tuple[bytes, flo
         slope = module._linear_slope(points)
         if slope is not None and abs(slope) < math.tan(math.radians(7.0)):
             slopes.append(slope)
-
     if not slopes:
+        return None
+    return math.degrees(math.atan(statistics.median(slopes)))
+
+
+def _rule_deskew(module, content: bytes, observations: list) -> tuple[bytes, float]:
+    skew_degrees = _header_rule_skew_degrees(content)
+    if skew_degrees is None:
+        skew_degrees = _text_skew_degrees(module, observations)
+    if skew_degrees is None:
         return content, 0.0
-    skew_degrees = max(-6.0, min(6.0, math.degrees(math.atan(statistics.median(slopes)))))
+
+    skew_degrees = max(-6.0, min(6.0, skew_degrees))
     if abs(skew_degrees) < 0.03:
         return content, 0.0
 
@@ -334,7 +430,7 @@ def main() -> None:
     original_build_lines = module._build_lines
     original_review_html = module._review_html
 
-    module._deskew_image = lambda content, observations: _wide_deskew(
+    module._deskew_image = lambda content, observations: _rule_deskew(
         module, content, observations
     )
     module._build_lines = lambda observations, image_width, image_height: _geometry_build_lines(
@@ -363,7 +459,6 @@ def main() -> None:
         threshold,
         skew_degrees,
     ):
-        # image_content is the deskewed image used for the second OCR pass.
         report = original_review_html(
             page,
             source_url,
