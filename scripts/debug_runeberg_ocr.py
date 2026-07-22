@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import io
 import math
+import re
 import statistics
 import sys
 from dataclasses import replace
@@ -12,7 +13,9 @@ from PIL import Image
 
 
 BASE = Path(__file__).with_name("debug_runeberg_ocr_base.py")
-AMBIGUOUS_PREFIXES = set("123456789Iil|oO°.'`,:")
+LETTER_RE = re.compile(r"[A-Za-zÅÄÖåäö]")
+MERGED_HOMONYM_RE = re.compile(r"^([1-9])([A-Za-zÅÄÖåäö].*)$")
+_BODY_TOP_Y: float | None = None
 
 
 def _load_base_module():
@@ -23,245 +26,6 @@ def _load_base_module():
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
-
-
-def _prefix_geometry(module, line, median_height: float):
-    """Return (word_x, word_object, stripped_text, geometric_candidate)."""
-    items = line.items
-    first = items[0]
-    token = first.text.strip()
-
-    if len(items) >= 2:
-        second = items[1]
-        second_text = second.text.strip()
-        if module.WORD_RE.match(second_text):
-            gap = second.left - (first.left + first.width)
-            small = first.height <= max(median_height * 0.92, second.height * 0.90)
-            raised = (
-                first.top < second.top
-                or first.top + first.height <= second.top + second.height * 0.86
-            )
-            narrow = first.width <= max(second.height, median_height * 0.95)
-            close = -3.0 <= gap <= max(14.0, second.height * 1.10)
-            isolated = 0 < len(token) <= 2
-            if small and raised and narrow and close and isolated:
-                return float(second.left), second, second_text, True
-
-    if len(token) >= 2 and token[0] in AMBIGUOUS_PREFIXES:
-        rest = token[1:]
-        if module.WORD_RE.match(rest):
-            character_width = max(first.width / max(2, len(token)), first.height * 0.20)
-            return float(first.left + character_width), first, rest, True
-
-    return float(line.letter_start_x), line.first, line.first.text.strip(), False
-
-
-def _remove_outliers(values: list[float], median_height: float) -> list[float]:
-    if len(values) < 6:
-        return values[:]
-    centre = statistics.median(values)
-    mad = statistics.median(abs(value - centre) for value in values)
-    if mad <= 0:
-        radius = max(10.0, median_height * 4.0)
-    else:
-        radius = max(median_height * 1.5, 4.5 * 1.4826 * mad)
-    filtered = [value for value in values if abs(value - centre) <= radius]
-    return filtered if len(filtered) >= 4 else values[:]
-
-
-def _largest_gap_centres(
-    values: list[float],
-    median_height: float,
-    fallback_a: float,
-    fallback_f: float,
-) -> tuple[float, float]:
-    clean = sorted(_remove_outliers(values, median_height))
-    if len(clean) < 4:
-        return fallback_a, fallback_f
-
-    minimum_side = max(2, round(len(clean) * 0.06))
-    candidates: list[tuple[float, int]] = []
-    for index in range(minimum_side - 1, len(clean) - minimum_side):
-        gap = clean[index + 1] - clean[index]
-        if gap >= max(2.5, median_height * 0.22):
-            candidates.append((gap, index))
-
-    if not candidates:
-        return fallback_a, fallback_f
-
-    _gap, split_index = max(candidates, key=lambda item: item[0])
-    article_x = float(statistics.median(clean[: split_index + 1]))
-    continuation_x = float(statistics.median(clean[split_index + 1 :]))
-    if continuation_x - article_x < max(3.0, median_height * 0.35):
-        return fallback_a, fallback_f
-    return article_x, continuation_x
-
-
-def _filter_h_positions(
-    values: list[float], median_height: float, article_x: float
-) -> list[float]:
-    margin = max(1.5, median_height * 0.10)
-    values = [value for value in values if value < article_x - margin]
-    if len(values) <= 2:
-        return values
-    centre = statistics.median(values)
-    radius = max(4.0, median_height * 0.8)
-    nearby = [value for value in values if abs(value - centre) <= radius]
-    return nearby if nearby else values
-
-
-def _geometry_build_lines(module, original_build_lines, observations, image_width, image_height):
-    original_lines, preliminary_models = original_build_lines(
-        observations, image_width, image_height
-    )
-    if not original_lines:
-        return original_lines, preliminary_models
-
-    heights = [item.height for line in original_lines for item in line.items]
-    median_height = statistics.median(heights) if heights else 1.0
-    result = []
-    models = {}
-
-    for column in (1, 2):
-        column_lines = sorted(
-            (line for line in original_lines if line.column == column),
-            key=lambda line: (line.top, line.left),
-        )
-        if not column_lines:
-            models[column] = module.ColumnXModel(None, 0.0, 0.0, 0.0)
-            continue
-
-        preliminary = preliminary_models[column]
-        geometry = [_prefix_geometry(module, line, median_height) for line in column_lines]
-        lexical_x = [
-            word_x
-            for word_x, _word, stripped, _candidate in geometry
-            if module.WORD_RE.search(stripped)
-        ]
-        article_x, continuation_x = _largest_gap_centres(
-            lexical_x,
-            median_height,
-            float(preliminary.article_x),
-            float(preliminary.continuation_x),
-        )
-        boundary_x = (article_x + continuation_x) / 2
-
-        minimum_prefix_gap = max(1.5, median_height * 0.10)
-        maximum_prefix_gap = max(
-            median_height * 1.8,
-            (continuation_x - article_x) * 0.85,
-        )
-        article_tolerance = max(
-            median_height * 0.9,
-            (continuation_x - article_x) * 0.30,
-        )
-        prepared = []
-        accepted_prefix_x: list[float] = []
-
-        for line, (word_x, word_object, stripped, candidate) in zip(column_lines, geometry):
-            raw_x = float(line.raw_start_x)
-            raw_gap = word_x - raw_x
-            geometric_homonym = (
-                candidate
-                and raw_x < article_x - minimum_prefix_gap
-                and abs(word_x - article_x) <= article_tolerance
-                and minimum_prefix_gap <= raw_gap <= maximum_prefix_gap
-            )
-
-            headword_object = word_object
-            if geometric_homonym and stripped:
-                headword_object = replace(
-                    word_object,
-                    text=stripped,
-                    ocr_tesseract=stripped,
-                )
-                accepted_prefix_x.append(raw_x)
-
-            prepared.append((line, word_x, headword_object, geometric_homonym))
-
-        h_samples = _filter_h_positions(accepted_prefix_x, median_height, article_x)
-        homonym_x = float(statistics.median(h_samples)) if h_samples else None
-        if homonym_x is not None and homonym_x >= article_x:
-            homonym_x = None
-
-        models[column] = module.ColumnXModel(
-            homonym_x,
-            article_x,
-            continuation_x,
-            boundary_x,
-        )
-
-        lexical_objects = [
-            headword
-            for _line, _word_x, headword, _homonym in prepared
-            if module.WORD_RE.search(headword.text) and headword.ink_density > 0
-        ]
-        inks = [item.ink_density for item in lexical_objects]
-        ordinary_ink = statistics.median(inks) if inks else 1.0
-        bold_reference = max(
-            sorted(inks)[min(len(inks) - 1, round((len(inks) - 1) * 0.75))]
-            if inks
-            else ordinary_ink,
-            ordinary_ink,
-            1e-6,
-        )
-
-        for line, word_x, headword, geometric_homonym in prepared:
-            ink_ratio = headword.ink_density / bold_reference
-            bold_score = max(0.0, min(1.0, (ink_ratio - 0.70) / 0.34))
-            x_class = "article" if word_x <= boundary_x else "continuation"
-            if geometric_homonym:
-                x_class = "homonym+article"
-            result.append(
-                replace(
-                    line,
-                    first=headword,
-                    letter_start_x=word_x,
-                    has_homonym_marker=geometric_homonym,
-                    x_class=x_class,
-                    bold_score=bold_score,
-                )
-            )
-
-    return sorted(result, key=lambda line: (line.column, line.top, line.left)), models
-
-
-def _geometry_group_articles(module, lines, threshold: float):
-    articles = []
-    for column in (1, 2):
-        current = []
-        current_score = 0.0
-        for line in (line for line in lines if line.column == column):
-            lexical = bool(module.WORD_RE.search(line.first.text))
-            is_start = lexical and line.x_class.endswith("article")
-            if is_start:
-                if current:
-                    first = current[0]
-                    articles.append(
-                        module.Article(
-                            column,
-                            first.first.text,
-                            first.first.text,
-                            tuple(current),
-                            current_score,
-                        )
-                    )
-                current = [line]
-                current_score = line.bold_score
-            elif current:
-                current.append(line)
-        if current:
-            first = current[0]
-            articles.append(
-                module.Article(
-                    column,
-                    first.first.text,
-                    first.first.text,
-                    tuple(current),
-                    current_score,
-                )
-            )
-    return articles
 
 
 def _linear_fit(points: list[tuple[float, float]]) -> tuple[float, float] | None:
@@ -276,24 +40,20 @@ def _linear_fit(points: list[tuple[float, float]]) -> tuple[float, float] | None
     return slope, mean_y - slope * mean_x
 
 
-def _header_rule_skew_degrees(content: bytes) -> float | None:
-    """Measure the long rule directly below the page number."""
+def _header_rule(content: bytes) -> tuple[float, float] | None:
+    """Return the separating rule's angle in degrees and centre y."""
     with Image.open(io.BytesIO(content)) as source:
         gray = source.convert("L")
         width, height = gray.size
         pixels = gray.load()
 
-        # The page number and running head are above this band; body text starts
-        # below it. This deliberately targets the separating rule, not text.
         x0 = max(0, round(width * 0.04))
         x1 = min(width, round(width * 0.96))
-        y0 = max(0, round(height * 0.09))
-        y1 = min(height, round(height * 0.23))
+        y0 = max(0, round(height * 0.025))
+        y1 = min(height, round(height * 0.24))
         if x1 - x0 < 100 or y1 - y0 < 20:
             return None
 
-        # Find the row with the greatest horizontal dark coverage. The rule spans
-        # most of the page, unlike the page number and running head.
         row_scores: list[tuple[int, int, int]] = []
         for y in range(y0, y1):
             dark_x = [x for x in range(x0, x1) if pixels[x, y] < 160]
@@ -303,19 +63,21 @@ def _header_rule_skew_degrees(content: bytes) -> float | None:
             row_scores.append((span, len(dark_x), y))
         if not row_scores:
             return None
+
         span, dark_count, peak_y = max(row_scores)
-        if span < width * 0.60 or dark_count < width * 0.18:
+        if span < width * 0.60 or dark_count < width * 0.16:
             return None
 
-        # For each sampled x, take the median dark y close to the detected rule.
-        # A generous vertical band still follows a visibly skewed rule.
         half_band = max(8, round(height * 0.018))
         step = max(1, width // 1400)
         points: list[tuple[float, float]] = []
         for x in range(x0, x1, step):
             ys = [
                 y
-                for y in range(max(y0, peak_y - half_band), min(y1, peak_y + half_band + 1))
+                for y in range(
+                    max(y0, peak_y - half_band),
+                    min(y1, peak_y + half_band + 1),
+                )
                 if pixels[x, y] < 160
             ]
             if ys:
@@ -328,9 +90,6 @@ def _header_rule_skew_degrees(content: bytes) -> float | None:
         if fit is None:
             return None
         slope, intercept = fit
-
-        # Remove page-number/running-head fragments and dust that happen to fall
-        # inside the band, then fit the rule once more.
         residuals = [abs(y - (slope * x + intercept)) for x, y in points]
         median_residual = statistics.median(residuals)
         mad = statistics.median(abs(value - median_residual) for value in residuals)
@@ -340,63 +99,247 @@ def _header_rule_skew_degrees(content: bytes) -> float | None:
             for point, residual in zip(points, residuals)
             if residual <= tolerance
         ]
-        if len(clean) < 40 or clean[-1][0] - clean[0][0] < width * 0.55:
+        if len(clean) < 40:
             return None
 
         fit = _linear_fit(clean)
         if fit is None:
             return None
-        slope, _intercept = fit
+        slope, intercept = fit
         angle = math.degrees(math.atan(slope))
         if abs(angle) > 7.0:
             return None
-        return angle
-
-
-def _text_skew_degrees(module, observations: list) -> float | None:
-    slopes: list[float] = []
-    for indices in module._observation_line_indices(observations):
-        items = sorted((observations[index] for index in indices), key=lambda item: item.left)
-        if len(items) < 3:
-            continue
-        span = (items[-1].left + items[-1].width) - items[0].left
-        median_height = statistics.median(item.height for item in items)
-        if span < max(80.0, median_height * 5):
-            continue
-        points = [
-            (item.left + item.width / 2, item.top + item.height / 2)
-            for item in items
-        ]
-        slope = module._linear_slope(points)
-        if slope is not None and abs(slope) < math.tan(math.radians(7.0)):
-            slopes.append(slope)
-    if not slopes:
-        return None
-    return math.degrees(math.atan(statistics.median(slopes)))
+        centre_y = slope * (width / 2) + intercept
+        return angle, centre_y
 
 
 def _rule_deskew(module, content: bytes, observations: list) -> tuple[bytes, float]:
-    skew_degrees = _header_rule_skew_degrees(content)
-    if skew_degrees is None:
-        skew_degrees = _text_skew_degrees(module, observations)
-    if skew_degrees is None:
+    del module, observations
+    global _BODY_TOP_Y
+
+    detected = _header_rule(content)
+    if detected is None:
+        _BODY_TOP_Y = None
         return content, 0.0
 
-    skew_degrees = max(-6.0, min(6.0, skew_degrees))
-    if abs(skew_degrees) < 0.03:
+    angle, rule_y = detected
+    angle = max(-6.0, min(6.0, angle))
+    if abs(angle) < 0.03:
+        _BODY_TOP_Y = rule_y
         return content, 0.0
 
     with Image.open(io.BytesIO(content)) as source:
         image = source.convert("RGB")
         deskewed = image.rotate(
-            -skew_degrees,
+            -angle,
             resample=Image.Resampling.BICUBIC,
             expand=False,
             fillcolor="white",
         )
         output = io.BytesIO()
         deskewed.save(output, format="PNG", optimize=True)
-    return output.getvalue(), skew_degrees
+        result = output.getvalue()
+
+    after = _header_rule(result)
+    _BODY_TOP_Y = after[1] if after is not None else rule_y
+    return result, angle
+
+
+def _split_two_positions(
+    values: list[float], median_height: float
+) -> tuple[float, float]:
+    values = sorted(values)
+    if not values:
+        return 0.0, max(8.0, median_height * 0.8)
+    if len(values) < 4:
+        left = float(min(values))
+        return left, left + max(8.0, median_height * 0.8)
+
+    trim = max(0, round(len(values) * 0.02))
+    clean = values[trim : len(values) - trim] if trim and len(values) > 2 * trim else values
+    minimum_side = max(2, round(len(clean) * 0.08))
+    candidates: list[tuple[float, int]] = []
+    for index in range(minimum_side - 1, len(clean) - minimum_side):
+        gap = clean[index + 1] - clean[index]
+        if gap >= max(2.5, median_height * 0.20):
+            candidates.append((gap, index))
+
+    if not candidates:
+        left = float(statistics.median(clean))
+        return left, left + max(8.0, median_height * 0.8)
+
+    _gap, index = max(candidates)
+    article_x = float(statistics.median(clean[: index + 1]))
+    continuation_x = float(statistics.median(clean[index + 1 :]))
+    return article_x, continuation_x
+
+
+def _word_geometry(module, items: tuple, median_height: float):
+    """Return word x, word object and possible homonym-marker x."""
+    first = items[0]
+    first_text = first.text.strip()
+
+    if len(items) >= 2:
+        second = items[1]
+        second_text = second.text.strip()
+        marker_like = bool(re.fullmatch(r"[1-9Iil|]", first_text))
+        raised = (
+            first.top < second.top
+            or first.top + first.height <= second.top + second.height * 0.90
+        )
+        small = first.height <= max(median_height * 0.95, second.height * 0.95)
+        close = second.left - (first.left + first.width) <= max(16.0, median_height)
+        if marker_like and raised and small and close and LETTER_RE.search(second_text):
+            return float(second.left), second, float(first.left), second_text
+
+    merged = MERGED_HOMONYM_RE.match(first_text)
+    if merged:
+        word_text = merged.group(2)
+        character_width = max(first.width / max(2, len(first_text)), first.height * 0.20)
+        word_x = float(first.left + character_width)
+        word = replace(first, text=word_text, ocr_tesseract=word_text)
+        return word_x, word, float(first.left), word_text
+
+    for item in items[:3]:
+        text = item.text.strip()
+        if LETTER_RE.search(text):
+            if item is first:
+                merged_word = module._merge_line_headword(items, median_height)
+                return float(item.left), merged_word, None, merged_word.text.strip()
+            return float(item.left), item, None, text
+
+    merged_word = module._merge_line_headword(items, median_height)
+    return float(first.left), merged_word, None, merged_word.text.strip()
+
+
+def _bold_scores(prepared: list[tuple]) -> dict[int, float]:
+    densities = [word.ink_density for _line, _x, word, _h, _text in prepared if word.ink_density > 0]
+    if not densities:
+        return {id(word): 0.0 for _line, _x, word, _h, _text in prepared}
+    ordinary = statistics.median(densities)
+    ordered = sorted(densities)
+    high = ordered[min(len(ordered) - 1, round((len(ordered) - 1) * 0.80))]
+    reference = max(ordinary, high, 1e-6)
+    return {
+        id(word): max(0.0, min(1.0, (word.ink_density / reference - 0.68) / 0.34))
+        for _line, _x, word, _h, _text in prepared
+    }
+
+
+def _build_lines(module, observations, image_width: int, image_height: int):
+    if not observations:
+        empty = module.ColumnXModel(None, 0.0, 0.0, 0.0)
+        return [], {1: empty, 2: empty}
+
+    heights = [item.height for item in observations]
+    median_height = statistics.median(heights) if heights else 1.0
+    body_top = _BODY_TOP_Y if _BODY_TOP_Y is not None else image_height * 0.03
+    body_top += max(1.0, median_height * 0.10)
+    split = image_width / 2
+
+    raw: dict[int, list] = {1: [], 2: []}
+    for indices in module._observation_line_indices(observations):
+        items = tuple(sorted((observations[index] for index in indices), key=lambda item: item.left))
+        if not items:
+            continue
+        top = min(item.top for item in items)
+        bottom = max(item.top + item.height for item in items)
+        centre_y = (top + bottom) / 2
+        if centre_y <= body_top or centre_y >= image_height * 0.94:
+            continue
+
+        left = min(item.left for item in items)
+        right = max(item.left + item.width for item in items)
+        column = 1 if (left + right) / 2 < split else 2
+        word_x, word, marker_x, word_text = _word_geometry(module, items, median_height)
+        text = " ".join(item.text for item in items)
+        line = module.PrintedLine(
+            column=column,
+            items=items,
+            text=text,
+            first=word,
+            left=left,
+            top=top,
+            right=right,
+            bottom=bottom,
+            raw_start_x=float(left),
+            letter_start_x=word_x,
+            has_homonym_marker=marker_x is not None,
+        )
+        raw[column].append((line, word_x, word, marker_x, word_text))
+
+    result = []
+    models = {}
+    for column in (1, 2):
+        prepared = sorted(raw[column], key=lambda item: (item[0].top, item[0].left))
+        if not prepared:
+            fallback = 0.0 if column == 1 else split
+            models[column] = module.ColumnXModel(None, fallback, fallback, fallback)
+            continue
+
+        lexical_x = [x for _line, x, _word, _marker, text in prepared if LETTER_RE.search(text)]
+        article_x, continuation_x = _split_two_positions(lexical_x, median_height)
+        boundary_x = (article_x + continuation_x) / 2
+        marker_xs = [marker for _line, _x, _word, marker, _text in prepared if marker is not None]
+        homonym_x = float(statistics.median(marker_xs)) if marker_xs else None
+        if homonym_x is not None and homonym_x >= article_x:
+            homonym_x = None
+        models[column] = module.ColumnXModel(homonym_x, article_x, continuation_x, boundary_x)
+
+        scores = _bold_scores(prepared)
+        separation = max(continuation_x - article_x, median_height * 0.5)
+        for line, word_x, word, marker_x, word_text in prepared:
+            bold_score = scores[id(word)]
+            distance_a = abs(word_x - article_x)
+            distance_f = abs(word_x - continuation_x)
+            clearly_at_article = distance_a <= min(distance_f, separation * 0.38)
+            ambiguous_left = word_x <= boundary_x and distance_a <= separation * 0.55
+            is_article = bool(LETTER_RE.search(word_text)) and (
+                clearly_at_article or (ambiguous_left and bold_score >= 0.45)
+            )
+            if is_article and marker_x is not None:
+                x_class = "homonym+article"
+            elif is_article:
+                x_class = "article"
+            else:
+                x_class = "continuation"
+            result.append(
+                replace(
+                    line,
+                    first=word,
+                    letter_start_x=word_x,
+                    has_homonym_marker=marker_x is not None and is_article,
+                    x_class=x_class,
+                    bold_score=bold_score,
+                )
+            )
+
+    return sorted(result, key=lambda line: (line.column, line.top, line.left)), models
+
+
+def _group_articles(module, lines, threshold: float):
+    del threshold
+    articles = []
+    for column in (1, 2):
+        current = []
+        current_score = 0.0
+        for line in (line for line in lines if line.column == column):
+            if line.x_class.endswith("article"):
+                if current:
+                    first = current[0]
+                    articles.append(
+                        module.Article(column, first.first.text, first.first.text, tuple(current), current_score)
+                    )
+                current = [line]
+                current_score = line.bold_score
+            elif current:
+                current.append(line)
+        if current:
+            first = current[0]
+            articles.append(
+                module.Article(column, first.first.text, first.first.text, tuple(current), current_score)
+            )
+    return articles
 
 
 def _guides_html(x_models: dict, image_width: int) -> str:
@@ -427,24 +370,13 @@ def _guides_html(x_models: dict, image_width: int) -> str:
 
 def main() -> None:
     module = _load_base_module()
-    original_build_lines = module._build_lines
     original_review_html = module._review_html
 
-    module._deskew_image = lambda content, observations: _rule_deskew(
-        module, content, observations
+    module._deskew_image = lambda content, observations: _rule_deskew(module, content, observations)
+    module._build_lines = lambda observations, image_width, image_height: _build_lines(
+        module, observations, image_width, image_height
     )
-    module._build_lines = lambda observations, image_width, image_height: _geometry_build_lines(
-        module,
-        original_build_lines,
-        observations,
-        image_width,
-        image_height,
-    )
-    module._group_articles = lambda lines, threshold: _geometry_group_articles(
-        module,
-        lines,
-        threshold,
-    )
+    module._group_articles = lambda lines, threshold: _group_articles(module, lines, threshold)
 
     def review_html_with_guides(
         page,
