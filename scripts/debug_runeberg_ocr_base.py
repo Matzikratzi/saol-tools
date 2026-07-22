@@ -62,11 +62,13 @@ def _materialize_runtime() -> None:
 
 
 def _body_top_y(observations: list, image_height: int, median_height: float) -> float:
-    """Infer the body start from the large gap below the running head.
+    """Keep the first OCR row immediately below the header separator.
 
-    The old implementation discarded the top seven percent unconditionally,
-    which can remove the first dictionary row.  OCR line centres let us place
-    the cutoff in the whitespace between the running head and the body instead.
+    The separator itself is normally not returned as OCR text.  Its position is
+    therefore represented by the first substantial vertical gap near the top of
+    the page.  Scan gaps from top to bottom instead of selecting the largest one:
+    a later, unusually large dictionary line gap must never remove the first
+    headword.  The cutoff is placed just above the first row below that gap.
     """
     centres: list[float] = []
     for indices in _observation_line_indices(observations):
@@ -79,15 +81,23 @@ def _body_top_y(observations: list, image_height: int, median_height: float) -> 
         if centre <= image_height * 0.25:
             centres.append(float(centre))
 
+    # Multiple OCR engines can produce almost identical rows.  Collapse those
+    # before looking for the whitespace directly below the header rule.
     centres.sort()
-    if len(centres) >= 2:
-        gaps = [
-            (centres[index + 1] - centres[index], index)
-            for index in range(len(centres) - 1)
-        ]
-        gap, index = max(gaps)
-        if gap >= max(median_height * 1.4, image_height * 0.008):
-            return (centres[index] + centres[index + 1]) / 2
+    distinct: list[float] = []
+    merge_distance = max(1.0, median_height * 0.35)
+    for centre in centres:
+        if not distinct or centre - distinct[-1] > merge_distance:
+            distinct.append(centre)
+        else:
+            distinct[-1] = (distinct[-1] + centre) / 2
+
+    minimum_gap = max(median_height * 1.4, image_height * 0.008)
+    for upper, lower in zip(distinct, distinct[1:]):
+        if lower - upper >= minimum_gap:
+            # The lower item is the first printed row below the separator.  Put
+            # the cutoff above its bounding-box centre so that the row survives.
+            return max(0.0, lower - median_height * 0.75)
 
     # Conservative fallback: retain substantially more than the old 7 % rule.
     return image_height * 0.03
