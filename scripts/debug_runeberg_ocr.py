@@ -39,6 +39,7 @@ def _source() -> str:
     old_globals = "_BODY_TOP_Y: float | None = None\n"
     new_globals = (
         "_BODY_TOP_Y: float | None = None\n"
+        "_DESKEW_RULE_Y: float | None = None\n"
         "_COLUMN_SPLIT_X: float | None = None\n"
         "_LEFT_A_X: float | None = None\n"
         "_LEFT_LEVELS: list[float] = []\n"
@@ -47,6 +48,30 @@ def _source() -> str:
     if old_globals not in source:
         raise RuntimeError("Kunde inte lägga till geometrins globala positioner")
     source = source.replace(old_globals, new_globals, 1)
+
+    old_deskew_start = (
+        "    global _BODY_TOP_Y\n"
+        "\n"
+        "    detected = _header_rule(content)\n"
+    )
+    new_deskew_start = (
+        "    global _BODY_TOP_Y, _DESKEW_RULE_Y\n"
+        "    _DESKEW_RULE_Y = None\n"
+        "\n"
+        "    detected = _header_rule(content)\n"
+    )
+    if old_deskew_start not in source:
+        raise RuntimeError("Kunde inte spara upprätningslinjens y-position")
+    source = source.replace(old_deskew_start, new_deskew_start, 1)
+
+    old_rule_result = "    angle, rule_y = detected\n"
+    new_rule_result = (
+        "    angle, rule_y = detected\n"
+        "    _DESKEW_RULE_Y = rule_y\n"
+    )
+    if old_rule_result not in source:
+        raise RuntimeError("Kunde inte registrera vald upprätningslinje")
+    source = source.replace(old_rule_result, new_rule_result, 1)
 
     old_header_start = (
         "def _header_rule(content: bytes) -> tuple[float, float] | None:\n"
@@ -247,6 +272,14 @@ def _source() -> str:
         "            '<span class=\"y-guide-label\">Artikelkontroll börjar här · y=%.1f</span></div>'\n"
         "            % (top_percent, y)\n"
         "        )\n"
+        "    if _DESKEW_RULE_Y is not None and image_height > 0:\n"
+        "        y = max(0.0, min(float(image_height), float(_DESKEW_RULE_Y)))\n"
+        "        top_percent = 100.0 * y / image_height\n"
+        "        result.append(\n"
+        "            '<div class=\"y-guide y-guide-deskew\" style=\"--guide-y:%.6f%%\">'\n"
+        "            '<span class=\"y-guide-label y-guide-label-deskew\">Upprätningslinje · y=%.1f</span></div>'\n"
+        "            % (top_percent, y)\n"
+        "        )\n"
     )
     if old_guides not in source:
         raise RuntimeError("Kunde inte lägga till kolumngränsen i HTML-rapporten")
@@ -278,9 +311,11 @@ def _source() -> str:
         "font:700 11px/1.1 system-ui,sans-serif; white-space:nowrap; }\n"
         ".y-guide { position:absolute; left:0; right:0; top:var(--guide-y); height:0; "
         "z-index:35; border-top:3px solid #0891b2; pointer-events:none; }\n"
+        ".y-guide-deskew { z-index:36; border-top:2px dashed #dc2626; }\n"
         ".y-guide-label { position:absolute; top:4px; left:8px; padding:2px 5px; "
         "border-radius:3px; background:#0891b2; color:white; "
         "font:700 11px/1.1 system-ui,sans-serif; white-space:nowrap; }\n"
+        ".y-guide-label-deskew { left:220px; background:#dc2626; }\n"
         ".x-guide-article { border-left-width:2px; }\n"
         ".marker { z-index:40; }"
     )
