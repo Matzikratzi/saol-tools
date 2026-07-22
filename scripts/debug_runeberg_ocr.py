@@ -122,6 +122,20 @@ def _source() -> str:
         raise RuntimeError("Kunde inte isolera sidhuvudsstrecket från närliggande text")
     source = source.replace(old_point_pick, new_point_pick, 1)
 
+    old_rule_y = (
+        "        centre_y = slope * (width / 2) + intercept\n"
+        "        return angle, centre_y\n"
+    )
+    new_rule_y = (
+        "        # The fitted line supplies only the angle. Anchor y directly\n"
+        "        # to the dark scan row that identified the physical rule; the\n"
+        "        # regression can otherwise be pulled down by nearby print.\n"
+        "        return angle, float(peak_y)\n"
+    )
+    if old_rule_y not in source:
+        raise RuntimeError("Kunde inte fästa y-positionen vid den svarta upprätningslinjen")
+    source = source.replace(old_rule_y, new_rule_y, 1)
+
     # Keep Pillow's original sign convention from the rebuilt implementation.
     # Changing -angle to +angle doubles the skew instead of removing it.
 
