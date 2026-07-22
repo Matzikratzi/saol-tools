@@ -32,6 +32,7 @@ def _source() -> str:
         text=True,
     )
     source = result.stdout
+
     old = (
         "    body_top = _BODY_TOP_Y if _BODY_TOP_Y is not None else image_height * 0.03\n"
         "    body_top += max(1.0, median_height * 0.10)\n"
@@ -42,7 +43,29 @@ def _source() -> str:
     )
     if old not in source:
         raise RuntimeError("Kunde inte sätta textstart direkt under sidhuvudsstrecket")
-    return source.replace(old, new, 1)
+    source = source.replace(old, new, 1)
+
+    old_guides = "def _guides_html(x_models: dict, image_width: int) -> str:\n    result: list[str] = []\n"
+    new_guides = (
+        "def _guides_html(x_models: dict, image_width: int) -> str:\n"
+        "    result: list[str] = [\n"
+        "        '<div class=\"x-guide x-guide-column-split\" data-x=\"%.3f\" ' \n"
+        "        'style=\"--guide-color:#dc2626\"></div>' % (image_width / 2)\n"
+        "    ]\n"
+    )
+    if old_guides not in source:
+        raise RuntimeError("Kunde inte lägga till kolumngränsen i HTML-rapporten")
+    source = source.replace(old_guides, new_guides, 1)
+
+    old_css = ".x-guide-continuation { border-left-style:dashed; }\n.marker { z-index:40; }"
+    new_css = (
+        ".x-guide-continuation { border-left-style:dashed; }\n"
+        ".x-guide-column-split { border-left-width:2px; border-left-style:solid; opacity:1; }\n"
+        ".marker { z-index:40; }"
+    )
+    if old_css not in source:
+        raise RuntimeError("Kunde inte formatera kolumngränsen i HTML-rapporten")
+    return source.replace(old_css, new_css, 1)
 
 
 exec(compile(_source(), str(Path(__file__).resolve()), "exec"), globals(), globals())
