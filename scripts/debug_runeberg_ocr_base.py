@@ -9,6 +9,7 @@ in this module, so the normal ``git pull`` + run workflow works again.
 """
 
 import io
+import statistics
 import subprocess
 import sys
 import tarfile
@@ -60,10 +61,50 @@ def _materialize_runtime() -> None:
         tar.extractall(CACHE_ROOT)
 
 
+def _body_top_y(observations: list, image_height: int, median_height: float) -> float:
+    """Infer the body start from the large gap below the running head.
+
+    The old implementation discarded the top seven percent unconditionally,
+    which can remove the first dictionary row.  OCR line centres let us place
+    the cutoff in the whitespace between the running head and the body instead.
+    """
+    centres: list[float] = []
+    for indices in _observation_line_indices(observations):
+        items = [observations[index] for index in indices]
+        if not items:
+            continue
+        top = min(item.top for item in items)
+        bottom = max(item.top + item.height for item in items)
+        centre = (top + bottom) / 2
+        if centre <= image_height * 0.25:
+            centres.append(float(centre))
+
+    centres.sort()
+    if len(centres) >= 2:
+        gaps = [
+            (centres[index + 1] - centres[index], index)
+            for index in range(len(centres) - 1)
+        ]
+        gap, index = max(gaps)
+        if gap >= max(median_height * 1.4, image_height * 0.008):
+            return (centres[index] + centres[index + 1]) / 2
+
+    # Conservative fallback: retain substantially more than the old 7 % rule.
+    return image_height * 0.03
+
+
 _materialize_runtime()
 
 if str(CACHE_ROOT) not in sys.path:
     sys.path.insert(0, str(CACHE_ROOT))
 
 source = BASE_PATH.read_text(encoding="utf-8")
+old_filter = "if center_y < image_height * 0.07 or center_y > image_height * 0.93:"
+new_filter = (
+    "if center_y < _body_top_y(observations, image_height, median_height) "
+    "or center_y > image_height * 0.93:"
+)
+if old_filter not in source:
+    raise RuntimeError("Kunde inte ersätta den fasta sidhuvudsgränsen i OCR-basmodulen")
+source = source.replace(old_filter, new_filter, 1)
 exec(compile(source, str(BASE_PATH), "exec"), globals(), globals())
