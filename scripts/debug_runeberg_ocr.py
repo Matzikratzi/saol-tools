@@ -231,9 +231,8 @@ def _source() -> str:
         "    if _BODY_TOP_Y is not None and image_height > 0:\n"
         "        start_y = max(0.0, min(float(image_height), _BODY_TOP_Y + 3.0))\n"
         "        result.append(\n"
-        "            '<div class=\"y-guide y-guide-body-start\" style=\"top:%.6f%%\">'\n"
-        "            '<span>Artikelstart · y=%.1f</span></div>'\n"
-        "            % (100.0 * start_y / image_height, start_y)\n"
+        "            '<div class=\"y-guide y-guide-body-start\" style=\"top:%.6f%%\"></div>'\n"
+        "            % (100.0 * start_y / image_height)\n"
         "        )\n"
     )
     if old_guides not in source:
@@ -262,9 +261,6 @@ def _source() -> str:
         ".x-guide-article { border-left-width:2px; }\n"
         ".y-guide { position:absolute; left:0; right:0; height:0; z-index:35; "
         "border-top:3px solid #0891b2; pointer-events:none; }\n"
-        ".y-guide span { position:absolute; left:8px; top:4px; padding:2px 5px; "
-        "border-radius:3px; background:#0891b2; color:white; "
-        "font:700 11px/1.1 system-ui,sans-serif; white-space:nowrap; }\n"
         ".marker { z-index:40; }"
     )
     if old_css not in source:
