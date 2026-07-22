@@ -153,6 +153,55 @@ def _geometry_build_lines(module, original_build_lines, observations, image_widt
     return sorted(result, key=lambda line: (line.column, line.top, line.left)), models
 
 
+def _geometry_group_articles(module, lines, threshold: float):
+    """Group articles with geometry taking precedence for homonym starts.
+
+    A geometrically detected homonym prefix at article-x is sufficient to start
+    a new article. Ordinary article starts still need the configured boldness
+    threshold, because continuation text is not always indented in the source.
+    """
+    articles = []
+    for column in (1, 2):
+        current = []
+        current_score = 0.0
+        for line in (line for line in lines if line.column == column):
+            lexical = bool(module.WORD_RE.search(line.first.text))
+            at_article_x = line.x_class.endswith("article")
+            geometry_start = line.has_homonym_marker and at_article_x
+            typography_start = at_article_x and line.bold_score >= threshold
+            is_start = lexical and (geometry_start or typography_start)
+
+            if is_start:
+                if current:
+                    first = current[0]
+                    articles.append(
+                        module.Article(
+                            column,
+                            first.first.text,
+                            first.first.text,
+                            tuple(current),
+                            current_score,
+                        )
+                    )
+                current = [line]
+                current_score = line.bold_score
+            elif current:
+                current.append(line)
+
+        if current:
+            first = current[0]
+            articles.append(
+                module.Article(
+                    column,
+                    first.first.text,
+                    first.first.text,
+                    tuple(current),
+                    current_score,
+                )
+            )
+    return articles
+
+
 def _guides_html(x_models: dict, image_width: int) -> str:
     result: list[str] = []
     definitions = (
@@ -192,6 +241,11 @@ def main() -> None:
         observations,
         image_width,
         image_height,
+    )
+    module._group_articles = lambda lines, threshold: _geometry_group_articles(
+        module,
+        lines,
+        threshold,
     )
 
     def review_html_with_guides(
