@@ -294,9 +294,10 @@ def _source() -> str:
     )
     new_article_decision = (
         "            if column == 1 and _LEFT_THRESHOLD_X is not None:\n"
-        "                # Classify by the first normal letter, not raw OCR debris\n"
-        "                # or a separate homonym digit to its left.\n"
-        "                is_article = bool(LETTER_RE.search(word_text)) and word_x < _LEFT_THRESHOLD_X\n"
+        "                # Count the line as an article when any part of its first\n"
+        "                # lexical OCR box reaches left of T. Ignore unrelated raw\n"
+        "                # OCR fragments that precede that lexical box.\n"
+        "                is_article = bool(LETTER_RE.search(word_text)) and word.left < _LEFT_THRESHOLD_X\n"
         "            else:\n"
         "                is_article = bool(LETTER_RE.search(word_text)) and (\n"
         "                    clearly_at_article or (ambiguous_left and bold_score >= 0.45)\n"
