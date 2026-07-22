@@ -84,20 +84,17 @@ def _geometry_build_lines(module, original_build_lines, observations, image_widt
             continuation_x = article_x + max(8.0, median_height * 0.8)
         boundary_x = (article_x + continuation_x) / 2
 
-        # A prefix is accepted by layout, not by OCR: its following letter must be
-        # at the article position and the raw glyph must sit clearly to the left.
+        # The midpoint is the only article/continuation boundary. A suspected
+        # prefix is accepted when the following word starts in the article zone
+        # and the prefix itself is visibly separated to its left.
         prefix_gap = max(3.0, (continuation_x - article_x) * 0.28, median_height * 0.22)
-        article_tolerance = max(
-            minimum_separation,
-            (continuation_x - article_x) * 0.45,
-        )
         accepted_prefix_x = []
         prepared = []
 
         for line, (letter_x, word_object, stripped, candidate) in zip(column_lines, geometry):
             raw_gap = letter_x - line.raw_start_x
-            near_article = abs(letter_x - article_x) <= article_tolerance
-            geometric_homonym = candidate and near_article and raw_gap >= prefix_gap
+            in_article_zone = letter_x <= boundary_x
+            geometric_homonym = candidate and in_article_zone and raw_gap >= prefix_gap
 
             headword_object = word_object
             if geometric_homonym and stripped:
@@ -154,11 +151,11 @@ def _geometry_build_lines(module, original_build_lines, observations, image_widt
 
 
 def _geometry_group_articles(module, lines, threshold: float):
-    """Group articles with geometry taking precedence for homonym starts.
+    """Group articles using the midpoint as the sole start-zone boundary.
 
-    A geometrically detected homonym prefix at article-x is sufficient to start
-    a new article. Ordinary article starts still need the configured boldness
-    threshold, because continuation text is not always indented in the source.
+    Every lexical line whose first normal letter is on the article side of the
+    midpoint starts a new article. Boldness is retained as diagnostic metadata,
+    but no longer blocks article starts.
     """
     articles = []
     for column in (1, 2):
@@ -167,9 +164,7 @@ def _geometry_group_articles(module, lines, threshold: float):
         for line in (line for line in lines if line.column == column):
             lexical = bool(module.WORD_RE.search(line.first.text))
             at_article_x = line.x_class.endswith("article")
-            geometry_start = line.has_homonym_marker and at_article_x
-            typography_start = at_article_x and line.bold_score >= threshold
-            is_start = lexical and (geometry_start or typography_start)
+            is_start = lexical and at_article_x
 
             if is_start:
                 if current:
