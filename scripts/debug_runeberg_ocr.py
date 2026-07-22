@@ -147,9 +147,9 @@ def _source() -> str:
         "        article_x, continuation_x = _split_two_positions(lexical_x, median_height)\n"
         "        if column == 1 and _LEFT_A_X is not None:\n"
         "            article_x = _LEFT_A_X\n"
-        "            # F is the next recurring line-start position to the right\n"
-        "            # of A. Ignore the ordinary A starts immediately beside\n"
-        "            # the guide and isolated OCR outliers.\n"
+        "            # The first recurring position to the right of the guide is\n"
+        "            # the printed A start itself (and can also contain H digits).\n"
+        "            # Skip it and test the following recurring position as F.\n"
         "            tolerance = max(2.5, median_height * 0.20)\n"
         "            clusters = []\n"
         "            for value in sorted(lexical_x):\n"
@@ -164,8 +164,8 @@ def _source() -> str:
         "                if len(cluster) >= minimum_count\n"
         "                and statistics.median(cluster) > article_x + minimum_offset\n"
         "            ]\n"
-        "            if typical_right:\n"
-        "                continuation_x = float(statistics.median(typical_right[0]))\n"
+        "            if len(typical_right) >= 2:\n"
+        "                continuation_x = float(statistics.median(typical_right[1]))\n"
         "        boundary_x = (article_x + continuation_x) / 2\n"
     )
     if old_positions not in source:
