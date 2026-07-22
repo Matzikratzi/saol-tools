@@ -75,6 +75,22 @@ def _source() -> str:
         raise RuntimeError("Kunde inte mäta streckets vänster- och högerände")
     source = source.replace(old_peak, new_peak, 1)
 
+    old_point_pick = (
+        "            if ys:\n"
+        "                points.append((float(x), float(statistics.median(ys))))\n"
+    )
+    new_point_pick = (
+        "            if ys:\n"
+        "                # Follow the dark pixel nearest the peak row.  Taking the\n"
+        "                # median of all dark pixels in the band lets nearby text\n"
+        "                # pull the fitted angle away from the printed rule.\n"
+        "                rule_y = min(ys, key=lambda value: abs(value - peak_y))\n"
+        "                points.append((float(x), float(rule_y)))\n"
+    )
+    if old_point_pick not in source:
+        raise RuntimeError("Kunde inte isolera sidhuvudsstrecket från närliggande text")
+    source = source.replace(old_point_pick, new_point_pick, 1)
+
     old_rotation = (
         "        deskewed = image.rotate(\n"
         "            -angle,\n"
