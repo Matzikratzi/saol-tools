@@ -40,6 +40,7 @@ def _source() -> str:
         "_COLUMN_SPLIT_X: float | None = None\n"
         "_LEFT_A_X: float | None = None\n"
         "_LEFT_LEVELS: list[float] = []\n"
+        "_LEFT_LEVEL_COUNTS: list[int | None] = []\n"
     )
     if old_globals not in source:
         raise RuntimeError("Kunde inte lägga till geometrins globala positioner")
@@ -191,7 +192,7 @@ def _source() -> str:
         "    models = {}\n"
     )
     new_result_start = (
-        "    global _LEFT_A_X, _LEFT_LEVELS\n"
+        "    global _LEFT_A_X, _LEFT_LEVELS, _LEFT_LEVEL_COUNTS\n"
         "    # Experimental A: two pixels immediately left of the leftmost OCR\n"
         "    # character in the left column. No clustering and no F/H influence.\n"
         "    _LEFT_A_X = (\n"
@@ -209,10 +210,11 @@ def _source() -> str:
         "            clusters.append([value])\n"
         "    minimum_count = max(2, round(len(raw_starts) * 0.04))\n"
         "    recurring = [\n"
-        "        float(statistics.median(cluster)) for cluster in clusters\n"
+        "        (float(statistics.median(cluster)), len(cluster)) for cluster in clusters\n"
         "        if len(cluster) >= minimum_count\n"
         "    ]\n"
-        "    _LEFT_LEVELS = ([_LEFT_A_X] if _LEFT_A_X is not None else []) + recurring[:2]\n"
+        "    _LEFT_LEVELS = ([_LEFT_A_X] if _LEFT_A_X is not None else []) + [value for value, _count in recurring[:2]]\n"
+        "    _LEFT_LEVEL_COUNTS = ([None] if _LEFT_A_X is not None else []) + [count for _value, count in recurring[:2]]\n"
         "\n"
         "    result = []\n"
         "    models = {}\n"
@@ -293,6 +295,28 @@ def _source() -> str:
     if old_css not in source:
         raise RuntimeError("Kunde inte formatera hjälplinjerna i HTML-rapporten")
     source = source.replace(old_css, new_css, 1)
+
+    old_console_summary = "    module.main()\n"
+    new_console_summary = (
+        "    module.main()\n"
+        "    measured = (_LEFT_LEVELS + [None, None, None])[:3]\n"
+        "    counts = (_LEFT_LEVEL_COUNTS + [None, None, None])[:3]\n"
+        "    n1, n2, n3 = measured\n"
+        "    d12 = n2 - n1 if n1 is not None and n2 is not None else None\n"
+        "    d23 = n3 - n2 if n2 is not None and n3 is not None else None\n"
+        "    start_y = _BODY_TOP_Y + 3.0 if _BODY_TOP_Y is not None else None\n"
+        "    value = lambda number: '–' if number is None else f'{number:.1f}'\n"
+        "    count = lambda number: '–' if number is None else str(number)\n"
+        "    print(\n"
+        "        f'MÄTVÄRDEN start_y={value(start_y)} '\n"
+        "        f'N1={value(n1)} N2={value(n2)}(rader={count(counts[1])}) '\n"
+        "        f'N3={value(n3)}(rader={count(counts[2])}) '\n"
+        "        f'Δ12={value(d12)} Δ23={value(d23)}'\n"
+        "    )\n"
+    )
+    if old_console_summary not in source:
+        raise RuntimeError("Kunde inte lägga till kopieringsvänliga mätvärden")
+    source = source.replace(old_console_summary, new_console_summary, 1)
 
     old_image_size = "            image_width = image.width\n"
     new_image_size = (
