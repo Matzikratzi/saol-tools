@@ -441,6 +441,11 @@ def _source() -> str:
 
     old_report_image = "        with Image.open(io.BytesIO(image_content)) as image:\n"
     new_report_image = (
+        "        report = report.replace(\n"
+        "            'const padX=Math.max(12,h*.35),padY=Math.max(9,h*.22);',\n"
+        "            'const padX=12,padY=9;',\n"
+        "            1,\n"
+        "        )\n"
         "        previous_page = max(1, page - 1)\n"
         "        navigation = (\n"
         "            f'<a class=\"page-step\" href=\"/page/{previous_page}\">← Sida {previous_page}</a>'\n"
@@ -555,12 +560,6 @@ def _source() -> str:
     if old_main_start not in source:
         raise RuntimeError("Kunde inte aktivera webbläget")
     source = source.replace(old_main_start, new_main_start, 1)
-
-    old_marker_padding = "const padX=Math.max(12,h*.35),padY=Math.max(9,h*.22);"
-    new_marker_padding = "const padX=12,padY=9;"
-    if old_marker_padding not in source:
-        raise RuntimeError("Kunde inte ta bort höjdberoende rektangelmarginal")
-    source = source.replace(old_marker_padding, new_marker_padding, 1)
 
     old_console_summary = "    module.main()\n"
     new_console_summary = (
