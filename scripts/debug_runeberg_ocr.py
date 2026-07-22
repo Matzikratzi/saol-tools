@@ -30,31 +30,22 @@ def _guides_html(x_models: dict, image_width: int) -> str:
     )
     for column in (1, 2):
         model = x_models[column]
-        fallback = model.article_x - max(10.0, abs(model.continuation_x - model.article_x) * 0.65)
         positions = {
-            "homonym": model.homonym_x if model.homonym_x is not None else fallback,
+            "homonym": model.homonym_x,
             "article": model.article_x,
             "continuation": model.continuation_x,
         }
         for kind, short, label, color in definitions:
-            x = max(0.0, min(float(image_width), float(positions[kind])))
-            estimated = kind == "homonym" and model.homonym_x is None
+            raw_x = positions[kind]
+            if raw_x is None:
+                continue
+            x = max(0.0, min(float(image_width), float(raw_x)))
             result.append(
-                '<div class="x-guide x-guide-%s" data-x="%.3f" style="--guide-color:%s">'
-                '<span class="x-guide-label">%s%d · x=%.1f%s</span>'
-                '<span class="x-guide-label x-guide-label-middle">%s%d</span>'
+                '<div class="x-guide x-guide-%s" data-x="%.3f" style="--guide-color:%s" '
+                'title="Spalt %d · %s · x=%.1f">'
+                '<span class="x-guide-label">%s%d · %.1f</span>'
                 '</div>'
-                % (
-                    kind,
-                    x,
-                    color,
-                    short,
-                    column,
-                    x,
-                    " uppsk." if estimated else "",
-                    short,
-                    column,
-                )
+                % (kind, x, color, column, label, x, short, column, x)
             )
     return "".join(result)
 
@@ -76,6 +67,9 @@ def main() -> None:
         threshold,
         skew_degrees,
     ):
+        # image_content är exakt deskewed_content från baskodens main().
+        # Bild, OCR-koordinater, artikelmarkeringar och x-guider använder därför
+        # samma koordinatsystem i HTML-rapporten.
         html = original_review_html(
             page,
             source_url,
@@ -100,10 +94,10 @@ def main() -> None:
     bottom: 0;
     width: 0;
     z-index: 30;
-    border-left: 6px solid var(--guide-color);
+    border-left: 1px solid var(--guide-color);
     pointer-events: none;
-    opacity: .92;
-    filter: drop-shadow(0 0 2px white) drop-shadow(0 0 3px black);
+    opacity: .95;
+    filter: drop-shadow(0 0 1px white);
 }
 .x-guide-homonym { border-left-style: dotted; }
 .x-guide-article { border-left-style: solid; }
@@ -111,19 +105,17 @@ def main() -> None:
 .x-guide-label {
     position: absolute;
     top: 8px;
-    left: 8px;
-    padding: 4px 7px;
-    border: 2px solid white;
-    border-radius: 5px;
-    background: var(--guide-color);
+    left: 3px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--guide-color) 88%, black);
     color: white;
-    font: 800 14px/1.15 system-ui, sans-serif;
+    font: 700 11px/1.1 system-ui, sans-serif;
     white-space: nowrap;
-    box-shadow: 0 1px 5px #000b;
+    box-shadow: 0 1px 3px #0008;
 }
-.x-guide-label-middle { top: 48%; font-size: 16px; }
 .marker { z-index: 40; }
-.guide-legend { margin-left: 14px; font-weight: 700; }
+.guide-legend { margin-left: 14px; font-weight: 700; font-size: .82rem; }
 .guide-legend .h { color: #7c3aed; }
 .guide-legend .a { color: #16a34a; }
 .guide-legend .f { color: #ea580c; }
@@ -131,7 +123,7 @@ def main() -> None:
 """
         legend = (
             '<span class="guide-legend">'
-            '<span class="h">H = homonym</span> · '
+            '<span class="h">H = observerad homonym</span> · '
             '<span class="a">A = artikelstart</span> · '
             '<span class="f">F = fortsättning</span>'
             '</span>'
