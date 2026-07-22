@@ -149,7 +149,8 @@ def _source() -> str:
         "            article_x = _LEFT_A_X\n"
         "            # The first recurring position to the right of the guide is\n"
         "            # the printed A start itself (and can also contain H digits).\n"
-        "            # Skip it and test the following recurring position as F.\n"
+        "            # Skip it and the first following level, then test whether\n"
+        "            # one more recurring position appears farther right as F.\n"
         "            tolerance = max(2.5, median_height * 0.20)\n"
         "            clusters = []\n"
         "            for value in sorted(lexical_x):\n"
@@ -164,8 +165,8 @@ def _source() -> str:
         "                if len(cluster) >= minimum_count\n"
         "                and statistics.median(cluster) > article_x + minimum_offset\n"
         "            ]\n"
-        "            if len(typical_right) >= 2:\n"
-        "                continuation_x = float(statistics.median(typical_right[1]))\n"
+        "            if len(typical_right) >= 3:\n"
+        "                continuation_x = float(statistics.median(typical_right[2]))\n"
         "        boundary_x = (article_x + continuation_x) / 2\n"
     )
     if old_positions not in source:
