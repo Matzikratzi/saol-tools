@@ -6,7 +6,8 @@ The implementation is materialised from the preceding rebuilt commit and then
 patched so dictionary text starts immediately below the rule. The midpoint of
 the detected rule is used as the boundary between the columns. For this
 experiment, the left column's A guide is placed just to the left of the
-leftmost printed OCR character; F and H are hidden there until A is settled.
+leftmost printed OCR character. F is the next typical x position for printed
+line starts; H remains hidden there until A and F are settled.
 """
 
 import subprocess
@@ -146,6 +147,25 @@ def _source() -> str:
         "        article_x, continuation_x = _split_two_positions(lexical_x, median_height)\n"
         "        if column == 1 and _LEFT_A_X is not None:\n"
         "            article_x = _LEFT_A_X\n"
+        "            # F is the next recurring line-start position to the right\n"
+        "            # of A. Ignore the ordinary A starts immediately beside\n"
+        "            # the guide and isolated OCR outliers.\n"
+        "            tolerance = max(2.5, median_height * 0.20)\n"
+        "            clusters = []\n"
+        "            for value in sorted(lexical_x):\n"
+        "                if clusters and value - clusters[-1][-1] <= tolerance:\n"
+        "                    clusters[-1].append(value)\n"
+        "                else:\n"
+        "                    clusters.append([value])\n"
+        "            minimum_count = max(2, round(len(lexical_x) * 0.04))\n"
+        "            minimum_offset = max(4.0, median_height * 0.35)\n"
+        "            typical_right = [\n"
+        "                cluster for cluster in clusters\n"
+        "                if len(cluster) >= minimum_count\n"
+        "                and statistics.median(cluster) > article_x + minimum_offset\n"
+        "            ]\n"
+        "            if typical_right:\n"
+        "                continuation_x = float(statistics.median(typical_right[0]))\n"
         "        boundary_x = (article_x + continuation_x) / 2\n"
     )
     if old_positions not in source:
@@ -171,13 +191,13 @@ def _source() -> str:
     )
     new_guide_loop = (
         "        for kind, color in definitions:\n"
-        "            # For the left column, show only A while we tune it.\n"
-        "            if column == 1 and kind != \"article\":\n"
+        "            # Keep H hidden in the left column while A and F are tuned.\n"
+        "            if column == 1 and kind == \"homonym\":\n"
         "                continue\n"
         "            position = positions[kind]\n"
     )
     if old_guide_loop not in source:
-        raise RuntimeError("Kunde inte dölja F och H i vänsterspalten")
+        raise RuntimeError("Kunde inte dölja H i vänsterspalten")
     source = source.replace(old_guide_loop, new_guide_loop, 1)
 
     old_css = ".x-guide-continuation { border-left-style:dashed; }\n.marker { z-index:40; }"
