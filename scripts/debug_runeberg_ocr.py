@@ -203,6 +203,86 @@ def _source() -> str:
         raise RuntimeError("Kunde inte använda streckets mittpunkt som kolumngräns")
     source = source.replace(old_split, new_split, 1)
 
+    old_line_builder = '''    raw: dict[int, list] = {1: [], 2: []}
+    for indices in module._observation_line_indices(observations):
+        items = tuple(sorted((observations[index] for index in indices), key=lambda item: item.left))
+        if not items:
+            continue
+        top = min(item.top for item in items)
+        bottom = max(item.top + item.height for item in items)
+        centre_y = (top + bottom) / 2
+        if centre_y <= body_top or centre_y >= image_height * 0.94:
+            continue
+
+        left = min(item.left for item in items)
+        right = max(item.left + item.width for item in items)
+        column = 1 if (left + right) / 2 < split else 2
+        word_x, word, marker_x, word_text = _word_geometry(module, items, median_height)
+        text = " ".join(item.text for item in items)
+        line = module.PrintedLine(
+            column=column,
+            items=items,
+            text=text,
+            first=word,
+            left=left,
+            top=top,
+            right=right,
+            bottom=bottom,
+            raw_start_x=float(left),
+            letter_start_x=word_x,
+            has_homonym_marker=marker_x is not None,
+        )
+        raw[column].append((line, word_x, word, marker_x, word_text))
+'''
+    new_line_builder = '''    raw: dict[int, list] = {1: [], 2: []}
+    for indices in module._observation_line_indices(observations):
+        all_items = tuple(sorted((observations[index] for index in indices), key=lambda item: item.left))
+        if not all_items:
+            continue
+
+        # Tesseract can merge words from both printed columns into one OCR row.
+        # Split that row at the detected blue column guide before measuring its
+        # bounds, classifying it or grouping it into articles.
+        sides = (
+            (1, tuple(item for item in all_items if item.left + item.width / 2 < split)),
+            (2, tuple(item for item in all_items if item.left + item.width / 2 >= split)),
+        )
+        for column, items in sides:
+            if not items:
+                continue
+            top = min(item.top for item in items)
+            bottom = max(item.top + item.height for item in items)
+            centre_y = (top + bottom) / 2
+            if centre_y <= body_top or centre_y >= image_height * 0.94:
+                continue
+
+            left = min(item.left for item in items)
+            right = max(item.left + item.width for item in items)
+            if column == 1:
+                right = min(right, split)
+            else:
+                left = max(left, split)
+            word_x, word, marker_x, word_text = _word_geometry(module, items, median_height)
+            text = " ".join(item.text for item in items)
+            line = module.PrintedLine(
+                column=column,
+                items=items,
+                text=text,
+                first=word,
+                left=left,
+                top=top,
+                right=right,
+                bottom=bottom,
+                raw_start_x=float(left),
+                letter_start_x=word_x,
+                has_homonym_marker=marker_x is not None,
+            )
+            raw[column].append((line, word_x, word, marker_x, word_text))
+'''
+    if old_line_builder not in source:
+        raise RuntimeError("Kunde inte dela OCR-rader vid den blå spaltlinjen")
+    source = source.replace(old_line_builder, new_line_builder, 1)
+
     old_result_start = (
         "    result = []\n"
         "    models = {}\n"
