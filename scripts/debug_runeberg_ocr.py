@@ -81,9 +81,9 @@ def _source() -> str:
     )
     new_point_pick = (
         "            if ys:\n"
-        "                # Follow the dark pixel nearest the peak row.  Taking the\n"
-        "                # median of all dark pixels in the band lets nearby text\n"
-        "                # pull the fitted angle away from the printed rule.\n"
+        "                # Follow the dark pixel nearest the peak row. Taking the\n"
+        "                # median of every dark pixel in the band lets nearby text\n"
+        "                # influence the fitted angle.\n"
         "                rule_y = min(ys, key=lambda value: abs(value - peak_y))\n"
         "                points.append((float(x), float(rule_y)))\n"
     )
@@ -91,21 +91,8 @@ def _source() -> str:
         raise RuntimeError("Kunde inte isolera sidhuvudsstrecket från närliggande text")
     source = source.replace(old_point_pick, new_point_pick, 1)
 
-    old_rotation = (
-        "        deskewed = image.rotate(\n"
-        "            -angle,\n"
-        "            resample=Image.Resampling.BICUBIC,\n"
-    )
-    new_rotation = (
-        "        # Image y increases downwards, so a rule descending to the right\n"
-        "        # must be rotated by the measured positive angle to become level.\n"
-        "        deskewed = image.rotate(\n"
-        "            angle,\n"
-        "            resample=Image.Resampling.BICUBIC,\n"
-    )
-    if old_rotation not in source:
-        raise RuntimeError("Kunde inte rätta rotationsriktningen för deskew")
-    source = source.replace(old_rotation, new_rotation, 1)
+    # Keep Pillow's original sign convention from the rebuilt implementation.
+    # The previous experiment changed -angle to +angle and doubled the skew.
 
     old_body = (
         "    body_top = _BODY_TOP_Y if _BODY_TOP_Y is not None else image_height * 0.03\n"
