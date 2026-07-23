@@ -180,6 +180,22 @@ def infer_compound_series_boundary(
     return ""
 
 
+
+def pronunciation_then_inflection(tokens: list[dict]) -> bool:
+    """Recognize a new lemma followed by pronunciation and inflection."""
+    if not tokens or not tokens[0].get("text", "").strip().startswith("("):
+        return False
+    depth = 0
+    for index, token in enumerate(tokens):
+        text = token.get("text", "").strip()
+        depth += text.count("(") - text.count(")")
+        if depth <= 0:
+            return (
+                index + 1 < len(tokens)
+                and tokens[index + 1].get("text", "").strip().startswith("-")
+            )
+    return False
+
 def _token_score(token: dict, ordinary: float, bold: float) -> float:
     density = float(token.get("ink_density", 0.0))
     span = max(0.005, bold - ordinary)
@@ -497,11 +513,15 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 plausible_position = previous_separator or at_line_start
                 clearly_semibold = score >= 0.70
                 has_stem_boundary = "|" in cleaned or "¦" in cleaned
+                has_lemma_grammar = pronunciation_then_inflection(
+                    following_tokens
+                )
                 if (
                     (plausible_position and score >= 0.45)
                     or previous_separator
                     or clearly_semibold
                     or has_stem_boundary
+                    or has_lemma_grammar
                     or series_first
                 ):
                     lemma = normalize_lemma(cleaned)
@@ -513,6 +533,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                         structurally_new_base = (
                             plausible_position
                             or has_stem_boundary
+                            or has_lemma_grammar
                             or series_first
                         )
                         if structurally_new_base:
