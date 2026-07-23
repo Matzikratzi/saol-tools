@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from scripts.article_text_review import group_articles
+from scripts.article_text_review import group_articles, merge_overlapping_rows
 
 
 def row(page, column, top, text, *, start=False, heading=False):
@@ -12,6 +12,9 @@ def row(page, column, top, text, *, start=False, heading=False):
         "top": float(top),
         "bottom": float(top + 10),
         "text": text,
+        "match_text": text.casefold(),
+        "left": 100.0,
+        "right": 500.0,
         "baseline": start,
         "chapter_heading": heading,
         "ocr_reaches_left": start,
@@ -36,6 +39,19 @@ class ArticleGroupingTests(unittest.TestCase):
         ])
         self.assertEqual(unattached, [])
         self.assertEqual(headings, [])
+
+    def test_overlapping_tesseract_fragments_become_one_article_start(self):
+        suffix = row(29, 2, 494, "-en s. mus. vard. embouchyr", start=True)
+        suffix["left"] = 1450.0
+        suffix["bottom"] = 548.0
+        headword = row(29, 2, 500, "ambis", start=True)
+        headword["left"] = 1380.0
+        headword["bottom"] = 545.0
+        merged = merge_overlapping_rows([suffix, headword])
+        self.assertEqual(len(merged), 1)
+        self.assertEqual(merged[0]["text"], "ambis -en s. mus. vard. embouchyr")
+        articles, _unattached, _headings = group_articles([suffix, headword])
+        self.assertEqual(len(articles), 1)
 
     def test_heading_is_excluded_and_resets_article(self):
         rows = [
