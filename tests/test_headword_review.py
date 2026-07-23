@@ -14,6 +14,7 @@ class HeadwordReviewTests(unittest.TestCase):
     def test_extracts_headword_from_runeberg_stem_boundary(self):
         self.assertEqual(raw_headword("amöb|a (-ö'-) -an -or s."), "amöba")
         self.assertEqual(raw_headword("alabaster (-ast'-) -n s."), "alabaster")
+        self.assertEqual(raw_headword("^aga ei. åga s. i uttr."), "aga")
 
     def test_monotonic_secondary_alignment_uses_rest_of_line(self):
         items = [
