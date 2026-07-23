@@ -54,6 +54,8 @@ class HeadwordReviewTests(unittest.TestCase):
                 "homonym": 2,
                 "homonym_marker_detected": True,
                 "runeberg_headword": "ampel",
+                "runeberg_stem_headword": "amp|el",
+                "stem_headword": "amploel amplel",
                 "reasons": ["låg OCR-säkerhet (50)"],
                 "status": "osäker",
                 "corrected_from": "",
@@ -65,6 +67,8 @@ class HeadwordReviewTests(unittest.TestCase):
         infer_homonym_runs(items)
         self.assertEqual([item["headword"] for item in items], ["ampel", "ampel"])
         self.assertEqual([item["homonym"] for item in items], [1, 2])
+        self.assertEqual(items[1]["stem_headword"], "amp|el")
+        self.assertEqual(items[1]["correction_method"], "angränsande homonym")
         self.assertTrue(items[0]["homonym_inferred"])
 
     def test_repairs_aa_to_grave_accent_when_neighbours_prove_it(self):
