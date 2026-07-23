@@ -353,8 +353,52 @@ def _rows_from_lines(
     return rows
 
 
+def _ocr_band_ranges(
+    height: int, core_height: int = 480, padding: int = 100
+) -> list[tuple[int, int, int, int]]:
+    """Return (crop_top, crop_bottom, core_top, core_bottom) OCR bands."""
+    return [
+        (
+            max(0, core_top - padding),
+            min(height, min(height, core_top + core_height) + padding),
+            core_top,
+            min(height, core_top + core_height),
+        )
+        for core_top in range(0, height, core_height)
+    ]
+
+
+def _extract_column_observations_by_bands(
+    module, image: Image.Image, left: int, right: int
+) -> list:
+    """OCR a tall column in padded bands without duplicating overlap tokens."""
+    observations = []
+    height = image.height
+    for crop_top, crop_bottom, core_top, core_bottom in _ocr_band_ranges(
+        height
+    ):
+        crop = image.crop((left, crop_top, right, crop_bottom))
+        buffer = io.BytesIO()
+        crop.save(buffer, format="PNG")
+        for item in module.extract_observations(buffer.getvalue()):
+            global_top = item.top + crop_top
+            centre = global_top + item.height / 2
+            in_core = core_top <= centre < core_bottom
+            if core_bottom == height:
+                in_core = core_top <= centre <= core_bottom
+            if in_core:
+                observations.append(
+                    replace(
+                        item,
+                        left=item.left + left,
+                        top=global_top,
+                    )
+                )
+    return observations
+
+
 def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict]:
-    cache_file = cache_dir / f"page-{page:04d}-columns-v13.json"
+    cache_file = cache_dir / f"page-{page:04d}-columns-v14.json"
     image_file = cache_dir / f"page-{page:04d}-deskewed.png"
     if cache_file.exists() and image_file.exists() and not refresh:
         return json.loads(cache_file.read_text(encoding="utf-8"))
@@ -390,12 +434,10 @@ def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict
             else width / 2
         )
         for left, right in ((0, split), (split, width)):
-            crop = image.crop((left, 0, right, height))
-            buffer = io.BytesIO()
-            crop.save(buffer, format="PNG")
             observations.extend(
-                replace(item, left=item.left + left)
-                for item in module.extract_observations(buffer.getvalue())
+                _extract_column_observations_by_bands(
+                    module, image, left, right
+                )
             )
     # The review UI deliberately starts below the detected physical rule. For
     # training data, losing a real row is worse than retaining harmless header
