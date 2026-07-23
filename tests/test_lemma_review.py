@@ -65,9 +65,17 @@ class LemmaReviewTests(unittest.TestCase):
                                 token("-er", 360, 0.10),
                                 token("ss.", 420, 0.10),
                                 token("affärslangelägenhet", 500, 0.10),
-                                token("-anställd", 800, 0.10),
                             ],
-                        }
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("-anställd", 140, 0.10),
+                            ],
+                        },
                     ],
                 }
             ],
