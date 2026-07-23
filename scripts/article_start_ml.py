@@ -449,10 +449,19 @@ def label_rows(
                 if score < minimum_score
             ]
             mean_score = statistics.fmean(score for _row, _word, score in matches)
+            weak_have_left_ink = all(
+                selected[matches[index][0]].get("pixel_reaches_left", False)
+                for index in weak_indices
+            )
             accepted = not weak_indices or (
-                len(weak_indices) == 1
-                and 0 < weak_indices[0] < len(matches) - 1
-                and mean_score >= 0.90
+                mean_score >= 0.90
+                and (
+                    (
+                        len(weak_indices) == 1
+                        and 0 < weak_indices[0] < len(matches) - 1
+                    )
+                    or weak_have_left_ink
+                )
             )
             if not accepted:
                 for row in selected:
