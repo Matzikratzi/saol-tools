@@ -50,6 +50,22 @@ class GroundTruthTests(unittest.TestCase):
         self.assertEqual([index for index, _word, _score in matches], [1, 3])
         self.assertTrue(all(score > 0.7 for _index, _word, score in matches))
 
+    def test_alignment_prefers_left_ink_over_similar_continuation_word(self):
+        rows = [
+            {
+                "match_text": "akt s 1 et er",
+                "pixel_reaches_left": True,
+                "ocr_reaches_left": False,
+            },
+            {
+                "match_text": "orgel abstraktion ksjön",
+                "pixel_reaches_left": False,
+                "ocr_reaches_left": False,
+            },
+        ]
+        matches = align_truth(["abstrakt"], rows)
+        self.assertEqual(matches[0][0], 0)
+
     def test_models_use_leave_one_page_out_predictions(self):
         rows = []
         for page in (19, 20, 21, 22):
