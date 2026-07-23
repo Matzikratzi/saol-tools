@@ -201,6 +201,11 @@ def extract_heads(
             item["corrected_from"] = item["headword"]
             item["correction_method"] = "manuell korrektionsfil"
             item["headword"] = corrected
+            item["reasons"] = [
+                reason for reason in item["reasons"]
+                if not reason.startswith("låg OCR-säkerhet")
+            ]
+            item["status"] = "osäker" if item["reasons"] else "preliminär"
     infer_homonym_runs(result)
     return result
 
@@ -253,6 +258,17 @@ def main() -> None:
     if not args.no_runeberg:
         print("Matchar mot Runebergs parallella OCR ...", flush=True)
         fetch_and_enrich(items)
+        for item in items:
+            corrected = corrections.get(item["headword"])
+            if corrected:
+                item["corrected_from"] = item["headword"]
+                item["correction_method"] = "manuell korrektionsfil"
+                item["headword"] = corrected
+                item["reasons"] = [
+                    reason for reason in item["reasons"]
+                    if not reason.startswith("låg OCR-säkerhet")
+                ]
+                item["status"] = "osäker" if item["reasons"] else "preliminär"
         infer_homonym_runs(items)
     output = {"article_count": len(items), "headwords": items}
     args.json.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
