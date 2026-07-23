@@ -43,22 +43,39 @@ def swedish_sort_key(value: str) -> tuple[int, ...]:
 
 
 def repair_alphabetic_accents(items: list[dict]) -> None:
-    """Repair OCR accents only when the neighbouring article order proves it."""
-    for index in range(1, len(items) - 1):
-        original = items[index]["headword"]
-        if not original.startswith("å "):
+    """Repair OCR accents only when the surrounding article order proves it."""
+    index = 1
+    while index < len(items) - 1:
+        if not items[index]["headword"].startswith("å "):
+            index += 1
             continue
-        candidate = "à " + original[2:]
+        end = index
+        while end < len(items) and items[end]["headword"].startswith("å "):
+            end += 1
+        if end >= len(items):
+            break
+        originals = [items[position]["headword"] for position in range(index, end)]
+        candidates = ["à " + value[2:] for value in originals]
         previous_key = swedish_sort_key(items[index - 1]["headword"])
-        original_key = swedish_sort_key(original)
-        candidate_key = swedish_sort_key(candidate)
-        following_key = swedish_sort_key(items[index + 1]["headword"])
-        original_fits = previous_key <= original_key <= following_key
-        candidate_fits = previous_key <= candidate_key <= following_key
-        if candidate_fits and not original_fits:
-            items[index]["corrected_from"] = original
-            items[index]["correction_method"] = "alfabetisk ordning"
-            items[index]["headword"] = candidate
+        following_key = swedish_sort_key(items[end]["headword"])
+        original_keys = [swedish_sort_key(value) for value in originals]
+        candidate_keys = [swedish_sort_key(value) for value in candidates]
+        originals_fit = (
+            previous_key <= original_keys[0]
+            and original_keys == sorted(original_keys)
+            and original_keys[-1] <= following_key
+        )
+        candidates_fit = (
+            previous_key <= candidate_keys[0]
+            and candidate_keys == sorted(candidate_keys)
+            and candidate_keys[-1] <= following_key
+        )
+        if candidates_fit and not originals_fit:
+            for position, candidate in zip(range(index, end), candidates):
+                items[position]["corrected_from"] = items[position]["headword"]
+                items[position]["correction_method"] = "alfabetisk ordning"
+                items[position]["headword"] = candidate
+        index = end
 
 
 def extract_head(article: dict) -> dict:
