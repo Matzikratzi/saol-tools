@@ -249,8 +249,16 @@ def _rows_from_lines(
                 )
             # Tesseracts ordboxar kan innehålla luft och nå över T trots att
             # inget tryckt tecken gör det (t.ex. raden "som" under amfibie).
-            # Klassificera därför från de faktiska pixlarna i H–T-fönstret.
-            baseline = not chapter_heading and pixel_reaches_left
+            # Pixlarna är därför huvudsignalen. Ett mycket smalt undantag för
+            # en bokstavsstart precis efter T hanterar avrundningsfallet
+            # "abstinens" utan att acceptera boxar som börjar på fel sida.
+            near_threshold_ocr = (
+                ocr_reaches_left
+                and 0.0 <= letter_x - threshold_x <= threshold_tolerance
+            )
+            baseline = not chapter_heading and (
+                pixel_reaches_left or near_threshold_ocr
+            )
             rows.append(
                 {
                     "page": page,
@@ -302,7 +310,7 @@ def _rows_from_lines(
 
 
 def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict]:
-    cache_file = cache_dir / f"page-{page:04d}-columns-v10.json"
+    cache_file = cache_dir / f"page-{page:04d}-columns-v11.json"
     if cache_file.exists() and not refresh:
         return json.loads(cache_file.read_text(encoding="utf-8"))
 
