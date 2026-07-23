@@ -36,6 +36,14 @@ def expand_compound(base: str, suffix: str) -> str:
     return normalize_lemma(base + suffix[1:])
 
 
+def suffix_base(value: str) -> str:
+    """Return the repeatable stem before SAOL's vertical boundary marker."""
+    for marker in ("|", "¦"):
+        if marker in value:
+            return normalize_lemma(value.split(marker, 1)[0])
+    return normalize_lemma(value)
+
+
 def _token_score(token: dict, ordinary: float, bold: float) -> float:
     density = float(token.get("ink_density", 0.0))
     span = max(0.005, bold - ordinary)
@@ -143,7 +151,9 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
 
     for article in articles_payload["articles"]:
         head = heads[article["number"]]
-        current_base = head["headword"]
+        current_base = suffix_base(
+            head.get("stem_headword", head["headword"])
+        )
         first_line = article["lines"][0]
         head_tokens = sorted(first_line.get("tokens", []), key=lambda token: token["left"])
         head_token = next(
@@ -200,14 +210,15 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     at_line_start = False
                     continue
                 plausible_position = previous_separator or at_line_start
-                if plausible_position and score >= 0.35:
+                clearly_semibold = score >= 0.70
+                if (plausible_position and score >= 0.35) or clearly_semibold:
                     lemma = normalize_lemma(cleaned)
                     if lemma and lemma not in POS:
                         add(
                             article, lemma, cleaned, "halvfet token",
                             score, line=line, token=token
                         )
-                        current_base = lemma
+                        current_base = suffix_base(cleaned)
                 previous_separator = False
                 at_line_start = False
     return result
