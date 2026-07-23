@@ -6,6 +6,7 @@ from pathlib import Path
 
 from scripts.article_start_ml import (
     FEATURE_NAMES,
+    _is_chapter_heading,
     _slanted_geometry,
     align_truth,
     compare_models,
@@ -86,6 +87,12 @@ class GroundTruthTests(unittest.TestCase):
         self.assertAlmostEqual(slope, 0.02, places=3)
         self.assertIsNotNone(haf)
         self.assertAlmostEqual(haf[2] - haf[1], 40.0, places=1)
+
+    def test_large_uppercase_lowercase_pair_is_chapter_heading(self):
+        self.assertTrue(_is_chapter_heading("Aa", 100.0, 50.0))
+        self.assertTrue(_is_chapter_heading("Öö", 90.0, 50.0))
+        self.assertFalse(_is_chapter_heading("Aa", 60.0, 50.0))
+        self.assertFalse(_is_chapter_heading("Ab", 100.0, 50.0))
 
 
 if __name__ == "__main__":
