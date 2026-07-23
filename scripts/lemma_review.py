@@ -60,6 +60,28 @@ def suffix_base(value: str) -> str:
     return normalize_lemma(value)
 
 
+def infer_boundary_from_repeated_suffix(
+    value: str, following_tokens: list[dict]
+) -> str:
+    """Recover a | misread as l when a later dash repeats the printed tail."""
+    normalized = normalize_lemma(value)
+    suffixes = {
+        normalize_lemma(
+            token["text"].strip().strip(";,:.()[]{}")[1:]
+        )
+        for token in following_tokens
+        if token["text"].strip().strip(";,:.()[]{}").startswith("-")
+    }
+    for index, character in enumerate(normalized):
+        if character not in "li1":
+            continue
+        base = normalized[:index]
+        tail = normalized[index + 1 :]
+        if len(base) >= 3 and tail in suffixes:
+            return base + "|" + tail
+    return ""
+
+
 def infer_compound_series_boundary(
     value: str, article_head: str, next_suffix: str
 ) -> str:
@@ -136,7 +158,8 @@ def remove_alphabetic_family_outliers(
         by_article.setdefault(item["article_number"], []).append(item)
     rejected_ids = set()
     for article_number, article_items in by_article.items():
-        family = normalize_lemma(heads[article_number]["headword"])
+        headword = normalize_lemma(heads[article_number]["headword"])
+        family = headword[:-1] if len(headword) > 5 else headword
         for index, item in enumerate(article_items):
             lemma = normalize_lemma(item["lemma"])
             if item["method"] == "artikelhuvud" or lemma.startswith(family):
@@ -274,17 +297,22 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     continue
                 score = _token_score(token, ordinary, bold)
                 cleaned = raw.strip(";,:.()[]{}")
+                following_tokens = list(tokens[token_index + 1 :])
+                for following_line in article["lines"][line_index + 1 :]:
+                    following_tokens.extend(
+                        sorted(
+                            following_line.get("tokens", []),
+                            key=lambda candidate: candidate["left"],
+                        )
+                    )
+                repeated_boundary = infer_boundary_from_repeated_suffix(
+                    cleaned, following_tokens
+                )
+                if repeated_boundary:
+                    cleaned = repeated_boundary
                 series_position = line_index == 0 and at_line_start
                 inferred = ""
                 if series_position:
-                    following_tokens = list(tokens[token_index + 1 :])
-                    for following_line in article["lines"][line_index + 1 :]:
-                        following_tokens.extend(
-                            sorted(
-                                following_line.get("tokens", []),
-                                key=lambda candidate: candidate["left"],
-                            )
-                        )
                     next_suffix = next(
                         (
                             candidate["text"].strip().strip(";,:.()[]{}")[1:]
