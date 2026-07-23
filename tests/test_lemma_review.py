@@ -1271,6 +1271,81 @@ class LemmaReviewTests(unittest.TestCase):
         self.assertEqual(candidates[1]["source_page"], 23)
         self.assertEqual(candidates[1]["source_column"], 1)
 
+    def test_present_form_in_definition_is_not_a_new_lemma(self):
+        self.assertTrue(inflection_of_previous("affischera", "affischer"))
+        self.assertFalse(inflection_of_previous("affischera", "affischering"))
+
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("affisch", 100, 0.40),
+                                token("-en", 250, 0.10),
+                                token("-er", 330, 0.10),
+                                token("s.", 410, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("—", 100, 0.10),
+                                token("affischer|a", 150, 0.20),
+                                token("-ade", 360, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 180.0,
+                            "bottom": 204.0,
+                            "tokens": [
+                                token("v.", 100, 0.10),
+                                token("sätta", 170, 0.10),
+                                token("upp", 280, 0.10),
+                                token("affischer", 360, 0.20),
+                                token("-ing", 560, 0.20),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 220.0,
+                            "bottom": 244.0,
+                            "tokens": [token("s.", 100, 0.10)],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "affisch",
+                    "stem_headword": "affisch",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["affisch", "affischera", "affischering"],
+        )
+
     def test_review_facit_marks_matches_and_detects_changes(self):
         items = [
             {
