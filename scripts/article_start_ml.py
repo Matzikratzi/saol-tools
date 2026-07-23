@@ -19,6 +19,7 @@ import json
 import math
 import re
 import statistics
+from dataclasses import replace
 from pathlib import Path
 from typing import Iterable
 
@@ -193,7 +194,7 @@ def _rows_from_lines(lines, models, width: int, height: int, page: int) -> list[
 
 
 def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict]:
-    cache_file = cache_dir / f"page-{page:04d}.json"
+    cache_file = cache_dir / f"page-{page:04d}-columns-v2.json"
     if cache_file.exists() and not refresh:
         return json.loads(cache_file.read_text(encoding="utf-8"))
 
@@ -213,14 +214,25 @@ def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict
     image_response.raise_for_status()
     initial = module.extract_observations(image_response.content)
     deskewed, angle = module._deskew_image(image_response.content, initial)
-    observations = (
-        module.extract_observations(deskewed)
-        if deskewed is not image_response.content
-        else initial
-    )
-    corrected = module.reconcile_contextual_observations(observations, source_response.text)
+    # Tesseract --psm 6 occasionally joins both columns and can even leak TSV
+    # fields into a token. OCR each deskewed column independently instead.
+    observations = []
     with Image.open(io.BytesIO(deskewed)) as image:
         width, height = image.size
+        split = round(
+            debug._COLUMN_SPLIT_X
+            if debug._COLUMN_SPLIT_X is not None
+            else width / 2
+        )
+        for left, right in ((0, split), (split, width)):
+            crop = image.crop((left, 0, right, height))
+            buffer = io.BytesIO()
+            crop.save(buffer, format="PNG")
+            observations.extend(
+                replace(item, left=item.left + left)
+                for item in module.extract_observations(buffer.getvalue())
+            )
+    corrected = module.reconcile_contextual_observations(observations, source_response.text)
     lines, models = module._build_lines(corrected, width, height)
     rows = _rows_from_lines(lines, models, width, height, page)
     for row in rows:
@@ -288,20 +300,29 @@ def align_truth(words: list[str], rows: list[dict]) -> list[tuple[int, str, floa
 
 
 def label_rows(
-    all_rows: list[dict], truth: dict[int, dict[int, list[str]]]
+    all_rows: list[dict],
+    truth: dict[int, dict[int, list[str]]],
+    minimum_score: float = 0.72,
 ) -> tuple[list[dict], list[dict]]:
     diagnostics = []
     for row in all_rows:
         row["label"] = 0
         row["facit_word"] = ""
         row["match_score"] = 0.0
+        row["usable"] = True
     for page, columns in truth.items():
         for column, words in columns.items():
             selected = [
                 row for row in all_rows if row["page"] == page and row["column"] == column
             ]
-            for index, word, score in align_truth(words, selected):
-                selected[index]["label"] = 1
+            matches = align_truth(words, selected)
+            accepted = all(score >= minimum_score for _index, _word, score in matches)
+            if not accepted:
+                for row in selected:
+                    row["usable"] = False
+            for index, word, score in matches:
+                if accepted:
+                    selected[index]["label"] = 1
                 selected[index]["facit_word"] = word
                 selected[index]["match_score"] = score
                 diagnostics.append(
@@ -311,6 +332,7 @@ def label_rows(
                         "word": word,
                         "ocr": selected[index]["text"],
                         "score": score,
+                        "accepted": accepted,
                     }
                 )
     return all_rows, diagnostics
@@ -333,9 +355,12 @@ def compare_models(rows: list[dict]) -> tuple[dict[str, dict], list[dict]]:
     from sklearn.pipeline import make_pipeline
     from sklearn.preprocessing import StandardScaler
 
+    rows = [row for row in rows if row.get("usable", True)]
     labels = np.asarray([row["label"] for row in rows], dtype=int)
     features = np.asarray([row["features"] for row in rows], dtype=float)
     pages = sorted({row["page"] for row in rows})
+    if len(pages) < 2:
+        raise ValueError("För få fullt matchade facitsidor för sidvis korsvalidering")
     predictions = {
         "T-regel": np.asarray([row["baseline"] for row in rows], dtype=bool),
         "Logistisk regression": np.zeros(len(rows), dtype=bool),
@@ -428,7 +453,7 @@ def _report_html(results: dict[str, dict], rows: list[dict], alignment: list[dic
                 probability.get("Gradient boosting", math.nan),
             )
         )
-    weak = [item for item in alignment if item["score"] < 0.72]
+    weak = [item for item in alignment if not item["accepted"]]
     weak_rows = "".join(
         "<tr><td>%d</td><td>%d</td><td>%s</td><td>%s</td><td>%.3f</td></tr>"
         % (
@@ -472,8 +497,10 @@ def main() -> None:
         print(f"OCR sida {page} ...", flush=True)
         rows.extend(extract_page(page, args.cache_dir, args.refresh))
     rows, alignment = label_rows(rows, selected_truth)
-    weak = [item for item in alignment if item["score"] < 0.72]
-    print(f"Rader: {len(rows)}, artikelstarter i facit: {sum(row['label'] for row in rows)}")
+    weak = [item for item in alignment if not item["accepted"]]
+    usable = [row for row in rows if row["usable"]]
+    print(f"Rader: {len(rows)}, användbara efter facitmatchning: {len(usable)}")
+    print(f"Artikelstarter i användbart facit: {sum(row['label'] for row in usable)}")
     print(f"Osäkra facit–OCR-matchningar (<0,72): {len(weak)}")
     results, details = compare_models(rows)
     for name, values in results.items():
