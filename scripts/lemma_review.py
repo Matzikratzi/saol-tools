@@ -99,6 +99,21 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
             reasons.append("svag halvfetssignal")
         if len(lemma) == 1 and method != "artikelhuvud":
             reasons.append("ovanligt kort kandidat")
+        source_line = line or {}
+        source_token = token or {}
+        source_left = float(source_token.get("left", 0.0))
+        source_top = float(
+            source_token.get(
+                "top", source_line.get("top", article.get("start_y", 0.0))
+            )
+        )
+        source_width = float(source_token.get("width", 0.0))
+        line_height = max(
+            1.0,
+            float(source_line.get("bottom", source_top + 1.0))
+            - float(source_line.get("top", source_top)),
+        )
+        source_height = float(source_token.get("height", line_height))
         result.append(
             {
                 "article_number": article["number"],
@@ -111,23 +126,17 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 "bold_score": score,
                 "status": "osäker" if reasons else "kandidat",
                 "reasons": reasons,
-                "source_page": int((line or {}).get("page", article["start_page"])),
-                "source_column": int((line or {}).get("column", article["start_column"])),
-                "source_left": float((token or {}).get("left", 0.0)),
-                "source_top": float((token or {}).get("top", (line or {}).get("top", article.get("start_y", 0.0)))),
+                "source_page": int(source_line.get("page", article["start_page"])),
+                "source_column": int(
+                    source_line.get("column", article["start_column"])
+                ),
+                "source_left": source_left,
+                "source_top": source_top,
                 "source_right": float(
-                    (token or {}).get(
-                        "right",
-                        float((token or {}).get("left", 0.0))
-                        + float((token or {}).get("width", 0.0)),
-                    )
+                    source_token.get("right", source_left + source_width)
                 ),
                 "source_bottom": float(
-                    (token or {}).get(
-                        "bottom",
-                        float((token or {}).get("top", (line or {}).get("top", 0.0)))
-                        + float((token or {}).get("height", max(1.0, float((line or {}).get("bottom", 1.0)) - float((line or {}).get("top", 0.0)))),
-                    )
+                    source_token.get("bottom", source_top + source_height)
                 ),
             }
         )
