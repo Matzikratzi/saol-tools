@@ -104,6 +104,58 @@ class LemmaReviewTests(unittest.TestCase):
             inflection_of_previous("afrodisiakum", "afrodisiakum")
         )
 
+    def test_weak_line_start_definition_is_not_a_lemma(self):
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("afrodisiak|um", 100, 0.40),
+                                token("-umet", 300, 0.10),
+                                token("s.", 370, 0.10),
+                                token("medel", 430, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("mest", 140, 0.229),
+                                token("förklarande", 250, 0.10),
+                                token("text", 430, 0.10),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "afrodisiakum",
+                    "stem_headword": "afrodisiak|um",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["afrodisiakum"],
+        )
+
     def test_stem_suffix_inflection_is_not_a_lemma(self):
         articles = {
             "pages": [23],
