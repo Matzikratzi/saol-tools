@@ -472,21 +472,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     or series_first
                 ):
                     lemma = normalize_lemma(cleaned)
-                    if (
-                        lemma
-                        and lemma not in POS
-                        and len(lemma) > 1
-                        and (
-                            has_stem_boundary
-                            or not any(
-                                inflection_of_previous(base, lemma)
-                                for base in (
-                                    last_lookup_lemma,
-                                    current_head,
-                                )
-                            )
-                        )
-                    ):
+                    if lemma and lemma not in POS and len(lemma) > 1:
                         add(
                             article, lemma, cleaned, "halvfet token",
                             score, line=line, token=token
