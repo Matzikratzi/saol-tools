@@ -180,9 +180,19 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 tokens = _after_inflection_prefix(tokens)
             previous_separator = False
             at_line_start = True
+            parenthesis_depth = 0
             for token in tokens:
                 raw = token["text"].strip()
                 if not raw:
+                    continue
+                opens = raw.count("(")
+                closes = raw.count(")")
+                pronunciation_token = parenthesis_depth > 0 or opens > 0
+                parenthesis_depth = max(
+                    0, parenthesis_depth + opens - closes
+                )
+                if pronunciation_token:
+                    previous_separator = False
                     continue
                 if raw in {"—", "–", "--"}:
                     previous_separator = True
