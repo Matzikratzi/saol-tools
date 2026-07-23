@@ -151,9 +151,13 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
 
     for article in articles_payload["articles"]:
         head = heads[article["number"]]
-        current_base = suffix_base(
-            head.get("stem_headword", head["headword"])
+        structured_head = head.get("stem_headword", "")
+        current_head = (
+            normalize_lemma(structured_head)
+            if "|" in structured_head or "¦" in structured_head
+            else head["headword"]
         )
+        current_base = suffix_base(structured_head or current_head)
         first_line = article["lines"][0]
         head_tokens = sorted(first_line.get("tokens", []), key=lambda token: token["left"])
         head_token = next(
@@ -166,11 +170,11 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
         )
         add(
             article,
-            current_base,
-            head.get("raw_headword", current_base),
+            current_head,
+            head.get("raw_headword", current_head),
             "artikelhuvud",
             1.0,
-            head.get("stem_headword", current_base),
+            structured_head or current_head,
             first_line,
             head_token,
         )
@@ -251,6 +255,39 @@ def _review_font(size: int = 28):
     return ImageFont.load_default()
 
 
+def _items_in_reading_order(items: list[dict]) -> list[dict]:
+    """Group slightly uneven OCR boxes into printed rows, then read left to right."""
+    rows: list[list[dict]] = []
+    for item in sorted(
+        items,
+        key=lambda value: (
+            (value["source_top"] + value["source_bottom"]) / 2,
+            value["source_left"],
+        ),
+    ):
+        centre = (item["source_top"] + item["source_bottom"]) / 2
+        height = max(1.0, item["source_bottom"] - item["source_top"])
+        if rows:
+            previous_centres = [
+                (value["source_top"] + value["source_bottom"]) / 2
+                for value in rows[-1]
+            ]
+            previous_height = max(
+                max(1.0, value["source_bottom"] - value["source_top"])
+                for value in rows[-1]
+            )
+            row_centre = statistics.median(previous_centres)
+            if abs(centre - row_centre) <= max(height, previous_height) * 0.55:
+                rows[-1].append(item)
+                continue
+        rows.append([item])
+    return [
+        item
+        for row in rows
+        for item in sorted(row, key=lambda value: value["source_left"])
+    ]
+
+
 def render_review_images(
     items: list[dict], pages: list[int], cache_dir: Path, image_dir: Path
 ) -> list[Path]:
@@ -272,13 +309,12 @@ def render_review_images(
             canvas = Image.new("RGB", (crop.width + margin, crop.height), "white")
             canvas.paste(crop, (margin, 0))
             draw = ImageDraw.Draw(canvas)
-            column_items = sorted(
-                (
+            column_items = _items_in_reading_order(
+                [
                     item
                     for item in page_items
                     if item["source_column"] == column
-                ),
-                key=lambda item: (item["source_top"], item["source_left"]),
+                ]
             )
             last_label_y = -100
             for item in column_items:
