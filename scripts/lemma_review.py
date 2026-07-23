@@ -312,8 +312,8 @@ def _review_font(size: int = 28):
     return ImageFont.load_default()
 
 
-def _items_in_reading_order(items: list[dict]) -> list[dict]:
-    """Group slightly uneven OCR boxes into printed rows, then read left to right."""
+def _items_by_printed_row(items: list[dict]) -> list[list[dict]]:
+    """Group slightly uneven OCR boxes into physical printed rows."""
     rows: list[list[dict]] = []
     for item in sorted(
         items,
@@ -339,19 +339,27 @@ def _items_in_reading_order(items: list[dict]) -> list[dict]:
                 continue
         rows.append([item])
     return [
-        item
+        sorted(row, key=lambda value: value["source_left"])
         for row in rows
-        for item in sorted(row, key=lambda value: value["source_left"])
+    ]
+
+
+def _items_in_reading_order(items: list[dict]) -> list[dict]:
+    return [
+        item
+        for row in _items_by_printed_row(items)
+        for item in row
     ]
 
 
 def render_review_images(
     items: list[dict], pages: list[int], cache_dir: Path, image_dir: Path
 ) -> list[Path]:
-    """Render each printed column beside labels aligned to their source rows."""
+    """Render candidate rows beside the same physical rows in the facsimile."""
     image_dir.mkdir(parents=True, exist_ok=True)
     font = _review_font()
     outputs = []
+    separator = "  ·  "
     for page in pages:
         source = cache_dir / f"page-{page:04d}-deskewed.png"
         if not source.exists():
@@ -362,39 +370,88 @@ def render_review_images(
         page_items = [item for item in items if item["source_page"] == page]
         for column, (left, right) in enumerate(((0, split), (split, image.width)), 1):
             crop = image.crop((left, 0, right, image.height))
-            margin = max(460, crop.width // 3)
-            canvas = Image.new("RGB", (crop.width + margin, crop.height), "white")
-            canvas.paste(crop, (margin, 0))
-            draw = ImageDraw.Draw(canvas)
-            column_items = _items_in_reading_order(
+            column_rows = _items_by_printed_row(
                 [
                     item
                     for item in page_items
                     if item["source_column"] == column
                 ]
             )
+            measuring = ImageDraw.Draw(Image.new("RGB", (1, 1), "white"))
+            separator_box = measuring.textbbox((0, 0), separator, font=font)
+            separator_width = separator_box[2] - separator_box[0]
+            row_widths = []
+            for row in column_rows:
+                widths = [
+                    measuring.textbbox((0, 0), item["lemma"], font=font)[2]
+                    for item in row
+                ]
+                row_widths.append(
+                    sum(widths) + separator_width * max(0, len(widths) - 1)
+                )
+            margin = max(460, crop.width // 3, max(row_widths, default=0) + 40)
+            canvas = Image.new("RGB", (crop.width + margin, crop.height), "white")
+            canvas.paste(crop, (margin, 0))
+            draw = ImageDraw.Draw(canvas)
             last_label_y = -100
-            for item in column_items:
-                source_y = int((item["source_top"] + item["source_bottom"]) / 2)
+            for row, row_width in zip(column_rows, row_widths):
+                source_y = int(
+                    statistics.median(
+                        (item["source_top"] + item["source_bottom"]) / 2
+                        for item in row
+                    )
+                )
                 label_y = max(source_y - 15, last_label_y + 34)
                 label_y = min(label_y, canvas.height - 34)
                 last_label_y = label_y
-                color = "#c62828" if item["status"] == "osäker" else "#00695c"
-                source_x = margin + int(max(0, item["source_right"] - left))
-                label_right = margin - 18
-                text_box = draw.textbbox((0, 0), item["lemma"], font=font)
-                text_width = text_box[2] - text_box[0]
-                label_x = max(8, label_right - text_width)
-                draw.line(
-                    (label_right + 6, label_y + 14, source_x, source_y),
-                    fill=color,
-                    width=3,
-                )
-                draw.ellipse(
-                    (source_x - 4, source_y - 4, source_x + 4, source_y + 4),
-                    fill=color,
-                )
-                draw.text((label_x, label_y), item["lemma"], font=font, fill=color)
+                label_x = max(8, margin - 18 - row_width)
+                for index, item in enumerate(row):
+                    color = (
+                        "#c62828"
+                        if item["status"] == "osäker"
+                        else "#00695c"
+                    )
+                    text_box = draw.textbbox(
+                        (0, 0), item["lemma"], font=font
+                    )
+                    text_width = text_box[2] - text_box[0]
+                    source_x = margin + int(
+                        max(0, item["source_right"] - left)
+                    )
+                    draw.line(
+                        (
+                            label_x + text_width / 2,
+                            label_y + 31,
+                            source_x,
+                            source_y,
+                        ),
+                        fill=color,
+                        width=2,
+                    )
+                    draw.ellipse(
+                        (
+                            source_x - 4,
+                            source_y - 4,
+                            source_x + 4,
+                            source_y + 4,
+                        ),
+                        fill=color,
+                    )
+                    draw.text(
+                        (label_x, label_y),
+                        item["lemma"],
+                        font=font,
+                        fill=color,
+                    )
+                    label_x += text_width
+                    if index < len(row) - 1:
+                        draw.text(
+                            (label_x, label_y),
+                            separator,
+                            font=font,
+                            fill="#777777",
+                        )
+                        label_x += separator_width
             output = image_dir / f"page-{page:04d}-column-{column}.png"
             canvas.save(output, format="PNG")
             outputs.append(output)
