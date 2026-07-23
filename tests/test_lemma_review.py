@@ -10,6 +10,7 @@ from scripts.lemma_review import (
     _items_by_printed_row,
     _items_in_reading_order,
     expand_compound,
+    infer_boundary_from_repeated_suffix,
     infer_compound_series_boundary,
     extract_candidates,
     normalize_lemma,
@@ -113,6 +114,105 @@ class LemmaReviewTests(unittest.TestCase):
 
     def test_expands_compound_suffix(self):
         self.assertEqual(expand_compound("akademi", "-medlem"), "akademimedlem")
+
+    def test_repeated_suffix_proves_l_is_a_boundary(self):
+        following = [
+            token("-n", 100, 0.10),
+            token("-iker", 200, 0.10),
+            token("-isk", 300, 0.10),
+        ]
+        self.assertEqual(
+            infer_boundary_from_repeated_suffix(
+                "aforistliker", following
+            ),
+            "aforist|iker",
+        )
+
+    def test_aforism_family_ignores_definition_and_changes_base(self):
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("aforism", 100, 0.40),
+                                token("s.", 250, 0.10),
+                                token("tänkespråk", 320, 0.10),
+                                token("vanlig", 450, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("-samling", 140, 0.40),
+                                token("—", 300, 0.10),
+                                token("aforistik", 350, 0.40),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 180.0,
+                            "bottom": 204.0,
+                            "tokens": [
+                                token("litteratur", 140, 0.10),
+                                token("i", 280, 0.40),
+                                token("form", 320, 0.10),
+                                token("av", 390, 0.40),
+                                token("aforismer", 450, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 220.0,
+                            "bottom": 244.0,
+                            "tokens": [
+                                token("aforistliker", 140, 0.40),
+                                token("(-ist'-)", 360, 0.00),
+                                token("-n", 480, 0.10),
+                                token("pl.", 530, 0.10),
+                                token("-iker", 590, 0.10),
+                                token("s.", 680, 0.10),
+                                token("-isk", 730, 0.40),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "aforism",
+                    "stem_headword": "aforism",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            [
+                "aforism",
+                "aforismsamling",
+                "aforistik",
+                "aforistiker",
+                "aforistisk",
+            ],
+        )
 
     def test_ocr_l_becomes_compound_boundary_when_order_proves_it(self):
         self.assertEqual(
