@@ -7,6 +7,7 @@ from pathlib import Path
 from PIL import Image
 
 from scripts.lemma_review import (
+    _items_in_reading_order,
     expand_compound,
     extract_candidates,
     normalize_lemma,
@@ -32,6 +33,56 @@ class LemmaReviewTests(unittest.TestCase):
 
     def test_expands_compound_suffix(self):
         self.assertEqual(expand_compound("akademi", "-medlem"), "akademimedlem")
+
+    def test_structured_head_repairs_ocr_headword(self):
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("affrikatla", 100, 0.40),
+                                token("s.", 300, 0.10),
+                                token("ord", 360, 0.10),
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "affrikat",
+                    "stem_headword": "affrikat|a",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(candidates[0]["lemma"], "affrikata")
+
+    def test_same_printed_row_is_ordered_left_to_right(self):
+        right = {
+            "source_top": 96.0,
+            "source_bottom": 120.0,
+            "source_left": 400.0,
+        }
+        left = {
+            "source_top": 100.0,
+            "source_bottom": 124.0,
+            "source_left": 100.0,
+        }
+        self.assertEqual(_items_in_reading_order([right, left]), [left, right])
 
     def test_vertical_bar_selects_stem_for_following_suffix(self):
         self.assertEqual(suffix_base("affirm|ation"), "affirm")
