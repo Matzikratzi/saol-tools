@@ -14,6 +14,8 @@ import re
 from pathlib import Path
 
 
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_CORRECTIONS = ROOT / "data" / "headword_corrections.json"
 MARKERS = set("'\"“”„`´¹²³⁴⁵⁶⁷⁸⁹")
 SUPERSCRIPT = {character: index for index, character in enumerate("¹²³⁴⁵⁶⁷⁸⁹", 1)}
 STOP_WORDS = {
@@ -130,7 +132,10 @@ def infer_homonym_runs(items: list[dict]) -> None:
         position = end
 
 
-def extract_heads(payload: dict) -> list[dict]:
+def extract_heads(
+    payload: dict, corrections: dict[str, str] | None = None
+) -> list[dict]:
+    corrections = corrections or {}
     result = []
     for article in payload["articles"]:
         item = {
@@ -141,6 +146,10 @@ def extract_heads(payload: dict) -> list[dict]:
             "homonym_inferred": False,
             **extract_head(article),
         }
+        corrected = corrections.get(item["headword"])
+        item["corrected_from"] = item["headword"] if corrected else ""
+        if corrected:
+            item["headword"] = corrected
         result.append(item)
     infer_homonym_runs(result)
     return result
@@ -149,7 +158,10 @@ def extract_heads(payload: dict) -> list[dict]:
 def report_html(items: list[dict]) -> str:
     rows = []
     for item in items:
-        reasons = "; ".join(item["reasons"]) or "—"
+        notes = list(item["reasons"])
+        if item.get("corrected_from"):
+            notes.append(f"manuellt OCR-rättad från {item['corrected_from']}")
+        reasons = "; ".join(notes) or "—"
         homonym = "—" if item["homonym"] is None else str(item["homonym"])
         css = "uncertain" if item["status"] == "osäker" else ""
         rows.append(
@@ -175,11 +187,13 @@ body{{font:15px system-ui;margin:24px;max-width:1500px}}table{{border-collapse:c
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--articles", type=Path, default=Path("article-text-review.json"))
+    parser.add_argument("--corrections", type=Path, default=DEFAULT_CORRECTIONS)
     parser.add_argument("--json", type=Path, default=Path("headword-review.json"))
     parser.add_argument("--report", type=Path, default=Path("headword-review.html"))
     args = parser.parse_args()
     payload = json.loads(args.articles.read_text(encoding="utf-8"))
-    items = extract_heads(payload)
+    corrections = json.loads(args.corrections.read_text(encoding="utf-8"))
+    items = extract_heads(payload, corrections)
     output = {"article_count": len(items), "headwords": items}
     args.json.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
     args.report.write_text(report_html(items), encoding="utf-8")
