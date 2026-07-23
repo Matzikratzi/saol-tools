@@ -13,6 +13,8 @@ import json
 import re
 from pathlib import Path
 
+from scripts.runeberg_headwords import fetch_and_enrich
+
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CORRECTIONS = ROOT / "data" / "headword_corrections.json"
@@ -238,12 +240,20 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--articles", type=Path, default=Path("article-text-review.json"))
     parser.add_argument("--corrections", type=Path, default=DEFAULT_CORRECTIONS)
+    parser.add_argument(
+        "--no-runeberg", action="store_true",
+        help="Hoppa över Runebergs parallella OCR",
+    )
     parser.add_argument("--json", type=Path, default=Path("headword-review.json"))
     parser.add_argument("--report", type=Path, default=Path("headword-review.html"))
     args = parser.parse_args()
     payload = json.loads(args.articles.read_text(encoding="utf-8"))
     corrections = json.loads(args.corrections.read_text(encoding="utf-8"))
     items = extract_heads(payload, corrections)
+    if not args.no_runeberg:
+        print("Matchar mot Runebergs parallella OCR ...", flush=True)
+        fetch_and_enrich(items)
+        infer_homonym_runs(items)
     output = {"article_count": len(items), "headwords": items}
     args.json.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
     args.report.write_text(report_html(items), encoding="utf-8")
