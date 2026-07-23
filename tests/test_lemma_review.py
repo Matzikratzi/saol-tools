@@ -18,6 +18,7 @@ from scripts.lemma_review import (
     infer_compound_series_boundary,
     infer_suffix_boundary_from_series,
     inflection_of_previous,
+    inflections_then_part_of_speech,
     merged_pos_inflection,
     extract_candidates,
     normalize_lemma,
@@ -284,6 +285,81 @@ class LemmaReviewTests(unittest.TestCase):
         self.assertEqual(
             [item["lemma"] for item in candidates],
             ["agg", "aggande"],
+        )
+
+    def test_aggregation_grammar_sets_base_for_following_compound(self):
+        grammar = [
+            token("-en", 100, 0.10),
+            token("-ers.", 200, 0.10),
+        ]
+        self.assertTrue(inflections_then_part_of_speech(grammar))
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("aggregat", 100, 0.46),
+                                token("-et", 300, 0.10),
+                                token("s.", 380, 0.10),
+                                token("enhet", 430, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("aggregation", 140, 0.20),
+                                token("-en", 400, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 180.0,
+                            "bottom": 204.0,
+                            "tokens": [
+                                token("-ers.", 140, 0.10),
+                                token("sammangyttring", 280, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 220.0,
+                            "bottom": 244.0,
+                            "tokens": [
+                                token("-s|tillstånd", 140, 0.20),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "aggregat",
+                    "stem_headword": "aggregat",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["aggregat", "aggregation", "aggregationstillstånd"],
         )
 
     def test_agentur_grammar_sets_base_for_following_compound(self):
