@@ -6,11 +6,19 @@ from pathlib import Path
 
 from scripts.article_start_ml import (
     FEATURE_NAMES,
+    _slanted_geometry,
     align_truth,
     compare_models,
     normalize_word,
     read_ground_truth,
 )
+
+
+class FakeLine:
+    def __init__(self, y: float, x: float):
+        self.top = y
+        self.bottom = y + 50
+        self.raw_start_x = x
 
 
 class GroundTruthTests(unittest.TestCase):
@@ -67,6 +75,17 @@ class GroundTruthTests(unittest.TestCase):
         self.assertEqual(results["T-regel"]["f1"], 1.0)
         self.assertGreater(results["Logistisk regression"]["f1"], 0.9)
         self.assertGreater(results["Gradient boosting"]["f1"], 0.9)
+
+    def test_slanted_geometry_recovers_parallel_a_and_f_levels(self):
+        lines = []
+        for index in range(30):
+            y = 200.0 + index * 70.0
+            base = 160.0 if index % 3 == 0 else 200.0
+            lines.append(FakeLine(y, base + 0.02 * y))
+        slope, _anchor, haf = _slanted_geometry(lines, 50.0, None)
+        self.assertAlmostEqual(slope, 0.02, places=3)
+        self.assertIsNotNone(haf)
+        self.assertAlmostEqual(haf[2] - haf[1], 40.0, places=1)
 
 
 if __name__ == "__main__":
