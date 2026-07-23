@@ -36,6 +36,14 @@ def expand_compound(base: str, suffix: str) -> str:
     return normalize_lemma(base + suffix[1:])
 
 
+def optional_parenthesis_variants(value: str) -> list[str]:
+    """Expand SAOL's optional ending, e.g. -värld(en), in reading order."""
+    match = re.match(r"^(.*)\(([^()]*)\)$", value)
+    if not match or not match.group(1) or not match.group(2):
+        return [value]
+    return [match.group(1), match.group(1) + match.group(2)]
+
+
 def repair_mixed_case_duplicate(value: str) -> str:
     """Collapse an OCR duplicate such as -mMässighet to -Mässighet."""
     match = re.match(r"^(-?)([a-zåäö])([A-ZÅÄÖ])(.*)$", value)
@@ -221,11 +229,13 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     continue
                 opens = raw.count("(")
                 closes = raw.count(")")
-                pronunciation_token = parenthesis_depth > 0 or opens > 0
-                parenthesis_depth = max(
-                    0, parenthesis_depth + opens - closes
+                pronunciation_token = (
+                    parenthesis_depth > 0 or raw.startswith("(")
                 )
                 if pronunciation_token:
+                    parenthesis_depth = max(
+                        0, parenthesis_depth + opens - closes
+                    )
                     previous_separator = False
                     continue
                 if raw in {"—", "–", "--"}:
@@ -265,16 +275,37 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     continue
                 if cleaned.startswith("-"):
                     repaired_suffix = repair_mixed_case_duplicate(cleaned)
-                    normalized_suffix = "-" + normalize_lemma(repaired_suffix[1:])
-                    if (
-                        normalized_suffix not in NON_LEMMA_SUFFIXES
-                        and len(normalized_suffix) > 2
-                    ):
-                        lemma = expand_compound(current_base, repaired_suffix)
-                        add(
-                            article, lemma, cleaned, "sammansättningssuffix",
-                            score, line=line, token=token
+                    suffix_variants = optional_parenthesis_variants(
+                        repaired_suffix
+                    )
+                    for suffix_variant in suffix_variants:
+                        normalized_suffix = (
+                            "-" + normalize_lemma(suffix_variant[1:])
                         )
+                        suffix_word = normalize_lemma(suffix_variant[1:])
+                        repeated_full_word = (
+                            suffix_word
+                            and normalize_lemma(current_base).endswith(
+                                suffix_word
+                            )
+                        )
+                        if (
+                            normalized_suffix not in NON_LEMMA_SUFFIXES
+                            and len(normalized_suffix) > 2
+                            and not repeated_full_word
+                        ):
+                            lemma = expand_compound(
+                                current_base, suffix_variant
+                            )
+                            add(
+                                article,
+                                lemma,
+                                cleaned,
+                                "sammansättningssuffix",
+                                score,
+                                line=line,
+                                token=token,
+                            )
                     previous_separator = False
                     at_line_start = False
                     continue
