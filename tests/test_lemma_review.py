@@ -93,6 +93,59 @@ class LemmaReviewTests(unittest.TestCase):
             ["affirmativ", "affirmation", "affirmera"],
         )
 
+    def test_pronunciation_parenthesis_is_not_a_suffix(self):
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("affisch", 100, 0.40),
+                                token("s.", 250, 0.10),
+                                token("vanlig", 320, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("affischör", 140, 0.40),
+                                token("(-ö'r)", 300, 0.00),
+                                token("s.", 420, 0.10),
+                                token("person", 480, 0.10),
+                                token("text", 560, 0.10),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "affisch",
+                    "stem_headword": "affisch",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["affisch", "affischör"],
+        )
+
     def test_extracts_semibold_word_and_compound_inside_article(self):
         articles = {
             "pages": [23],
