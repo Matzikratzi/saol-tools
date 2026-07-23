@@ -14,8 +14,12 @@ from PIL import Image, ImageDraw, ImageFont
 from scripts.article_start_ml import DEFAULT_CACHE, extract_page
 
 
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_FACIT = ROOT / "data" / "lemma_review_facit.json"
+
+
 POS = {"adj", "adv", "interj", "prep", "pron", "s", "v"}
-GRAMMAR_MARKERS = POS | {"best", "komp", "oböjl", "pl", "superl"}
+GRAMMAR_MARKERS = POS | {"best", "el", "eller", "komp", "oböjl", "pl", "superl", "äv"}
 NON_LEMMA_SUFFIXES = {
     "-a", "-ad", "-ade", "-an", "-ar", "-are", "-at", "-de", "-dde",
     "-e", "-en", "-er", "-et", "-la", "-na", "-n", "-or", "-r", "-ra", "-t",
@@ -635,12 +639,83 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
     return remove_alphabetic_family_outliers(result, heads)
 
 
+def facit_signature(item: dict) -> dict:
+    """Stable interpretation stored for one approved candidate."""
+    return {
+        "article_number": int(item["article_number"]),
+        "lemma": item["lemma"],
+    }
+
+
+def apply_review_facit(
+    items: list[dict], facit: dict
+) -> list[dict]:
+    """Mark approved matches and return missing approved interpretations."""
+    pages = facit.get("pages", {})
+    missing = []
+    for item in items:
+        item["review_state"] = "unread"
+    for page_text, page_data in pages.items():
+        page = int(page_text)
+        expected = {
+            (int(value["article_number"]), value["lemma"])
+            for value in page_data.get("candidates", [])
+        }
+        current_items = [
+            item for item in items if int(item["source_page"]) == page
+        ]
+        current = {
+            (int(item["article_number"]), item["lemma"])
+            for item in current_items
+        }
+        for item in current_items:
+            signature = (int(item["article_number"]), item["lemma"])
+            item["review_state"] = (
+                "approved" if signature in expected else "facit_new"
+            )
+        for article_number, lemma in sorted(expected - current):
+            missing.append(
+                {
+                    "page": page,
+                    "article_number": article_number,
+                    "lemma": lemma,
+                }
+            )
+    return missing
+
+
+def approve_pages(
+    facit: dict, items: list[dict], pages: list[int]
+) -> dict:
+    """Snapshot the current interpretation for explicitly approved pages."""
+    stored_pages = facit.setdefault("pages", {})
+    for page in pages:
+        candidates = [
+            facit_signature(item)
+            for item in items
+            if int(item["source_page"]) == page
+        ]
+        candidates.sort(
+            key=lambda value: (
+                value["article_number"],
+                value["lemma"],
+            )
+        )
+        stored_pages[str(page)] = {"candidates": candidates}
+    return facit
+
+
 def display_lemma(item: dict) -> str:
-    """Make a detected homonym visible without changing the lemma itself."""
+    """Add review and homonym markers without changing the lemma itself."""
+    prefix = ""
+    if item.get("review_state") == "approved":
+        prefix = "✓ "
+    elif item.get("review_state") == "facit_new":
+        prefix = "⚠ "
     homonym = item.get("homonym")
     if homonym is not None and item.get("method") == "artikelhuvud":
-        return f"[H{homonym}] {item['lemma']}"
-    return item["lemma"]
+        return f"{prefix}[H{homonym}] {item['lemma']}"
+    return prefix + item["lemma"]
 
 
 def _review_font(size: int = 28):
