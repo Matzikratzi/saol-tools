@@ -19,6 +19,7 @@ Arbetet delas upp eftersom varje steg behöver kunna mätas separat:
    - skilj uttryckliga former från former som genereras av en regel.
 4. **Spelord**
    - generera alla böjningsformer,
+   - uteslut stora kapitelrubriker som `Aa`, `Bb`, `Åå`, `Ää` och `Öö`,
    - normalisera typografiska markörer men bevara å, ä och ö,
    - ta bort dubletter och kontrollera alfabetisk ordning.
 5. **Kvalitetskontroll**
