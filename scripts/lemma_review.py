@@ -451,7 +451,8 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     and cleaned.startswith(("—", "–", "~"))
                 ):
                     cleaned = "-" + cleaned[1:]
-                following_tokens = list(tokens[token_index + 1 :])
+                same_line_following = list(tokens[token_index + 1 :])
+                following_tokens = list(same_line_following)
                 for following_line in article["lines"][line_index + 1 :]:
                     following_tokens.extend(
                         sorted(
@@ -576,7 +577,13 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     ) in POS
                 )
                 followed_by_inflection_grammar = (
-                    inflections_then_part_of_speech(following_tokens)
+                    bool(same_line_following)
+                    and same_line_following[0].get(
+                        "text", ""
+                    ).strip().startswith("-")
+                    and inflections_then_part_of_speech(
+                        following_tokens
+                    )
                 )
                 if (
                     (plausible_position and score >= 0.45)
