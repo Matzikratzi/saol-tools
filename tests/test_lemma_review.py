@@ -11,6 +11,7 @@ from scripts.lemma_review import (
     extract_candidates,
     normalize_lemma,
     render_review_images,
+    suffix_base,
 )
 
 
@@ -31,6 +32,66 @@ class LemmaReviewTests(unittest.TestCase):
 
     def test_expands_compound_suffix(self):
         self.assertEqual(expand_compound("akademi", "-medlem"), "akademimedlem")
+
+    def test_vertical_bar_selects_stem_for_following_suffix(self):
+        self.assertEqual(suffix_base("affirm|ation"), "affirm")
+        self.assertEqual(
+            expand_compound(suffix_base("affirm|ation"), "-era"), "affirmera"
+        )
+
+    def test_finds_semibold_word_mid_line_before_its_suffix(self):
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("affirmativ", 100, 0.40),
+                                token("adj.", 250, 0.10),
+                                token("jakande", 320, 0.10),
+                                token(",", 410, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("bekräftande", 140, 0.10),
+                                token("vanlig", 260, 0.10),
+                                token("text", 340, 0.10),
+                                token("affirm|ation", 430, 0.40),
+                                token("-era", 600, 0.40),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "affirmativ",
+                    "stem_headword": "affirmativ",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["affirmativ", "affirmation", "affirmera"],
+        )
 
     def test_extracts_semibold_word_and_compound_inside_article(self):
         articles = {
