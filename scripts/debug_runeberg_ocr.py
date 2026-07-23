@@ -479,6 +479,8 @@ def _source() -> str:
         "        article_x, continuation_x = _split_two_positions(lexical_x, median_height)\n"
         "        if column == 1 and _HAF_LEVELS is not None:\n"
         "            _h_x, article_x, continuation_x = _HAF_LEVELS\n"
+        "        elif column == 2 and _RIGHT_HAF_LEVELS is not None:\n"
+        "            _h_x, article_x, continuation_x = _RIGHT_HAF_LEVELS\n"
         "        elif column == 1 and _LEFT_A_X is not None:\n"
         "            article_x = _LEFT_A_X\n"
         "        boundary_x = (article_x + continuation_x) / 2\n"
@@ -493,12 +495,15 @@ def _source() -> str:
         "            )\n"
     )
     new_article_decision = (
-        "            if column == 1 and _LEFT_THRESHOLD_X is not None:\n"
+        "            threshold_x = (\n"
+        "                _LEFT_THRESHOLD_X if column == 1 else _RIGHT_THRESHOLD_X\n"
+        "            )\n"
+        "            if threshold_x is not None:\n"
         "                # Start an article when any letter-bearing OCR box on the\n"
         "                # row reaches left of T. Punctuation-only debris does not\n"
         "                # count, but every actual textual box does.\n"
         "                is_article = any(\n"
-        "                    LETTER_RE.search(item.text) and item.left < _LEFT_THRESHOLD_X\n"
+        "                    LETTER_RE.search(item.text) and item.left < threshold_x\n"
         "                    for item in line.items\n"
         "                )\n"
         "            else:\n"
@@ -509,57 +514,6 @@ def _source() -> str:
     if old_article_decision not in source:
         raise RuntimeError("Kunde inte använda T som gräns för fortsättningstext")
     source = source.replace(old_article_decision, new_article_decision, 1)
-
-    old_result_loop = "        scores = _bold_scores(prepared)\n"
-    new_result_loop = (
-        "        scores = _bold_scores(prepared)\n"
-        "        ink_image = None\n"
-        "        ink_pixels = None\n"
-        "        if column == 1 and _DESKEWED_CONTENT is not None and _LEFT_THRESHOLD_X is not None:\n"
-        "            ink_image = Image.open(io.BytesIO(_DESKEWED_CONTENT)).convert('L')\n"
-        "            ink_pixels = ink_image.load()\n"
-    )
-    if old_result_loop not in source:
-        raise RuntimeError("Kunde inte förbereda pixelkontroll vänster om T")
-    source = source.replace(old_result_loop, new_result_loop, 1)
-
-    old_pixel_classification = (
-        "                is_article = any(\n"
-        "                    LETTER_RE.search(item.text) and item.left < _LEFT_THRESHOLD_X\n"
-        "                    for item in line.items\n"
-        "                )\n"
-    )
-    new_pixel_classification = (
-        "                ocr_reaches_left = any(\n"
-        "                    LETTER_RE.search(item.text) and item.left < _LEFT_THRESHOLD_X\n"
-        "                    for item in line.items\n"
-        "                )\n"
-        "                pixel_reaches_left = False\n"
-        "                if ink_pixels is not None and _HAF_LEVELS is not None:\n"
-        "                    x0 = max(0, round(_HAF_LEVELS[0] - median_height * 0.30))\n"
-        "                    x1 = min(ink_image.width, round(_LEFT_THRESHOLD_X))\n"
-        "                    y0 = max(0, round(line.top))\n"
-        "                    y1 = min(ink_image.height, round(line.bottom))\n"
-        "                    dark = sum(\n"
-        "                        1 for y in range(y0, y1) for x in range(x0, x1)\n"
-        "                        if ink_pixels[x, y] < 160\n"
-        "                    )\n"
-        "                    pixel_reaches_left = dark >= max(6, round(median_height * 0.50))\n"
-        "                is_article = ocr_reaches_left or pixel_reaches_left\n"
-    )
-    if old_pixel_classification not in source:
-        raise RuntimeError("Kunde inte komplettera OCR-rutor med bildpixlar")
-    source = source.replace(old_pixel_classification, new_pixel_classification, 1)
-
-    old_result_return = "    return sorted(result, key=lambda line: (line.column, line.top, line.left)), models\n"
-    new_result_return = (
-        "    if 'ink_image' in locals() and ink_image is not None:\n"
-        "        ink_image.close()\n"
-        "    return sorted(result, key=lambda line: (line.column, line.top, line.left)), models\n"
-    )
-    if old_result_return not in source:
-        raise RuntimeError("Kunde inte stänga bilden efter pixelkontrollen")
-    source = source.replace(old_result_return, new_result_return, 1)
 
     old_guides = "def _guides_html(x_models: dict, image_width: int) -> str:\n    result: list[str] = []\n"
     new_guides = (
