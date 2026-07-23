@@ -254,8 +254,7 @@ def _rows_from_lines(
             # en bokstavsstart precis efter T hanterar avrundningsfallet
             # "abstinens" utan att acceptera boxar som börjar på fel sida.
             near_threshold_ocr = (
-                ocr_reaches_left
-                and 0.0 <= letter_x - threshold_x <= threshold_tolerance
+                0.0 <= letter_x - threshold_x <= threshold_tolerance
             )
             baseline = not chapter_heading and (
                 pixel_reaches_left or near_threshold_ocr
@@ -286,8 +285,7 @@ def _rows_from_lines(
                         6, round(median_height * 0.50)
                     )
                     candidate_near_ocr = (
-                        ocr_reaches_left
-                        and 0.0 <= letter_x - candidate_t <= threshold_tolerance
+                        0.0 <= letter_x - candidate_t <= threshold_tolerance
                     )
                     t_candidates[f"{fraction:.2f}"] = bool(
                         candidate_pixel or candidate_near_ocr
