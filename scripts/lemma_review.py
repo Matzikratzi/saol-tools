@@ -643,6 +643,49 @@ def display_lemma(item: dict) -> str:
     return item["lemma"]
 
 
+def _overlay_font(size: int = 64):
+    for path in (
+        "/System/Library/Fonts/Supplemental/Times New Roman.ttf",
+        "/Library/Fonts/Times New Roman.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf",
+    ):
+        try:
+            return ImageFont.truetype(path, size)
+        except OSError:
+            pass
+    return _review_font(size)
+
+
+def _draw_fitted_text(
+    canvas: Image.Image,
+    text: str,
+    box: tuple[int, int, int, int],
+    color: str,
+) -> None:
+    """Fit regular text exactly inside the OCR word rectangle."""
+    left, top, right, bottom = box
+    target_width = max(1, right - left)
+    target_height = max(1, bottom - top)
+    font = _overlay_font()
+    text_box = font.getbbox(text)
+    width = max(1, text_box[2] - text_box[0])
+    height = max(1, text_box[3] - text_box[1])
+    mask = Image.new("L", (width, height), 0)
+    mask_draw = ImageDraw.Draw(mask)
+    mask_draw.text(
+        (-text_box[0], -text_box[1]),
+        text,
+        font=font,
+        fill=255,
+    )
+    mask = mask.resize(
+        (target_width, target_height),
+        Image.Resampling.LANCZOS,
+    )
+    ink = Image.new("RGB", (target_width, target_height), color)
+    canvas.paste(ink, (left, top), mask)
+
+
 def _review_font(size: int = 28):
     for path in (
         "/System/Library/Fonts/Supplemental/Arial.ttf",
@@ -842,50 +885,24 @@ def render_review_images(
                     fill=dot_color,
                 )
                 for item in row:
-                    source_height = max(
-                        1.0,
-                        item["source_bottom"] - item["source_top"],
-                    )
-                    overlay_font = _review_font(
-                        max(18, min(46, int(source_height * 0.82)))
-                    )
                     color = (
                         "#c62828"
                         if item["status"] == "osäker"
                         else "#00a651"
                     )
-                    source_center_x = margin + (
-                        (
-                            item["source_left"]
-                            + item["source_right"]
-                        )
-                        / 2
-                        - left
+                    source_box = (
+                        margin
+                        + int(max(0, item["source_left"] - left)),
+                        int(item["source_top"]),
+                        margin
+                        + int(max(1, item["source_right"] - left)),
+                        int(item["source_bottom"]),
                     )
-                    source_center_y = (
-                        item["source_top"]
-                        + item["source_bottom"]
-                    ) / 2
-                    text_box = draw.textbbox(
-                        (0, 0), item["lemma"], font=overlay_font
-                    )
-                    text_width = text_box[2] - text_box[0]
-                    text_height = text_box[3] - text_box[1]
-                    text_x = (
-                        source_center_x
-                        - text_width / 2
-                        - text_box[0]
-                    )
-                    text_y = (
-                        source_center_y
-                        - text_height / 2
-                        - text_box[1]
-                    )
-                    draw.text(
-                        (text_x, text_y),
+                    _draw_fitted_text(
+                        canvas,
                         item["lemma"],
-                        font=overlay_font,
-                        fill=color,
+                        source_box,
+                        color,
                     )
                     homonym = item.get("homonym")
                     if (
