@@ -169,6 +169,68 @@ class LemmaReviewTests(unittest.TestCase):
             ["afrodisiakum"],
         )
 
+    def test_inflection_dashes_before_part_of_speech_are_not_lemmas(self):
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("affisch", 100, 0.40),
+                                token("s.", 250, 0.10),
+                                token("text", 320, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("—er", 140, 0.10),
+                                token("s.", 250, 0.10),
+                                token("—are", 320, 0.10),
+                                token("adj.", 440, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 180.0,
+                            "bottom": 204.0,
+                            "tokens": [
+                                token("er", 140, 0.10),
+                                token("s.", 250, 0.10),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "affisch",
+                    "stem_headword": "affisch",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["affisch"],
+        )
+
     def test_midline_lemma_followed_by_part_of_speech(self):
         articles = {
             "pages": [23],
