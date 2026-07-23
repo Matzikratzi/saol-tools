@@ -83,6 +83,20 @@ def suffix_base(value: str) -> str:
     return normalize_lemma(value)
 
 
+def infer_boundary_from_previous(value: str, previous: str) -> str:
+    """Recover previous|ending when OCR renders the boundary as l."""
+    normalized = normalize_lemma(value)
+    previous = normalize_lemma(previous)
+    marker_prefix = previous + "l"
+    if (
+        len(previous) >= 3
+        and normalized.startswith(marker_prefix)
+        and len(normalized) > len(marker_prefix)
+    ):
+        return previous + "|" + normalized[len(marker_prefix):]
+    return ""
+
+
 def infer_boundary_from_repeated_suffix(
     value: str, following_tokens: list[dict]
 ) -> str:
@@ -329,10 +343,15 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             key=lambda candidate: candidate["left"],
                         )
                     )
+                previous_boundary = infer_boundary_from_previous(
+                    cleaned, last_lookup_lemma
+                )
                 repeated_boundary = infer_boundary_from_repeated_suffix(
                     cleaned, following_tokens
                 )
-                if repeated_boundary:
+                if previous_boundary:
+                    cleaned = previous_boundary
+                elif repeated_boundary:
                     cleaned = repeated_boundary
                 series_position = line_index == 0 and at_line_start
                 inferred = ""
@@ -405,6 +424,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 has_stem_boundary = "|" in cleaned or "¦" in cleaned
                 if (
                     (plausible_position and score >= 0.35)
+                    or previous_separator
                     or clearly_semibold
                     or has_stem_boundary
                     or series_first
