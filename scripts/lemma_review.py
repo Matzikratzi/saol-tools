@@ -354,6 +354,9 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
             else head["headword"]
         )
         current_base = suffix_base(structured_head or current_head)
+        article_family = normalize_lemma(current_head)
+        if len(article_family) > 5:
+            article_family = article_family[:-1]
         suffix_series_prefix = ""
         last_lookup_lemma = normalize_lemma(current_head)
         first_line = article["lines"][0]
@@ -530,11 +533,19 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             article, lemma, cleaned, "halvfet token",
                             score, line=line, token=token
                         )
+                        same_article_family = lemma.startswith(
+                            article_family
+                        )
                         structurally_new_base = (
-                            plausible_position
+                            previous_separator
                             or has_stem_boundary
                             or has_lemma_grammar
                             or series_first
+                            or (
+                                at_line_start
+                                and score >= 0.45
+                                and same_article_family
+                            )
                         )
                         if structurally_new_base:
                             last_lookup_lemma = lemma
