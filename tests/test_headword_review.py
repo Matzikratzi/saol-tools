@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import unittest
 
-from scripts.headword_review import repair_alphabetic_accents, swedish_sort_key
+from scripts.headword_review import (
+    infer_homonym_runs,
+    reconcile_homonym_neighbours,
+    repair_alphabetic_accents,
+    swedish_sort_key,
+)
 from scripts.runeberg_headwords import align_lines, raw_headword
 
 
@@ -30,6 +35,37 @@ class HeadwordReviewTests(unittest.TestCase):
         matches = align_lines(items, lines)
         self.assertEqual([index for index, _score in matches], [1, 3])
         self.assertTrue(all(score > 0.7 for _index, score in matches))
+
+    def test_second_homonym_repairs_and_numbers_its_neighbour(self):
+        items = [
+            {
+                "headword": "ampel",
+                "homonym": None,
+                "homonym_marker_detected": True,
+                "runeberg_headword": "kärleks-ampel",
+                "reasons": ["homonymtecknet känns igen som citattecken"],
+                "status": "osäker",
+                "corrected_from": "",
+                "correction_method": "",
+                "homonym_inferred": False,
+            },
+            {
+                "headword": "amploel amplel",
+                "homonym": 2,
+                "homonym_marker_detected": True,
+                "runeberg_headword": "ampel",
+                "reasons": ["låg OCR-säkerhet (50)"],
+                "status": "osäker",
+                "corrected_from": "",
+                "correction_method": "",
+                "homonym_inferred": False,
+            },
+        ]
+        reconcile_homonym_neighbours(items)
+        infer_homonym_runs(items)
+        self.assertEqual([item["headword"] for item in items], ["ampel", "ampel"])
+        self.assertEqual([item["homonym"] for item in items], [1, 2])
+        self.assertTrue(items[0]["homonym_inferred"])
 
     def test_repairs_aa_to_grave_accent_when_neighbours_prove_it(self):
         items = [
