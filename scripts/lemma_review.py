@@ -108,6 +108,20 @@ def infer_boundary_from_previous(value: str, previous: str) -> str:
 
 
 
+
+def infer_suffix_boundary_from_series(value: str, prefix: str) -> str:
+    """Recover -prefix|tail when OCR renders the series boundary as l."""
+    cleaned = value.strip().strip(";,:.()[]{}")
+    prefix = normalize_lemma(prefix)
+    marker_prefix = "-" + prefix + "l"
+    if (
+        prefix
+        and cleaned.casefold().startswith(marker_prefix)
+        and len(cleaned) > len(marker_prefix)
+    ):
+        return "-" + prefix + "|" + cleaned[len(marker_prefix):]
+    return ""
+
 def infer_boundary_from_article_family(value: str, article_head: str) -> str:
     """Recover family|ending when OCR renders SAOL's boundary as l."""
     normalized = normalize_lemma(value)
@@ -324,6 +338,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
             else head["headword"]
         )
         current_base = suffix_base(structured_head or current_head)
+        suffix_series_prefix = ""
         last_lookup_lemma = normalize_lemma(current_head)
         first_line = article["lines"][0]
         head_tokens = sorted(first_line.get("tokens", []), key=lambda token: token["left"])
@@ -418,7 +433,20 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     at_line_start = False
                     continue
                 if cleaned.startswith("-"):
+                    inferred_suffix_boundary = (
+                        infer_suffix_boundary_from_series(
+                            cleaned, suffix_series_prefix
+                        )
+                    )
+                    if inferred_suffix_boundary:
+                        cleaned = inferred_suffix_boundary
                     repaired_suffix = repair_mixed_case_duplicate(cleaned)
+                    for marker in ("|", "¦"):
+                        if marker in repaired_suffix:
+                            suffix_series_prefix = repaired_suffix.split(
+                                marker, 1
+                            )[0].lstrip("-")
+                            break
                     suffix_variants = optional_parenthesis_variants(
                         repaired_suffix
                     )
