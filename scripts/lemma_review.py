@@ -44,6 +44,28 @@ def suffix_base(value: str) -> str:
     return normalize_lemma(value)
 
 
+def infer_compound_series_boundary(
+    value: str, article_head: str, next_suffix: str
+) -> str:
+    """Recover a | misread as l when neighbouring compounds prove the order."""
+    normalized = normalize_lemma(value)
+    head = normalize_lemma(article_head)
+    following = normalize_lemma(next_suffix)
+    for base in (head + "s", head):
+        marker_prefix = base + "l"
+        if not normalized.startswith(marker_prefix):
+            continue
+        tail_with_l = normalized[len(base):]
+        repaired_tail = normalized[len(marker_prefix):]
+        if (
+            repaired_tail
+            and following
+            and repaired_tail <= following < tail_with_l
+        ):
+            return base + "|" + repaired_tail
+    return ""
+
+
 def _token_score(token: dict, ordinary: float, bold: float) -> float:
     density = float(token.get("ink_density", 0.0))
     span = max(0.005, bold - ordinary)
@@ -180,12 +202,16 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
         )
         for line_index, line in enumerate(article["lines"]):
             tokens = sorted(line.get("tokens", []), key=lambda token: token["left"])
+            compound_series = line_index == 0 and any(
+                re.sub(r"[^a-zåäö]+", "", token["text"].casefold()) == "ss"
+                for token in tokens
+            )
             if line_index == 0:
                 tokens = _after_inflection_prefix(tokens)
             previous_separator = False
             at_line_start = True
             parenthesis_depth = 0
-            for token in tokens:
+            for token_index, token in enumerate(tokens):
                 raw = token["text"].strip()
                 if not raw:
                     continue
@@ -203,6 +229,21 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     continue
                 score = _token_score(token, ordinary, bold)
                 cleaned = raw.strip(";,:.()[]{}")
+                series_first = compound_series and at_line_start
+                if series_first:
+                    next_suffix = next(
+                        (
+                            candidate["text"].strip().strip(";,:.()[]{}")[1:]
+                            for candidate in tokens[token_index + 1 :]
+                            if candidate["text"].strip().strip(";,:.()[]{}").startswith("-")
+                        ),
+                        "",
+                    )
+                    inferred = infer_compound_series_boundary(
+                        cleaned, current_head, next_suffix
+                    )
+                    if inferred:
+                        cleaned = inferred
                 lexical = bool(re.search(r"[A-Za-zÅÄÖåäöÀÁÉàáé]", cleaned))
                 if not lexical:
                     previous_separator = False
@@ -229,6 +270,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     (plausible_position and score >= 0.35)
                     or clearly_semibold
                     or has_stem_boundary
+                    or series_first
                 ):
                     lemma = normalize_lemma(cleaned)
                     if lemma and lemma not in POS:
