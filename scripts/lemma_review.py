@@ -57,10 +57,18 @@ def inflection_of_previous(previous: str, candidate: str) -> bool:
     """Recognize a full OCR token that is only an inflected previous lemma."""
     previous = normalize_lemma(previous)
     candidate = normalize_lemma(candidate)
-    return bool(previous) and any(
+    if not previous:
+        return False
+    suffix_inflection = any(
         candidate == previous + suffix[1:]
         for suffix in NON_LEMMA_SUFFIXES
     )
+    present_of_a_verb = (
+        len(previous) > 2
+        and previous.endswith("a")
+        and candidate == previous[:-1] + "r"
+    )
+    return suffix_inflection or present_of_a_verb
 
 def merged_pos_inflection(
     raw: str, normalized_suffix: str, bold_score: float
@@ -605,11 +613,15 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                         and f"-{lemma}" in NON_LEMMA_SUFFIXES
                         and score < 0.25
                     )
+                    full_word_inflection = inflection_of_previous(
+                        last_lookup_lemma, lemma
+                    )
                     if (
                         lemma
                         and lemma not in GRAMMAR_MARKERS
                         and len(lemma) > 1
                         and not bare_inflection_before_pos
+                        and not full_word_inflection
                     ):
                         add(
                             article, lemma, cleaned, "halvfet token",
