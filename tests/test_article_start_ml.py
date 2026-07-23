@@ -10,6 +10,7 @@ from scripts.article_start_ml import (
     _slanted_geometry,
     align_truth,
     compare_models,
+    compare_t_positions,
     normalize_word,
     read_ground_truth,
 )
@@ -65,6 +66,26 @@ class GroundTruthTests(unittest.TestCase):
         ]
         matches = align_truth(["abstrakt"], rows)
         self.assertEqual(matches[0][0], 0)
+
+    def test_t_position_sweep_reports_each_fraction(self):
+        rows = [
+            {
+                "label": 1,
+                "baseline": True,
+                "usable": True,
+                "t_candidates": {"0.35": False, "0.50": True, "0.65": True},
+            },
+            {
+                "label": 0,
+                "baseline": False,
+                "usable": True,
+                "t_candidates": {"0.35": False, "0.50": False, "0.65": True},
+            },
+        ]
+        results = compare_t_positions(rows)
+        self.assertEqual(results["0.50"]["f1"], 1.0)
+        self.assertEqual(results["0.35"]["fn"], 1)
+        self.assertEqual(results["0.65"]["fp"], 1)
 
     def test_models_use_leave_one_page_out_predictions(self):
         rows = []
