@@ -37,11 +37,11 @@ def expand_compound(base: str, suffix: str) -> str:
 
 
 def optional_parenthesis_variants(value: str) -> list[str]:
-    """Expand SAOL's optional ending, e.g. -värld(en), in reading order."""
+    """Include SAOL's parenthesized ending without inventing a short variant."""
     match = re.match(r"^(.*)\(([^()]*)\)$", value)
     if not match or not match.group(1) or not match.group(2):
         return [value]
-    return [match.group(1), match.group(1) + match.group(2)]
+    return [match.group(1) + match.group(2)]
 
 
 def repair_mixed_case_duplicate(value: str) -> str:
