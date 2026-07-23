@@ -626,8 +626,12 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     full_word_inflection = present_form_of_previous(
                         last_lookup_lemma, lemma
                     )
+                    same_article_family = lemma.startswith(
+                        article_family
+                    )
                     unsupported_definition_before_inflection = (
                         followed_by_inflection_grammar
+                        and not same_article_family
                         and not previous_separator
                         and not clearly_semibold
                         and not has_stem_boundary
