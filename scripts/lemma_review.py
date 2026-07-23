@@ -53,6 +53,17 @@ def plural_of_previous(previous: str, candidate: str) -> bool:
 
 
 
+def present_form_of_previous(previous: str, candidate: str) -> bool:
+    """Recognize a safe full-token present form, e.g. affischera -> affischer."""
+    previous = normalize_lemma(previous)
+    candidate = normalize_lemma(candidate)
+    return (
+        len(previous) > 4
+        and previous.endswith("era")
+        and candidate == previous[:-1]
+    )
+
+
 def inflection_of_previous(previous: str, candidate: str) -> bool:
     """Recognize a full OCR token that is only an inflected previous lemma."""
     previous = normalize_lemma(previous)
@@ -63,12 +74,7 @@ def inflection_of_previous(previous: str, candidate: str) -> bool:
         candidate == previous + suffix[1:]
         for suffix in NON_LEMMA_SUFFIXES
     )
-    present_of_a_verb = (
-        len(previous) > 2
-        and previous.endswith("a")
-        and candidate == previous[:-1] + "r"
-    )
-    return suffix_inflection or present_of_a_verb
+    return suffix_inflection or present_form_of_previous(previous, candidate)
 
 def merged_pos_inflection(
     raw: str, normalized_suffix: str, bold_score: float
@@ -613,7 +619,11 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                         and f"-{lemma}" in NON_LEMMA_SUFFIXES
                         and score < 0.25
                     )
-                    full_word_inflection = inflection_of_previous(
+                    # Only suppress a full token when the preceding lemma's
+                    # morphology makes the reading unambiguous.  The broader
+                    # suffix rule would wrongly remove real lemmas such as
+                    # afghanska after afghansk and aforistiker after aforistik.
+                    full_word_inflection = present_form_of_previous(
                         last_lookup_lemma, lemma
                     )
                     if (
