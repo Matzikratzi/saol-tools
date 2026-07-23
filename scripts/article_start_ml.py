@@ -300,6 +300,18 @@ def _rows_from_lines(
                     "right": float(line.right),
                     "text": line.text,
                     "match_text": match_text,
+                    "tokens": [
+                        {
+                            "text": item.text,
+                            "left": float(item.left),
+                            "top": float(item.top),
+                            "width": float(item.width),
+                            "height": float(item.height),
+                            "confidence": float(item.confidence),
+                            "ink_density": float(item.ink_density),
+                        }
+                        for item in text_items
+                    ],
                     "baseline": bool(baseline),
                     "chapter_heading": chapter_heading,
                     "ocr_reaches_left": ocr_reaches_left,
@@ -342,7 +354,7 @@ def _rows_from_lines(
 
 
 def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict]:
-    cache_file = cache_dir / f"page-{page:04d}-columns-v12.json"
+    cache_file = cache_dir / f"page-{page:04d}-columns-v13.json"
     if cache_file.exists() and not refresh:
         return json.loads(cache_file.read_text(encoding="utf-8"))
 
