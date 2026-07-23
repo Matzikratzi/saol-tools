@@ -10,7 +10,7 @@ from scripts import debug_runeberg_ocr as debug
 
 STOP_WORDS = {
     "adj", "adv", "best", "el", "eller", "i", "interj", "jfr", "komp",
-    "mus", "n", "oböjl", "pl", "prep", "pron", "s", "se", "ss", "subst",
+    "ei", "mus", "n", "oböjl", "pl", "prep", "pron", "s", "se", "ss", "subst",
     "v", "vard", "äv", "åld",
 }
 
@@ -108,7 +108,26 @@ def fetch_and_enrich(items: list[dict]) -> None:
             only_low_confidence = item["reasons"] and all(
                 reason.startswith("låg OCR-säkerhet") for reason in item["reasons"]
             )
-            if missing or (only_low_confidence and explicit_boundary):
+            same_headword = secondary == item["headword"]
+            if same_headword and score >= 0.85:
+                item["reasons"] = [
+                    reason for reason in item["reasons"]
+                    if not reason.startswith("låg OCR-säkerhet")
+                ]
+                item["status"] = "osäker" if item["reasons"] else "preliminär"
+                continue
+            headword_similarity = difflib.SequenceMatcher(
+                None, item["headword"], secondary
+            ).ratio()
+            strong_boundary_correction = (
+                explicit_boundary and score >= 0.75 and headword_similarity >= 0.70
+            )
+            strong_single_word_correction = (
+                only_low_confidence
+                and score >= 0.85
+                and " " not in secondary
+            )
+            if missing or strong_boundary_correction or strong_single_word_correction:
                 old = item["headword"]
                 item["corrected_from"] = old
                 item["correction_method"] = "Runebergs parallella OCR"
