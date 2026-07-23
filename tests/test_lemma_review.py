@@ -169,6 +169,60 @@ class LemmaReviewTests(unittest.TestCase):
             ["afrodisiakum"],
         )
 
+    def test_midline_lemma_followed_by_part_of_speech(self):
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("agg", 100, 0.58),
+                                token("-et", 220, 0.30),
+                                token("s.", 300, 0.37),
+                                token("ovilja", 360, 0.25),
+                                token("avoghet", 470, 0.27),
+                                token("aggande", 600, 0.38),
+                                token("adj.", 760, 0.29),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("tärande", 140, 0.28),
+                                token("plågande", 280, 0.27),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "agg",
+                    "stem_headword": "agg",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["agg", "aggande"],
+        )
+
     def test_agentur_grammar_sets_base_for_following_compound(self):
         self.assertTrue(
             pronunciation_then_inflection(
