@@ -109,7 +109,7 @@ def fetch_and_enrich(items: list[dict]) -> None:
             if score < 0.62 or not secondary:
                 continue
             missing = not item["headword"]
-            explicit_boundary = "|" in raw_line
+            explicit_boundary = "|" in secondary_stem
             only_low_confidence = item["reasons"] and all(
                 reason.startswith("låg OCR-säkerhet") for reason in item["reasons"]
             )
