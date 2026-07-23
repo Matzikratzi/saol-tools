@@ -245,7 +245,7 @@ def render_review_images(
             crop = image.crop((left, 0, right, image.height))
             margin = max(460, crop.width // 3)
             canvas = Image.new("RGB", (crop.width + margin, crop.height), "white")
-            canvas.paste(crop, (0, 0))
+            canvas.paste(crop, (margin, 0))
             draw = ImageDraw.Draw(canvas)
             column_items = sorted(
                 (
@@ -262,10 +262,20 @@ def render_review_images(
                 label_y = min(label_y, canvas.height - 34)
                 last_label_y = label_y
                 color = "#c62828" if item["status"] == "osäker" else "#00695c"
-                source_x = int(max(0, item["source_right"] - left))
-                label_x = crop.width + 18
-                draw.line((source_x, source_y, label_x - 5, label_y + 14), fill=color, width=3)
-                draw.ellipse((source_x - 4, source_y - 4, source_x + 4, source_y + 4), fill=color)
+                source_x = margin + int(max(0, item["source_right"] - left))
+                label_right = margin - 18
+                text_box = draw.textbbox((0, 0), item["lemma"], font=font)
+                text_width = text_box[2] - text_box[0]
+                label_x = max(8, label_right - text_width)
+                draw.line(
+                    (label_right + 6, label_y + 14, source_x, source_y),
+                    fill=color,
+                    width=3,
+                )
+                draw.ellipse(
+                    (source_x - 4, source_y - 4, source_x + 4, source_y + 4),
+                    fill=color,
+                )
                 draw.text((label_x, label_y), item["lemma"], font=font, fill=color)
             output = image_dir / f"page-{page:04d}-column-{column}.png"
             canvas.save(output, format="PNG")
