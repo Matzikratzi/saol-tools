@@ -354,6 +354,15 @@ class LemmaReviewTests(unittest.TestCase):
                                 token("afrika|resa", 140, 0.40),
                             ],
                         },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 260.0,
+                            "bottom": 284.0,
+                            "tokens": [
+                                token("afro|amerikan", 140, 0.40),
+                            ],
+                        },
                     ],
                 }
             ],
@@ -370,7 +379,13 @@ class LemmaReviewTests(unittest.TestCase):
         candidates = extract_candidates(articles, heads)
         self.assertEqual(
             [item["lemma"] for item in candidates],
-            ["afrikan", "afrikanisera", "afrikanisering", "afrikaresa"],
+            [
+                "afrikan",
+                "afrikanisera",
+                "afrikanisering",
+                "afrikaresa",
+                "afroamerikan",
+            ],
         )
 
     def test_ocr_l_becomes_compound_boundary_when_order_proves_it(self):
