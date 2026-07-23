@@ -14,6 +14,7 @@ from scripts.lemma_review import (
     infer_boundary_from_previous,
     infer_boundary_from_repeated_suffix,
     infer_compound_series_boundary,
+    inflection_of_previous,
     merged_pos_inflection,
     extract_candidates,
     normalize_lemma,
@@ -93,6 +94,14 @@ class LemmaReviewTests(unittest.TestCase):
         self.assertEqual(
             [item["lemma"] for item in candidates],
             ["afrik", "afrikanska"],
+        )
+
+    def test_full_token_definite_form_is_not_a_lemma(self):
+        self.assertTrue(
+            inflection_of_previous("afrodisiakum", "afrodisiakumet")
+        )
+        self.assertFalse(
+            inflection_of_previous("afrodisiakum", "afrodisiakum")
         )
 
     def test_merged_noun_marker_is_not_a_suffix(self):
