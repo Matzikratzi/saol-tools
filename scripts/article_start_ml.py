@@ -355,7 +355,8 @@ def _rows_from_lines(
 
 def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict]:
     cache_file = cache_dir / f"page-{page:04d}-columns-v13.json"
-    if cache_file.exists() and not refresh:
+    image_file = cache_dir / f"page-{page:04d}-deskewed.png"
+    if cache_file.exists() and image_file.exists() and not refresh:
         return json.loads(cache_file.read_text(encoding="utf-8"))
 
     module = _configure_debug_module()
@@ -374,6 +375,9 @@ def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict
     image_response.raise_for_status()
     initial = module.extract_observations(image_response.content)
     deskewed, angle = module._deskew_image(image_response.content, initial)
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    with Image.open(io.BytesIO(deskewed)) as deskewed_image:
+        deskewed_image.save(image_file, format="PNG")
     # Tesseract --psm 6 occasionally joins both columns and can even leak TSV
     # fields into a token. OCR each deskewed column independently instead.
     observations = []
