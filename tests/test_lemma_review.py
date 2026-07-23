@@ -875,6 +875,7 @@ class LemmaReviewTests(unittest.TestCase):
                                 token("-ade", 140, 0.10),
                                 token("v.", 230, 0.10),
                                 token("hopklumpa", 300, 0.10),
+                                token("blodkroppar", 470, 0.10),
                             ],
                         },
                         {
