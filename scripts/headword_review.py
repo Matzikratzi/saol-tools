@@ -8,6 +8,7 @@ for review instead of being silently invented.
 """
 
 import argparse
+import difflib
 import html
 import json
 import re
@@ -93,6 +94,7 @@ def extract_head(article: dict) -> dict:
             "headword": "",
             "raw_headword": "",
             "homonym": None,
+            "homonym_marker_detected": False,
             "status": "osäker",
             "reasons": ["tokenmetadata saknas; kör om OCR med aktuell cacheversion"],
         }
@@ -151,9 +153,50 @@ def extract_head(article: dict) -> dict:
         "headword": headword,
         "raw_headword": raw,
         "homonym": homonym,
+        "homonym_marker_detected": bool(homonym is not None or marker_unclear),
         "status": "osäker" if reasons else "preliminär",
         "reasons": reasons,
     }
+
+
+def reconcile_homonym_neighbours(items: list[dict]) -> None:
+    """Use a detected homonym marker as evidence about adjacent entries."""
+    for index in range(len(items) - 1):
+        first, second = items[index], items[index + 1]
+        if not (
+            first.get("homonym_marker_detected")
+            or second.get("homonym_marker_detected")
+        ):
+            continue
+        first_head, second_head = first["headword"], second["headword"]
+        if not first_head or not second_head or first_head == second_head:
+            continue
+        first_runeberg = first.get("runeberg_headword", "")
+        second_runeberg = second.get("runeberg_headword", "")
+        canonical = ""
+        if first_head == second_runeberg:
+            canonical = first_head
+        elif second_head == first_runeberg:
+            canonical = second_head
+        elif first_runeberg and first_runeberg == second_runeberg:
+            canonical = first_runeberg
+        elif difflib.SequenceMatcher(None, first_head, second_head).ratio() >= 0.82:
+            if first.get("homonym") is not None:
+                canonical = first_head
+            elif second.get("homonym") is not None:
+                canonical = second_head
+        if not canonical:
+            continue
+        for item in (first, second):
+            if item["headword"] != canonical:
+                item["corrected_from"] = item["headword"]
+                item["correction_method"] = "angränsande homonym"
+                item["headword"] = canonical
+                item["reasons"] = [
+                    reason for reason in item["reasons"]
+                    if not reason.startswith(("låg OCR-säkerhet", "homonymtecknet"))
+                ]
+                item["status"] = "osäker" if item["reasons"] else "preliminär"
 
 
 def infer_homonym_runs(items: list[dict]) -> None:
@@ -207,6 +250,7 @@ def extract_heads(
                 if not reason.startswith("låg OCR-säkerhet")
             ]
             item["status"] = "osäker" if item["reasons"] else "preliminär"
+    reconcile_homonym_neighbours(result)
     infer_homonym_runs(result)
     return result
 
@@ -274,6 +318,7 @@ def main() -> None:
                     if not reason.startswith("låg OCR-säkerhet")
                 ]
                 item["status"] = "osäker" if item["reasons"] else "preliminär"
+        reconcile_homonym_neighbours(items)
         infer_homonym_runs(items)
     output = {"article_count": len(items), "headwords": items}
     args.json.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
