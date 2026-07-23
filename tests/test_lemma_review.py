@@ -7,6 +7,7 @@ from pathlib import Path
 from PIL import Image
 
 from scripts.lemma_review import (
+    _items_by_printed_row,
     _items_in_reading_order,
     expand_compound,
     infer_compound_series_boundary,
@@ -159,6 +160,7 @@ class LemmaReviewTests(unittest.TestCase):
             "source_left": 100.0,
         }
         self.assertEqual(_items_in_reading_order([right, left]), [left, right])
+        self.assertEqual(_items_by_printed_row([right, left]), [[left, right]])
 
     def test_vertical_bar_selects_stem_for_following_suffix(self):
         self.assertEqual(suffix_base("affirm|ation"), "affirm")
