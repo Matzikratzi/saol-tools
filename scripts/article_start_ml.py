@@ -194,7 +194,7 @@ def _rows_from_lines(lines, models, width: int, height: int, page: int) -> list[
 
 
 def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict]:
-    cache_file = cache_dir / f"page-{page:04d}-columns-v4.json"
+    cache_file = cache_dir / f"page-{page:04d}-columns-v5.json"
     if cache_file.exists() and not refresh:
         return json.loads(cache_file.read_text(encoding="utf-8"))
 
@@ -232,6 +232,14 @@ def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict
                 replace(item, left=item.left + left)
                 for item in module.extract_observations(buffer.getvalue())
             )
+    # The review UI deliberately starts below the detected physical rule. For
+    # training data, losing a real row is worse than retaining harmless header
+    # debris. Never let a mistaken rule detection suppress the top 4%+ of a page.
+    safe_rule_y = height * 0.04
+    debug._BODY_TOP_Y = min(
+        debug._BODY_TOP_Y if debug._BODY_TOP_Y is not None else safe_rule_y,
+        safe_rule_y,
+    )
     # Context reconciliation assumes full-width Tesseract lines. Applying it
     # after column OCR shifts words between unrelated rows and may copy raw TSV
     # payload into tokens, so the ML track deliberately uses clean OCR boxes.
