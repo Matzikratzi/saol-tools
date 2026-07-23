@@ -13,6 +13,7 @@ from scripts.lemma_review import (
     extract_candidates,
     normalize_lemma,
     render_review_images,
+    repair_mixed_case_duplicate,
     suffix_base,
 )
 
@@ -31,6 +32,17 @@ def token(text: str, left: float, density: float) -> dict:
 class LemmaReviewTests(unittest.TestCase):
     def test_normalizes_stem_boundary_for_game_word(self):
         self.assertEqual(normalize_lemma("amp|el"), "ampel")
+
+    def test_repairs_mixed_case_ocr_duplicate(self):
+        self.assertEqual(
+            repair_mixed_case_duplicate("-mMässighet"), "-Mässighet"
+        )
+        self.assertEqual(
+            expand_compound(
+                "affärs", repair_mixed_case_duplicate("-mMässighet")
+            ),
+            "affärsmässighet",
+        )
 
     def test_expands_compound_suffix(self):
         self.assertEqual(expand_compound("akademi", "-medlem"), "akademimedlem")
