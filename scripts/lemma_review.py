@@ -471,8 +471,11 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                         lemma
                         and lemma not in POS
                         and len(lemma) > 1
-                        and not inflection_of_previous(
-                            last_lookup_lemma, lemma
+                        and (
+                            has_stem_boundary
+                            or not inflection_of_previous(
+                                last_lookup_lemma, lemma
+                            )
                         )
                     ):
                         add(
