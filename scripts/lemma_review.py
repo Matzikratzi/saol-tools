@@ -36,6 +36,17 @@ def expand_compound(base: str, suffix: str) -> str:
     return normalize_lemma(base + suffix[1:])
 
 
+def plural_of_previous(previous: str, candidate: str) -> bool:
+    """Recognize an -a noun's plural, e.g. afrikanska -> afrikanskor."""
+    previous = normalize_lemma(previous)
+    candidate = normalize_lemma(candidate)
+    return (
+        len(previous) > 2
+        and previous.endswith("a")
+        and candidate == previous[:-1] + "or"
+    )
+
+
 def merged_pos_inflection(
     raw: str, normalized_suffix: str, bold_score: float
 ) -> bool:
@@ -262,6 +273,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
             else head["headword"]
         )
         current_base = suffix_base(structured_head or current_head)
+        last_lookup_lemma = normalize_lemma(current_head)
         first_line = article["lines"][0]
         head_tokens = sorted(first_line.get("tokens", []), key=lambda token: token["left"])
         head_token = next(
@@ -371,6 +383,10 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             lemma = expand_compound(
                                 current_base, suffix_variant
                             )
+                            if plural_of_previous(
+                                last_lookup_lemma, lemma
+                            ):
+                                continue
                             add(
                                 article,
                                 lemma,
@@ -380,6 +396,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                                 line=line,
                                 token=token,
                             )
+                            last_lookup_lemma = lemma
                     previous_separator = False
                     at_line_start = False
                     continue
@@ -398,6 +415,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             article, lemma, cleaned, "halvfet token",
                             score, line=line, token=token
                         )
+                        last_lookup_lemma = lemma
                         current_base = suffix_base(cleaned)
                 previous_separator = False
                 at_line_start = False
