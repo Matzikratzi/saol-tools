@@ -36,6 +36,14 @@ def expand_compound(base: str, suffix: str) -> str:
     return normalize_lemma(base + suffix[1:])
 
 
+def repair_mixed_case_duplicate(value: str) -> str:
+    """Collapse an OCR duplicate such as -mMässighet to -Mässighet."""
+    match = re.match(r"^(-?)([a-zåäö])([A-ZÅÄÖ])(.*)$", value)
+    if match and match.group(2).casefold() == match.group(3).casefold():
+        return match.group(1) + match.group(3) + match.group(4)
+    return value
+
+
 def suffix_base(value: str) -> str:
     """Return the repeatable stem before SAOL's vertical boundary marker."""
     for marker in ("|", "¦"):
@@ -256,12 +264,13 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     at_line_start = False
                     continue
                 if cleaned.startswith("-"):
-                    normalized_suffix = "-" + normalize_lemma(cleaned[1:])
+                    repaired_suffix = repair_mixed_case_duplicate(cleaned)
+                    normalized_suffix = "-" + normalize_lemma(repaired_suffix[1:])
                     if (
                         normalized_suffix not in NON_LEMMA_SUFFIXES
                         and len(normalized_suffix) > 2
                     ):
-                        lemma = expand_compound(current_base, cleaned)
+                        lemma = expand_compound(current_base, repaired_suffix)
                         add(
                             article, lemma, cleaned, "sammansättningssuffix",
                             score, line=line, token=token
