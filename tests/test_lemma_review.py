@@ -104,6 +104,64 @@ class LemmaReviewTests(unittest.TestCase):
             inflection_of_previous("afrodisiakum", "afrodisiakum")
         )
 
+    def test_article_head_inflection_is_excluded_after_base_changes(self):
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("afrodisiakum", 100, 0.40),
+                                token("-et", 300, 0.10),
+                                token("s.", 370, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("afrodisiak|isk", 140, 0.40),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 180.0,
+                            "bottom": 204.0,
+                            "tokens": [
+                                token("afrodisiakumet", 140, 0.40),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "afrodisiakum",
+                    "stem_headword": "afrodisiakum",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["afrodisiakum", "afrodisiakisk"],
+        )
+
     def test_merged_noun_marker_is_not_a_suffix(self):
         self.assertTrue(merged_pos_inflection("-ers.", "-ers", 0.80))
         self.assertTrue(merged_pos_inflection("-ers", "-ers", 0.10))
