@@ -4,6 +4,7 @@ import unittest
 
 from scripts.headword_review import (
     infer_homonym_runs,
+    infer_stem_boundary_from_ocr,
     reconcile_homonym_neighbours,
     repair_alphabetic_accents,
     swedish_sort_key,
@@ -35,6 +36,12 @@ class HeadwordReviewTests(unittest.TestCase):
         matches = align_lines(items, lines)
         self.assertEqual([index for index, _score in matches], [1, 3])
         self.assertTrue(all(score > 0.7 for _index, score in matches))
+
+    def test_l_like_glyph_becomes_stem_boundary_from_canonical_homonym(self):
+        self.assertEqual(
+            infer_stem_boundary_from_ocr("amploel amplel", "ampel"),
+            "amp|el",
+        )
 
     def test_second_homonym_repairs_and_numbers_its_neighbour(self):
         items = [
