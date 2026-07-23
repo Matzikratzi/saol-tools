@@ -7,6 +7,7 @@ from pathlib import Path
 from scripts.article_start_ml import (
     FEATURE_NAMES,
     _is_chapter_heading,
+    _ocr_band_ranges,
     _slanted_geometry,
     align_truth,
     compare_models,
@@ -21,6 +22,25 @@ class FakeLine:
         self.top = y
         self.bottom = y + 50
         self.raw_start_x = x
+
+
+class OcrBandTests(unittest.TestCase):
+    def test_padded_bands_cover_height_once_by_their_cores(self):
+        bands = _ocr_band_ranges(1150, core_height=480, padding=100)
+        self.assertEqual(
+            bands,
+            [
+                (0, 580, 0, 480),
+                (380, 1060, 480, 960),
+                (860, 1150, 960, 1150),
+            ],
+        )
+        self.assertEqual(bands[0][2], 0)
+        self.assertEqual(bands[-1][3], 1150)
+        for previous, current in zip(bands, bands[1:]):
+            self.assertEqual(previous[3], current[2])
+            self.assertLess(current[0], current[2])
+            self.assertGreater(previous[1], previous[3])
 
 
 class GroundTruthTests(unittest.TestCase):
