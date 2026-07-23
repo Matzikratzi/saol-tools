@@ -31,6 +31,7 @@ from scripts import debug_runeberg_ocr as debug
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_TRUTH = ROOT / "data" / "facit_sidor.txt"
 DEFAULT_CACHE = ROOT / ".article-start-ml-cache"
+T_FRACTIONS = (0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65)
 FEATURE_NAMES = [
     "column",
     "y_fraction",
@@ -259,6 +260,38 @@ def _rows_from_lines(
             baseline = not chapter_heading and (
                 pixel_reaches_left or near_threshold_ocr
             )
+            t_candidates = {}
+            if not chapter_heading and haf is not None and line_height <= median_height * 1.60:
+                pixels = gray.load()
+                sweep_x0 = max(
+                    0, round(haf[0] + correction - median_height * 0.30)
+                )
+                sweep_y0 = max(0, round(line.top))
+                sweep_y1 = min(gray.height, round(line.bottom))
+                for fraction in T_FRACTIONS:
+                    candidate_t = article_x + fraction * (
+                        continuation_x - article_x
+                    )
+                    candidate_x1 = min(
+                        gray.width,
+                        round(candidate_t + correction + threshold_tolerance),
+                    )
+                    candidate_ink = sum(
+                        1
+                        for y in range(sweep_y0, sweep_y1)
+                        for x in range(sweep_x0, candidate_x1)
+                        if pixels[x, y] < 160
+                    )
+                    candidate_pixel = candidate_ink >= max(
+                        6, round(median_height * 0.50)
+                    )
+                    candidate_near_ocr = (
+                        ocr_reaches_left
+                        and 0.0 <= letter_x - candidate_t <= threshold_tolerance
+                    )
+                    t_candidates[f"{fraction:.2f}"] = bool(
+                        candidate_pixel or candidate_near_ocr
+                    )
             rows.append(
                 {
                     "page": page,
@@ -274,6 +307,7 @@ def _rows_from_lines(
                     "ocr_reaches_left": ocr_reaches_left,
                     "pixel_reaches_left": pixel_reaches_left,
                     "left_ink": left_ink,
+                    "t_candidates": t_candidates,
                     "margin_slope": slope,
                     "geometry": [float(value) for value in haf] if haf else None,
                     "features": [
@@ -310,7 +344,7 @@ def _rows_from_lines(
 
 
 def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict]:
-    cache_file = cache_dir / f"page-{page:04d}-columns-v11.json"
+    cache_file = cache_dir / f"page-{page:04d}-columns-v12.json"
     if cache_file.exists() and not refresh:
         return json.loads(cache_file.read_text(encoding="utf-8"))
 
@@ -506,6 +540,21 @@ def _metrics(labels, predictions) -> dict[str, float]:
     return {"precision": precision, "recall": recall, "f1": f1, "tp": tp, "fp": fp, "fn": fn}
 
 
+def compare_t_positions(rows: list[dict]) -> dict[str, dict[str, float]]:
+    usable = [row for row in rows if row.get("usable", True)]
+    labels = [bool(row["label"]) for row in usable]
+    return {
+        fraction: _metrics(
+            labels,
+            [
+                bool(row.get("t_candidates", {}).get(fraction, row["baseline"]))
+                for row in usable
+            ],
+        )
+        for fraction in (f"{value:.2f}" for value in T_FRACTIONS)
+    }
+
+
 def compare_models(rows: list[dict]) -> tuple[dict[str, dict], list[dict]]:
     import numpy as np
     from sklearn.ensemble import HistGradientBoostingClassifier
@@ -660,6 +709,14 @@ def main() -> None:
     print(f"Rader: {len(rows)}, användbara efter facitmatchning: {len(usable)}")
     print(f"Artikelstarter i användbart facit: {sum(row['label'] for row in usable)}")
     print(f"Osäkra facit–OCR-matchningar (<0,72): {len(weak)}")
+    t_positions = compare_t_positions(rows)
+    print("T-svep (0=A, 1=F):")
+    for fraction, values in t_positions.items():
+        print(
+            f"  T={fraction}: precision={values['precision']:.3f} "
+            f"recall={values['recall']:.3f} F1={values['f1']:.3f} "
+            f"FP={values['fp']} FN={values['fn']}"
+        )
     results, details = compare_models(rows)
     for name, values in results.items():
         print(
@@ -674,6 +731,7 @@ def main() -> None:
                 "rows": details,
                 "all_rows": rows,
                 "alignment": alignment,
+                "t_positions": t_positions,
             },
             ensure_ascii=False,
             indent=2,
