@@ -49,6 +49,7 @@ FEATURE_NAMES = [
     "gap_after",
     "mean_confidence",
     "chapter_heading",
+    "left_ink",
 ]
 
 
@@ -182,7 +183,9 @@ def _slanted_geometry(ordered, median_height: float, fallback):
     return slope, anchor_y, haf
 
 
-def _rows_from_lines(lines, models, width: int, height: int, page: int) -> list[dict]:
+def _rows_from_lines(
+    lines, models, width: int, height: int, page: int, gray: Image.Image
+) -> list[dict]:
     rows: list[dict] = []
     split = debug._COLUMN_SPLIT_X if debug._COLUMN_SPLIT_X is not None else width / 2
     for column in (1, 2):
@@ -212,9 +215,33 @@ def _rows_from_lines(lines, models, width: int, height: int, page: int) -> list[
             chapter_heading = _is_chapter_heading(
                 line.text, line_height, median_height
             )
-            baseline = not chapter_heading and any(
+            ocr_reaches_left = any(
                 normalize_word(item.text) and float(item.left) - correction < threshold_x
                 for item in line.items
+            )
+            left_ink = 0
+            pixel_reaches_left = False
+            if (
+                not chapter_heading
+                and haf is not None
+                and line_height <= median_height * 1.60
+            ):
+                x0 = max(0, round(haf[0] + correction - median_height * 0.30))
+                x1 = min(gray.width, round(threshold_x + correction))
+                y0 = max(0, round(line.top))
+                y1 = min(gray.height, round(line.bottom))
+                pixels = gray.load()
+                left_ink = sum(
+                    1
+                    for y in range(y0, y1)
+                    for x in range(x0, x1)
+                    if pixels[x, y] < 160
+                )
+                pixel_reaches_left = left_ink >= max(
+                    6, round(median_height * 0.50)
+                )
+            baseline = not chapter_heading and (
+                ocr_reaches_left or pixel_reaches_left
             )
             rows.append(
                 {
@@ -228,6 +255,9 @@ def _rows_from_lines(lines, models, width: int, height: int, page: int) -> list[
                     "match_text": match_text,
                     "baseline": bool(baseline),
                     "chapter_heading": chapter_heading,
+                    "ocr_reaches_left": ocr_reaches_left,
+                    "pixel_reaches_left": pixel_reaches_left,
+                    "left_ink": left_ink,
                     "margin_slope": slope,
                     "geometry": [float(value) for value in haf] if haf else None,
                     "features": [
@@ -256,6 +286,7 @@ def _rows_from_lines(lines, models, width: int, height: int, page: int) -> list[
                         ),
                         _mean_confidence(line.items),
                         float(chapter_heading),
+                        left_ink / max(1.0, median_height * median_height),
                     ],
                 }
             )
@@ -263,7 +294,7 @@ def _rows_from_lines(lines, models, width: int, height: int, page: int) -> list[
 
 
 def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict]:
-    cache_file = cache_dir / f"page-{page:04d}-columns-v7.json"
+    cache_file = cache_dir / f"page-{page:04d}-columns-v8.json"
     if cache_file.exists() and not refresh:
         return json.loads(cache_file.read_text(encoding="utf-8"))
 
@@ -288,6 +319,7 @@ def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict
     observations = []
     with Image.open(io.BytesIO(deskewed)) as image:
         width, height = image.size
+        gray = image.convert("L")
         split = round(
             debug._COLUMN_SPLIT_X
             if debug._COLUMN_SPLIT_X is not None
@@ -313,7 +345,7 @@ def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict
     # after column OCR shifts words between unrelated rows and may copy raw TSV
     # payload into tokens, so the ML track deliberately uses clean OCR boxes.
     lines, models = module._build_lines(observations, width, height)
-    rows = _rows_from_lines(lines, models, width, height, page)
+    rows = _rows_from_lines(lines, models, width, height, page, gray)
     for row in rows:
         row["deskew_degrees"] = float(angle)
     cache_dir.mkdir(parents=True, exist_ok=True)
