@@ -49,6 +49,51 @@ class LemmaReviewTests(unittest.TestCase):
         item["method"] = "sammansättningssuffix"
         self.assertEqual(display_lemma(item), "afro")
 
+    def test_extracts_explicit_alternative_headword(self):
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("aga", 100, 0.40),
+                                token("el.", 220, 0.10),
+                                token("åga", 280, 0.40),
+                                token("s.", 360, 0.10),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "aga",
+                    "stem_headword": "aga",
+                    "homonym": 4,
+                    "homonym_marker_detected": True,
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["aga", "åga"],
+        )
+        self.assertEqual(candidates[1]["method"], "alternativt huvudord")
+        self.assertEqual(candidates[1]["homonym"], 4)
+
     def test_normalizes_stem_boundary_for_game_word(self):
         self.assertEqual(normalize_lemma("amp|el"), "ampel")
 
