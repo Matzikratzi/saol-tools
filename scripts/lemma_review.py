@@ -626,12 +626,26 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     full_word_inflection = present_form_of_previous(
                         last_lookup_lemma, lemma
                     )
+                    unsupported_definition_before_inflection = (
+                        followed_by_inflection_grammar
+                        and not previous_separator
+                        and not clearly_semibold
+                        and not has_stem_boundary
+                        and not has_lemma_grammar
+                        and not followed_by_pos
+                        and not series_first
+                        and not (
+                            plausible_position
+                            and score >= 0.45
+                        )
+                    )
                     if (
                         lemma
                         and lemma not in GRAMMAR_MARKERS
                         and len(lemma) > 1
                         and not bare_inflection_before_pos
                         and not full_word_inflection
+                        and not unsupported_definition_before_inflection
                     ):
                         add(
                             article, lemma, cleaned, "halvfet token",
