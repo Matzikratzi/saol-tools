@@ -13,6 +13,7 @@ from scripts.lemma_review import (
     infer_compound_series_boundary,
     extract_candidates,
     normalize_lemma,
+    optional_parenthesis_variants,
     render_review_images,
     repair_mixed_case_duplicate,
     suffix_base,
@@ -33,6 +34,65 @@ def token(text: str, left: float, density: float) -> dict:
 class LemmaReviewTests(unittest.TestCase):
     def test_normalizes_stem_boundary_for_game_word(self):
         self.assertEqual(normalize_lemma("amp|el"), "ampel")
+
+    def test_expands_optional_parenthesized_ending(self):
+        self.assertEqual(
+            optional_parenthesis_variants("-värld(en)"),
+            ["-värld", "-världen"],
+        )
+
+    def test_full_word_followed_by_same_suffix_is_not_duplicated(self):
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("afghan", 100, 0.40),
+                                token("s.", 250, 0.10),
+                                token("inv.", 310, 0.10),
+                                token("person", 380, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("afghanhund", 140, 0.40),
+                                token("-hund", 350, 0.40),
+                                token("—", 470, 0.10),
+                                token("afghansk", 520, 0.40),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "afghan",
+                    "stem_headword": "afghan",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["afghan", "afghanhund", "afghansk"],
+        )
 
     def test_repairs_mixed_case_ocr_duplicate(self):
         self.assertEqual(
