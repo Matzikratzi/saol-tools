@@ -9,6 +9,10 @@ import re
 import statistics
 from pathlib import Path
 
+from PIL import Image, ImageDraw, ImageFont
+
+from scripts.article_start_ml import DEFAULT_CACHE, extract_page
+
 
 POS = {"adj", "adv", "interj", "prep", "pron", "s", "v"}
 NON_LEMMA_SUFFIXES = {
@@ -48,9 +52,17 @@ def _references(payload: dict) -> tuple[float, float]:
                 for token in line.get("tokens", [])
                 if float(token.get("ink_density", 0.0)) > 0
             )
-        tokens = article["lines"][0].get("tokens", [])
-        if tokens:
-            head_values.append(float(min(tokens, key=lambda token: token["left"])["ink_density"]))
+        tokens = sorted(
+            article["lines"][0].get("tokens", []), key=lambda token: token["left"]
+        )
+        lexical = [
+            token
+            for token in tokens
+            if re.search(r"[A-Za-zÅÄÖåäöÀÁÉàáé]", token.get("text", ""))
+            and normalize_lemma(token.get("text", ""))
+        ]
+        if lexical:
+            head_values.append(float(lexical[0].get("ink_density", 0.0)))
     ordinary = statistics.median(all_values) if all_values else 0.0
     bold = statistics.median(head_values) if head_values else ordinary + 0.05
     if bold <= ordinary:
@@ -74,7 +86,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
     result = []
     seen = set()
 
-    def add(article, lemma, raw, method, score, stem=""):
+    def add(article, lemma, raw, method, score, stem="", line=None, token=None):
         lemma = normalize_lemma(lemma)
         if not lemma:
             return
@@ -99,12 +111,40 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 "bold_score": score,
                 "status": "osäker" if reasons else "kandidat",
                 "reasons": reasons,
+                "source_page": int((line or {}).get("page", article["start_page"])),
+                "source_column": int((line or {}).get("column", article["start_column"])),
+                "source_left": float((token or {}).get("left", 0.0)),
+                "source_top": float((token or {}).get("top", (line or {}).get("top", article.get("start_y", 0.0)))),
+                "source_right": float(
+                    (token or {}).get(
+                        "right",
+                        float((token or {}).get("left", 0.0))
+                        + float((token or {}).get("width", 0.0)),
+                    )
+                ),
+                "source_bottom": float(
+                    (token or {}).get(
+                        "bottom",
+                        float((token or {}).get("top", (line or {}).get("top", 0.0)))
+                        + float((token or {}).get("height", max(1.0, float((line or {}).get("bottom", 1.0)) - float((line or {}).get("top", 0.0)))),
+                    )
+                ),
             }
         )
 
     for article in articles_payload["articles"]:
         head = heads[article["number"]]
         current_base = head["headword"]
+        first_line = article["lines"][0]
+        head_tokens = sorted(first_line.get("tokens", []), key=lambda token: token["left"])
+        head_token = next(
+            (
+                token
+                for token in head_tokens
+                if normalize_lemma(token.get("text", ""))
+            ),
+            head_tokens[0] if head_tokens else None,
+        )
         add(
             article,
             current_base,
@@ -112,6 +152,8 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
             "artikelhuvud",
             1.0,
             head.get("stem_headword", current_base),
+            first_line,
+            head_token,
         )
         for line_index, line in enumerate(article["lines"]):
             tokens = sorted(line.get("tokens", []), key=lambda token: token["left"])
@@ -141,7 +183,10 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                         and score >= 0.25
                     ):
                         lemma = expand_compound(current_base, cleaned)
-                        add(article, lemma, cleaned, "sammansättningssuffix", score)
+                        add(
+                            article, lemma, cleaned, "sammansättningssuffix",
+                            score, line=line, token=token
+                        )
                     previous_separator = False
                     at_line_start = False
                     continue
@@ -149,14 +194,77 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 if plausible_position and score >= 0.35:
                     lemma = normalize_lemma(cleaned)
                     if lemma and lemma not in POS:
-                        add(article, lemma, cleaned, "halvfet token", score)
+                        add(
+                            article, lemma, cleaned, "halvfet token",
+                            score, line=line, token=token
+                        )
                         current_base = lemma
                 previous_separator = False
                 at_line_start = False
     return result
 
 
-def report_html(items: list[dict]) -> str:
+def _review_font(size: int = 28):
+    for path in (
+        "/System/Library/Fonts/Supplemental/Arial.ttf",
+        "/Library/Fonts/Arial.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    ):
+        try:
+            return ImageFont.truetype(path, size)
+        except OSError:
+            pass
+    return ImageFont.load_default()
+
+
+def render_review_images(
+    items: list[dict], pages: list[int], cache_dir: Path, image_dir: Path
+) -> list[Path]:
+    """Render each printed column beside labels aligned to their source rows."""
+    image_dir.mkdir(parents=True, exist_ok=True)
+    font = _review_font()
+    outputs = []
+    for page in pages:
+        source = cache_dir / f"page-{page:04d}-deskewed.png"
+        if not source.exists():
+            continue
+        with Image.open(source) as opened:
+            image = opened.convert("RGB")
+        split = image.width // 2
+        page_items = [item for item in items if item["source_page"] == page]
+        for column, (left, right) in enumerate(((0, split), (split, image.width)), 1):
+            crop = image.crop((left, 0, right, image.height))
+            margin = max(460, crop.width // 3)
+            canvas = Image.new("RGB", (crop.width + margin, crop.height), "white")
+            canvas.paste(crop, (0, 0))
+            draw = ImageDraw.Draw(canvas)
+            column_items = sorted(
+                (
+                    item
+                    for item in page_items
+                    if item["source_column"] == column
+                ),
+                key=lambda item: (item["source_top"], item["source_left"]),
+            )
+            last_label_y = -100
+            for item in column_items:
+                source_y = int((item["source_top"] + item["source_bottom"]) / 2)
+                label_y = max(source_y - 15, last_label_y + 34)
+                label_y = min(label_y, canvas.height - 34)
+                last_label_y = label_y
+                color = "#c62828" if item["status"] == "osäker" else "#00695c"
+                source_x = int(max(0, item["source_right"] - left))
+                label_x = crop.width + 18
+                draw.line((source_x, source_y, label_x - 5, label_y + 14), fill=color, width=3)
+                draw.ellipse((source_x - 4, source_y - 4, source_x + 4, source_y + 4), fill=color)
+                draw.text((label_x, label_y), item["lemma"], font=font, fill=color)
+            output = image_dir / f"page-{page:04d}-column-{column}.png"
+            canvas.save(output, format="PNG")
+            outputs.append(output)
+    return outputs
+
+
+def report_html(items: list[dict], images: list[Path] | None = None) -> str:
     rows = []
     for item in items:
         css = "uncertain" if item["status"] == "osäker" else ""
@@ -171,11 +279,19 @@ def report_html(items: list[dict]) -> str:
         )
     uncertain = sum(item["status"] == "osäker" for item in items)
     unique = {item["lemma"] for item in items}
+    image_blocks = "".join(
+        '<figure><img src="%s" loading="lazy"><figcaption>%s</figcaption></figure>'
+        % (html.escape(str(path)), html.escape(path.stem.replace("-", " ")))
+        for path in (images or [])
+    )
     return f"""<!doctype html><html lang="sv"><head><meta charset="utf-8">
 <title>SAOL – grundformskandidater</title><style>
-body{{font:15px system-ui;margin:24px;max-width:1500px}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #ccc;padding:6px;text-align:left;vertical-align:top}}th{{position:sticky;top:0;background:#eee}}tr.uncertain{{background:#fff3cd}}code{{white-space:pre-wrap}}
+body{{font:15px system-ui;margin:24px;max-width:1800px}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #ccc;padding:6px;text-align:left;vertical-align:top}}th{{position:sticky;top:0;background:#eee}}tr.uncertain{{background:#fff3cd}}code{{white-space:pre-wrap}}figure{{margin:24px 0;border:1px solid #aaa;padding:10px;background:#eee}}figure img{{display:block;width:100%;height:auto}}figcaption{{margin-top:6px;color:#555}}
 </style></head><body><h1>Grundformskandidater</h1>
-<p>{len(items)} träffar; {len(unique)} unika grundformer; {uncertain} gula kandidater.</p>
+<p>{len(items)} träffar; {len(unique)} unika grundformer; {uncertain} röda kandidater.</p>
+<p>Grönt är en säker kandidat. Rött bör kontrolleras. Linjen visar den tryckta källa som kandidaten kommer från.</p>
+{image_blocks}
+<h2>Alla kandidater som tabell</h2>
 <table><thead><tr><th>Artikel</th><th>Sida:spalt</th><th>Grundform</th><th>Metod</th><th>Fet</th><th>OCR</th><th>Anmärkning</th></tr></thead><tbody>{''.join(rows)}</tbody></table>
 </body></html>"""
 
@@ -186,10 +302,17 @@ def main() -> None:
     parser.add_argument("--headwords", type=Path, default=Path("headword-review.json"))
     parser.add_argument("--json", type=Path, default=Path("lemma-review.json"))
     parser.add_argument("--report", type=Path, default=Path("lemma-review.html"))
+    parser.add_argument("--cache-dir", type=Path, default=DEFAULT_CACHE)
+    parser.add_argument("--image-dir", type=Path, default=Path("lemma-review-pages"))
     args = parser.parse_args()
     articles = json.loads(args.articles.read_text(encoding="utf-8"))
     heads = json.loads(args.headwords.read_text(encoding="utf-8"))
+    for page in articles.get("pages", []):
+        extract_page(page, args.cache_dir, False)
     items = extract_candidates(articles, heads)
+    images = render_review_images(
+        items, articles.get("pages", []), args.cache_dir, args.image_dir
+    )
     output = {
         "candidate_count": len(items),
         "unique_lemma_count": len({item["lemma"] for item in items}),
@@ -197,12 +320,13 @@ def main() -> None:
         "candidates": items,
     }
     args.json.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
-    args.report.write_text(report_html(items), encoding="utf-8")
+    args.report.write_text(report_html(items, images), encoding="utf-8")
     print(f"Kandidater: {output['candidate_count']}")
     print(f"Unika grundformer: {output['unique_lemma_count']}")
     print(f"Osäkra: {output['uncertain_count']}")
     print(f"Data: {args.json.resolve()}")
     print(f"Rapport: {args.report.resolve()}")
+    print(f"Bildsidor: {args.image_dir.resolve()}")
 
 
 if __name__ == "__main__":
