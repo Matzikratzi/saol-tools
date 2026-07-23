@@ -231,7 +231,10 @@ def _rows_from_lines(
                 and line_height <= median_height * 1.60
             ):
                 x0 = max(0, round(haf[0] + correction - median_height * 0.30))
-                x1 = min(gray.width, round(threshold_x + correction))
+                x1 = min(
+                    gray.width,
+                    round(threshold_x + correction + threshold_tolerance),
+                )
                 y0 = max(0, round(line.top))
                 y1 = min(gray.height, round(line.bottom))
                 pixels = gray.load()
@@ -244,9 +247,10 @@ def _rows_from_lines(
                 pixel_reaches_left = left_ink >= max(
                     6, round(median_height * 0.50)
                 )
-            baseline = not chapter_heading and (
-                ocr_reaches_left or pixel_reaches_left
-            )
+            # Tesseracts ordboxar kan innehålla luft och nå över T trots att
+            # inget tryckt tecken gör det (t.ex. raden "som" under amfibie).
+            # Klassificera därför från de faktiska pixlarna i H–T-fönstret.
+            baseline = not chapter_heading and pixel_reaches_left
             rows.append(
                 {
                     "page": page,
@@ -298,7 +302,7 @@ def _rows_from_lines(
 
 
 def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict]:
-    cache_file = cache_dir / f"page-{page:04d}-columns-v9.json"
+    cache_file = cache_dir / f"page-{page:04d}-columns-v10.json"
     if cache_file.exists() and not refresh:
         return json.loads(cache_file.read_text(encoding="utf-8"))
 
