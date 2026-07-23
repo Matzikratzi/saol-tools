@@ -20,7 +20,7 @@ def _line_key(value: str) -> str:
     return "".join(character for character in value if character.isalnum())
 
 
-def raw_headword(value: str) -> str:
+def raw_headword(value: str, preserve_boundaries: bool = False) -> str:
     selected = []
     for token in value.split():
         text = token.strip()
@@ -38,8 +38,11 @@ def raw_headword(value: str) -> str:
         if not selected and plain in STOP_WORDS:
             return ""
         selected.append(text)
-    value = " ".join(selected).casefold().replace("|", "").replace("¦", "")
-    value = re.sub(r"[^a-zåäöàáé0-9 -]+", "", value)
+    value = " ".join(selected).casefold().replace("¦", "|")
+    if not preserve_boundaries:
+        value = value.replace("|", "")
+    allowed = r"[^a-zåäöàáé0-9 |+-]+" if preserve_boundaries else r"[^a-zåäöàáé0-9 -]+"
+    value = re.sub(allowed, "", value)
     return re.sub(r"\s+", " ", value).strip(" -")
 
 
@@ -98,8 +101,10 @@ def fetch_and_enrich(items: list[dict]) -> None:
         for item, (line_index, score) in zip(page_items, align_lines(page_items, raw_lines)):
             raw_line = raw_lines[line_index]
             secondary = raw_headword(raw_line)
+            secondary_stem = raw_headword(raw_line, preserve_boundaries=True)
             item["runeberg_line"] = raw_line
             item["runeberg_headword"] = secondary
+            item["runeberg_stem_headword"] = secondary_stem
             item["runeberg_match_score"] = score
             if score < 0.62 or not secondary:
                 continue
@@ -110,6 +115,8 @@ def fetch_and_enrich(items: list[dict]) -> None:
             )
             same_headword = secondary == item["headword"]
             if same_headword and score >= 0.85:
+                if "|" in secondary_stem:
+                    item["stem_headword"] = secondary_stem
                 item["reasons"] = [
                     reason for reason in item["reasons"]
                     if not reason.startswith("låg OCR-säkerhet")
@@ -132,5 +139,6 @@ def fetch_and_enrich(items: list[dict]) -> None:
                 item["corrected_from"] = old
                 item["correction_method"] = "Runebergs parallella OCR"
                 item["headword"] = secondary
+                item["stem_headword"] = secondary_stem or secondary
                 item["reasons"] = []
                 item["status"] = "preliminär"
