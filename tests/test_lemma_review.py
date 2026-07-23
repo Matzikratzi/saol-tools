@@ -9,6 +9,7 @@ from PIL import Image
 from scripts.lemma_review import (
     _items_by_printed_row,
     _items_in_reading_order,
+    display_lemma,
     expand_compound,
     infer_boundary_from_article_family,
     infer_boundary_from_previous,
@@ -38,6 +39,16 @@ def token(text: str, left: float, density: float) -> dict:
 
 
 class LemmaReviewTests(unittest.TestCase):
+    def test_displays_and_preserves_homonym_number(self):
+        item = {
+            "lemma": "afro",
+            "method": "artikelhuvud",
+            "homonym": 2,
+        }
+        self.assertEqual(display_lemma(item), "[H2] afro")
+        item["method"] = "sammansättningssuffix"
+        self.assertEqual(display_lemma(item), "afro")
+
     def test_normalizes_stem_boundary_for_game_word(self):
         self.assertEqual(normalize_lemma("amp|el"), "ampel")
 
