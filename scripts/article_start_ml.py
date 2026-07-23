@@ -215,8 +215,12 @@ def _rows_from_lines(
             chapter_heading = _is_chapter_heading(
                 line.text, line_height, median_height
             )
+            # En tryckt bokstav kan ligga precis över den beräknade T-linjen
+            # genom avrundning och kvarvarande snedhet. Tillåt ungefär en pixel.
+            threshold_tolerance = max(1.0, median_height * 0.03)
             ocr_reaches_left = any(
-                normalize_word(item.text) and float(item.left) - correction < threshold_x
+                normalize_word(item.text)
+                and float(item.left) - correction <= threshold_x + threshold_tolerance
                 for item in line.items
             )
             left_ink = 0
@@ -294,7 +298,7 @@ def _rows_from_lines(
 
 
 def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict]:
-    cache_file = cache_dir / f"page-{page:04d}-columns-v8.json"
+    cache_file = cache_dir / f"page-{page:04d}-columns-v9.json"
     if cache_file.exists() and not refresh:
         return json.loads(cache_file.read_text(encoding="utf-8"))
 
@@ -356,7 +360,10 @@ def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict
 def _match_score(expected: str, row: dict) -> float:
     wanted = normalize_word(expected)
     tokens = row["match_text"].split()
-    candidates = tokens[:]
+    # Ett facitord hör hemma i början av den tryckta raden. Att jämföra mot
+    # varje senare OCR-token gjorde t.ex. fortsättningsordet "abstraktion" till
+    # en falsk match för uppslagsordet "abstrakt".
+    candidates = [tokens[0]] if tokens else []
     for length in range(2, min(5, len(tokens)) + 1):
         candidates.append("".join(tokens[:length]))
     if not candidates:
@@ -372,6 +379,16 @@ def _match_score(expected: str, row: dict) -> float:
     return best
 
 
+def _alignment_score(expected: str, row: dict) -> float:
+    """Combine text matching with independent evidence at the printed margin."""
+    score = _match_score(expected, row)
+    if row.get("pixel_reaches_left"):
+        score += 0.75
+    elif row.get("ocr_reaches_left"):
+        score += 0.15
+    return score
+
+
 def align_truth(words: list[str], rows: list[dict]) -> list[tuple[int, str, float]]:
     """Monotonically align every facit word to one OCR row."""
     expected_count, row_count = len(words), len(rows)
@@ -385,7 +402,7 @@ def align_truth(words: list[str], rows: list[dict]) -> list[tuple[int, str, floa
             skip = scores[expected_index][row_index - 1]
             match = (
                 scores[expected_index - 1][row_index - 1]
-                + _match_score(words[expected_index - 1], rows[row_index - 1])
+                + _alignment_score(words[expected_index - 1], rows[row_index - 1])
             )
             if match > skip:
                 scores[expected_index][row_index] = match
