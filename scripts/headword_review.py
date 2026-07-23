@@ -159,6 +159,21 @@ def extract_head(article: dict) -> dict:
     }
 
 
+def infer_stem_boundary_from_ocr(raw_headword: str, canonical: str) -> str:
+    """Interpret one extra l/I/1-like glyph as SAOL's printed stem boundary."""
+    canonical_key = normalize_headword(canonical).replace(" ", "")
+    for raw_token in raw_headword.split():
+        token = normalize_headword(raw_token).replace(" ", "")
+        if len(token) != len(canonical_key) + 1:
+            continue
+        for index, character in enumerate(token):
+            if character not in "li1":
+                continue
+            if token[:index] + token[index + 1:] == canonical_key:
+                return canonical_key[:index] + "|" + canonical_key[index:]
+    return ""
+
+
 def reconcile_homonym_neighbours(items: list[dict]) -> None:
     """Use a detected homonym marker as evidence about adjacent entries."""
     for index in range(len(items) - 1):
@@ -192,11 +207,21 @@ def reconcile_homonym_neighbours(items: list[dict]) -> None:
                 item["corrected_from"] = item["headword"]
                 item["correction_method"] = "angränsande homonym"
                 item["headword"] = canonical
-                if (
+                inferred_stem = infer_stem_boundary_from_ocr(
+                    item.get("raw_headword", ""), canonical
+                )
+                runeberg_stem = item.get("runeberg_stem_headword", "")
+                if inferred_stem:
+                    item["stem_headword"] = inferred_stem
+                    item["stem_boundary_inferred"] = True
+                    item["stem_boundary_method"] = "OCR-glyf via angränsande homonym"
+                elif (
                     item.get("runeberg_headword") == canonical
-                    and "|" in item.get("runeberg_stem_headword", "")
+                    and "|" in runeberg_stem
                 ):
-                    item["stem_headword"] = item["runeberg_stem_headword"]
+                    item["stem_headword"] = runeberg_stem
+                    item["stem_boundary_inferred"] = False
+                    item["stem_boundary_method"] = "Runebergs parallella OCR"
                 item["reasons"] = [
                     reason for reason in item["reasons"]
                     if not reason.startswith(("låg OCR-säkerhet", "homonymtecknet"))
