@@ -406,6 +406,11 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     continue
                 score = _token_score(token, ordinary, bold)
                 cleaned = raw.strip(";,:.()[]{}")
+                if (
+                    len(cleaned) > 1
+                    and cleaned.startswith(("—", "–", "~"))
+                ):
+                    cleaned = "-" + cleaned[1:]
                 following_tokens = list(tokens[token_index + 1 :])
                 for following_line in article["lines"][line_index + 1 :]:
                     following_tokens.extend(
@@ -535,7 +540,17 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     or series_first
                 ):
                     lemma = normalize_lemma(cleaned)
-                    if lemma and lemma not in POS and len(lemma) > 1:
+                    bare_inflection_before_pos = (
+                        followed_by_pos
+                        and f"-{lemma}" in NON_LEMMA_SUFFIXES
+                        and score < 0.25
+                    )
+                    if (
+                        lemma
+                        and lemma not in POS
+                        and len(lemma) > 1
+                        and not bare_inflection_before_pos
+                    ):
                         add(
                             article, lemma, cleaned, "halvfet token",
                             score, line=line, token=token
