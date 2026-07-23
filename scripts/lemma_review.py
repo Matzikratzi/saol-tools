@@ -439,8 +439,13 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             lemma = expand_compound(
                                 current_base, suffix_variant
                             )
-                            if plural_of_previous(
-                                last_lookup_lemma, lemma
+                            if (
+                                plural_of_previous(
+                                    last_lookup_lemma, lemma
+                                )
+                                or inflection_of_previous(
+                                    current_head, lemma
+                                )
                             ):
                                 continue
                             add(
