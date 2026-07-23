@@ -12,7 +12,8 @@ Arbetet delas upp eftersom varje steg behöver kunna mätas separat:
 2. **Artikeltext**
    - knyt fortsättningsrader till rätt artikel,
    - hantera spalt- och sidbrytningar,
-   - bevara originalets lodstreck, homonymnummer och böjningsnotation.
+   - bevara originalets lodstreck, homonymnummer och böjningsnotation,
+   - granska nya sidor med `scripts/article_text_review.py` innan full körning.
 3. **Böjningsanalys**
    - maskinläs instruktionerna före sida 19,
    - implementera och testa notationens regler,
