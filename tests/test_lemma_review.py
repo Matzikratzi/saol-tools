@@ -9,6 +9,7 @@ from PIL import Image
 from scripts.lemma_review import (
     _items_in_reading_order,
     expand_compound,
+    infer_compound_series_boundary,
     extract_candidates,
     normalize_lemma,
     render_review_images,
@@ -33,6 +34,58 @@ class LemmaReviewTests(unittest.TestCase):
 
     def test_expands_compound_suffix(self):
         self.assertEqual(expand_compound("akademi", "-medlem"), "akademimedlem")
+
+    def test_ocr_l_becomes_compound_boundary_when_order_proves_it(self):
+        self.assertEqual(
+            infer_compound_series_boundary(
+                "affärslangelägenhet", "affär", "anställd"
+            ),
+            "affärs|angelägenhet",
+        )
+
+    def test_compound_series_changes_base_before_following_suffixes(self):
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("affär", 100, 0.40),
+                                token("(-ä'r)", 200, 0.00),
+                                token("-en", 300, 0.10),
+                                token("-er", 360, 0.10),
+                                token("ss.", 420, 0.10),
+                                token("affärslangelägenhet", 500, 0.10),
+                                token("-anställd", 800, 0.10),
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "affär",
+                    "stem_headword": "affär",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["affär", "affärsangelägenhet", "affärsanställd"],
+        )
 
     def test_structured_head_repairs_ocr_headword(self):
         articles = {
