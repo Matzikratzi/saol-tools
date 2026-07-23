@@ -199,7 +199,14 @@ def remove_alphabetic_family_outliers(
         family = headword[:-1] if len(headword) > 5 else headword
         for index, item in enumerate(article_items):
             lemma = normalize_lemma(item["lemma"])
-            if item["method"] == "artikelhuvud" or lemma.startswith(family):
+            explicit_boundary = any(
+                marker in item.get("raw", "") for marker in ("|", "¦")
+            )
+            if (
+                item["method"] == "artikelhuvud"
+                or lemma.startswith(family)
+                or explicit_boundary
+            ):
                 continue
             later_family = next(
                 (
