@@ -125,6 +125,51 @@ def _haf_for_column(column: int) -> tuple[float, float, float] | None:
     return debug._HAF_LEVELS if column == 1 else debug._RIGHT_HAF_LEVELS
 
 
+def _slanted_geometry(ordered, median_height: float, fallback):
+    """Estimate parallel A/F margins as x = intercept + slope*y."""
+    if not ordered:
+        return 0.0, 0.0, fallback
+    centres = [(float(line.top + line.bottom) / 2, float(line.raw_start_x)) for line in ordered]
+    slopes = []
+    minimum_dy = median_height * 5
+    for index, (first_y, first_x) in enumerate(centres):
+        for second_y, second_x in centres[index + 1 :]:
+            dy = second_y - first_y
+            if dy < minimum_dy:
+                continue
+            slope = (second_x - first_x) / dy
+            if abs(slope) <= 0.08:
+                slopes.append(slope)
+    slope = statistics.median(slopes) if slopes else 0.0
+    anchor_y = statistics.median(y for y, _x in centres)
+    adjusted = sorted(x - slope * (y - anchor_y) for y, x in centres)
+    tolerance = max(2.5, median_height * 0.20)
+    clusters = []
+    for value in adjusted:
+        if clusters and value - clusters[-1][-1] <= tolerance:
+            clusters[-1].append(value)
+        else:
+            clusters.append([value])
+    minimum_count = max(2, round(len(adjusted) * 0.04))
+    levels = [
+        (float(statistics.median(cluster)), len(cluster))
+        for cluster in clusters
+        if len(cluster) >= minimum_count
+    ]
+    pairs = [
+        (abs((f - a) - 40.0), -(a_count + f_count), a, f)
+        for index, (a, a_count) in enumerate(levels)
+        for f, f_count in levels[index + 1 :]
+        if 30.0 <= f - a <= 50.0
+    ]
+    if pairs:
+        _error, _count, article_x, continuation_x = min(pairs)
+        haf = (article_x - 23.0, article_x, continuation_x)
+    else:
+        haf = fallback
+    return slope, anchor_y, haf
+
+
 def _rows_from_lines(lines, models, width: int, height: int, page: int) -> list[dict]:
     rows: list[dict] = []
     split = debug._COLUMN_SPLIT_X if debug._COLUMN_SPLIT_X is not None else width / 2
@@ -133,12 +178,12 @@ def _rows_from_lines(lines, models, width: int, height: int, page: int) -> list[
         heights = [max(1.0, float(line.bottom - line.top)) for line in ordered]
         median_height = statistics.median(heights) if heights else 1.0
         model = models[column]
-        haf = _haf_for_column(column)
+        slope, anchor_y, haf = _slanted_geometry(
+            ordered, median_height, _haf_for_column(column)
+        )
         article_x = haf[1] if haf else float(model.article_x)
         continuation_x = haf[2] if haf else float(model.continuation_x)
-        threshold_x = _threshold_for_column(column)
-        if threshold_x is None:
-            threshold_x = (article_x + continuation_x) / 2
+        threshold_x = (article_x + continuation_x) / 2
         column_left = 0.0 if column == 1 else float(split)
         column_width = float(split) if column == 1 else max(1.0, width - float(split))
         for index, line in enumerate(ordered):
@@ -147,8 +192,12 @@ def _rows_from_lines(lines, models, width: int, height: int, page: int) -> list[
             text_items = sorted(line.items, key=lambda item: item.left)
             first_tokens = [normalize_word(item.text) for item in text_items if normalize_word(item.text)]
             match_text = " ".join(first_tokens[:5])
+            line_y = float(line.top + line.bottom) / 2
+            correction = slope * (line_y - anchor_y)
+            letter_x = float(line.letter_start_x) - correction
+            raw_x = float(line.raw_start_x) - correction
             baseline = any(
-                normalize_word(item.text) and float(item.left) < threshold_x
+                normalize_word(item.text) and float(item.left) - correction < threshold_x
                 for item in line.items
             )
             rows.append(
@@ -162,20 +211,22 @@ def _rows_from_lines(lines, models, width: int, height: int, page: int) -> list[
                     "text": line.text,
                     "match_text": match_text,
                     "baseline": bool(baseline),
+                    "margin_slope": slope,
+                    "geometry": [float(value) for value in haf] if haf else None,
                     "features": [
                         float(column - 1),
                         float(line.top) / max(1.0, height),
-                        (float(line.letter_start_x) - column_left) / column_width,
-                        (float(line.raw_start_x) - column_left) / column_width,
+                        (letter_x - column_left) / column_width,
+                        (raw_x - column_left) / column_width,
                         max(1.0, float(line.right - line.left)) / column_width,
                         max(1.0, float(line.bottom - line.top)) / median_height,
                         float(len(line.items)),
                         float(len(line.text)),
                         float(line.bold_score),
                         float(bool(line.has_homonym_marker)),
-                        (float(line.letter_start_x) - article_x) / median_height,
-                        (float(line.letter_start_x) - continuation_x) / median_height,
-                        (float(line.letter_start_x) - threshold_x) / median_height,
+                        (letter_x - article_x) / median_height,
+                        (letter_x - continuation_x) / median_height,
+                        (letter_x - threshold_x) / median_height,
                         (
                             (float(line.top) - float(previous.bottom)) / median_height
                             if previous is not None
@@ -194,7 +245,7 @@ def _rows_from_lines(lines, models, width: int, height: int, page: int) -> list[
 
 
 def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict]:
-    cache_file = cache_dir / f"page-{page:04d}-columns-v5.json"
+    cache_file = cache_dir / f"page-{page:04d}-columns-v6.json"
     if cache_file.exists() and not refresh:
         return json.loads(cache_file.read_text(encoding="utf-8"))
 
@@ -326,7 +377,16 @@ def label_rows(
                 row for row in all_rows if row["page"] == page and row["column"] == column
             ]
             matches = align_truth(words, selected)
-            accepted = all(score >= minimum_score for _index, _word, score in matches)
+            weak_indices = [
+                index for index, (_row, _word, score) in enumerate(matches)
+                if score < minimum_score
+            ]
+            mean_score = statistics.fmean(score for _row, _word, score in matches)
+            accepted = not weak_indices or (
+                len(weak_indices) == 1
+                and 0 < weak_indices[0] < len(matches) - 1
+                and mean_score >= 0.90
+            )
             if not accepted:
                 for row in selected:
                     row["usable"] = False
