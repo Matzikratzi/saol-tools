@@ -49,6 +49,7 @@ def _source() -> str:
     old_globals = "_BODY_TOP_Y: float | None = None\n"
     new_globals = (
         "_BODY_TOP_Y: float | None = None\n"
+        "_PARSE_TOP_Y: float | None = None\n"
         "_COLUMN_SPLIT_X: float | None = None\n"
         "_LEFT_A_X: float | None = None\n"
         "_LEFT_LEVELS: list[float] = []\n"
@@ -183,6 +184,18 @@ def _source() -> str:
         raise RuntimeError("Kunde inte mäta startlinjen efter upprätning")
     source = source.replace(old_after_y, new_after_y, 1)
 
+    old_angle_rejection = "        if abs(angle) > 7.0:\n            return None\n"
+    new_angle_rejection = "        if abs(angle) > 18.0:\n            return None\n"
+    if old_angle_rejection not in source:
+        raise RuntimeError("Kunde inte höja gränsen för kraftigt sneda sidor")
+    source = source.replace(old_angle_rejection, new_angle_rejection, 1)
+
+    old_angle_clamp = "    angle = max(-6.0, min(6.0, angle))\n"
+    new_angle_clamp = "    angle = max(-18.0, min(18.0, angle))\n"
+    if old_angle_clamp not in source:
+        raise RuntimeError("Kunde inte höja deskew-rotationens gräns")
+    source = source.replace(old_angle_clamp, new_angle_clamp, 1)
+
     # Keep Pillow's original sign convention from the rebuilt implementation.
     # Changing -angle to +angle doubles the skew instead of removing it.
 
@@ -191,8 +204,11 @@ def _source() -> str:
         "    body_top += max(1.0, median_height * 0.10)\n"
     )
     new_body = (
-        "    # Start three image pixels below the deskewed header rule.\n"
-        "    body_top = (_BODY_TOP_Y + 3.0) if _BODY_TOP_Y is not None else image_height * 0.03\n"
+        "    global _PARSE_TOP_Y\n"
+        "    # Keep the rule itself and its antialiased edge outside row parsing.\n"
+        "    rule_margin = max(8.0, median_height * 0.25)\n"
+        "    body_top = (_BODY_TOP_Y + rule_margin) if _BODY_TOP_Y is not None else image_height * 0.03\n"
+        "    _PARSE_TOP_Y = body_top\n"
     )
     if old_body not in source:
         raise RuntimeError("Kunde inte sätta textstart direkt under sidhuvudsstrecket")
@@ -524,7 +540,7 @@ def _source() -> str:
         "        'style=\"--guide-color:#2563eb\"></div>' % split_x\n"
         "    ]\n"
         "    if _BODY_TOP_Y is not None and image_height > 0:\n"
-        "        start_y = max(0.0, min(float(image_height), _BODY_TOP_Y + 3.0))\n"
+        "        start_y = max(0.0, min(float(image_height), _PARSE_TOP_Y if _PARSE_TOP_Y is not None else _BODY_TOP_Y + 8.0))\n"
         "        result.append(\n"
         "            '<div class=\"y-guide y-guide-body-start\" style=\"top:%.6f%%\"></div>'\n"
         "            % (100.0 * start_y / image_height)\n"
@@ -715,7 +731,7 @@ def _source() -> str:
         "    d12 = n2 - n1 if n1 is not None and n2 is not None else None\n"
         "    d23 = n3 - n2 if n2 is not None and n3 is not None else None\n"
         "    d34 = n4 - n3 if n3 is not None and n4 is not None else None\n"
-        "    start_y = _BODY_TOP_Y + 3.0 if _BODY_TOP_Y is not None else None\n"
+        "    start_y = _PARSE_TOP_Y\n"
         "    value = lambda number: '–' if number is None else f'{number:.1f}'\n"
         "    count = lambda number: '–' if number is None else str(number)\n"
         "    headings = ','.join(_LEFT_IGNORED_HEADINGS) or '–'\n"
