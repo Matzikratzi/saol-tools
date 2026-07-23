@@ -929,6 +929,63 @@ class LemmaReviewTests(unittest.TestCase):
             ],
         )
 
+    def test_following_suffix_boundary_repairs_first_series_item(self):
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("aggression", 100, 0.40),
+                                token("-en", 350, 0.10),
+                                token("-er", 430, 0.10),
+                                token("s.", 510, 0.10),
+                                token("-sldrift", 570, 0.20),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("-s|hämning", 140, 0.20),
+                                token("-s|politik", 390, 0.20),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "aggression",
+                    "stem_headword": "aggression",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            [
+                "aggression",
+                "aggressionsdrift",
+                "aggressionshämning",
+                "aggressionspolitik",
+            ],
+        )
+
     def test_previous_suffix_boundary_repairs_following_suffix(self):
         self.assertEqual(
             infer_suffix_boundary_from_series("-allös", "a"),
