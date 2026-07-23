@@ -12,6 +12,7 @@ from scripts.lemma_review import (
     expand_compound,
     infer_boundary_from_repeated_suffix,
     infer_compound_series_boundary,
+    merged_pos_inflection,
     extract_candidates,
     normalize_lemma,
     optional_parenthesis_variants,
@@ -35,6 +36,11 @@ def token(text: str, left: float, density: float) -> dict:
 class LemmaReviewTests(unittest.TestCase):
     def test_normalizes_stem_boundary_for_game_word(self):
         self.assertEqual(normalize_lemma("amp|el"), "ampel")
+
+    def test_merged_noun_marker_is_not_a_suffix(self):
+        self.assertTrue(merged_pos_inflection("-ers.", "-ers", 0.80))
+        self.assertTrue(merged_pos_inflection("-ers", "-ers", 0.10))
+        self.assertFalse(merged_pos_inflection("-ers", "-ers", 0.80))
 
     def test_expands_optional_parenthesized_ending(self):
         self.assertEqual(
