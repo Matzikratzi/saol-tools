@@ -228,10 +228,18 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 series_position = line_index == 0 and at_line_start
                 inferred = ""
                 if series_position:
+                    following_tokens = list(tokens[token_index + 1 :])
+                    for following_line in article["lines"][line_index + 1 :]:
+                        following_tokens.extend(
+                            sorted(
+                                following_line.get("tokens", []),
+                                key=lambda candidate: candidate["left"],
+                            )
+                        )
                     next_suffix = next(
                         (
                             candidate["text"].strip().strip(";,:.()[]{}")[1:]
-                            for candidate in tokens[token_index + 1 :]
+                            for candidate in following_tokens
                             if candidate["text"].strip().strip(";,:.()[]{}").startswith("-")
                         ),
                         "",
