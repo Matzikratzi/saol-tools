@@ -70,7 +70,7 @@ class LemmaReviewTests(unittest.TestCase):
                                 token("bekräftande", 140, 0.10),
                                 token("vanlig", 260, 0.10),
                                 token("text", 340, 0.10),
-                                token("affirm|ation", 430, 0.40),
+                                token("affirm|ation", 430, 0.10),
                                 token("-era", 600, 0.40),
                             ],
                         },
