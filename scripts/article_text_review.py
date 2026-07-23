@@ -62,6 +62,14 @@ def merge_overlapping_rows(rows: list[dict]) -> list[dict]:
                 combined["match_text"] = " ".join(
                     fragment.get("match_text", "") for fragment in fragments
                 ).strip()
+                combined["tokens"] = sorted(
+                    [
+                        token
+                        for fragment in fragments
+                        for token in fragment.get("tokens", [])
+                    ],
+                    key=lambda token: (token["left"], token["top"]),
+                )
                 for key in (
                     "baseline",
                     "chapter_heading",
@@ -110,6 +118,7 @@ def group_articles(rows: list[dict]) -> tuple[list[dict], list[dict], list[dict]
                 "top": row["top"],
                 "bottom": row["bottom"],
                 "text": row["text"],
+                "tokens": row.get("tokens", []),
                 "article_start": bool(row.get("baseline")),
                 "ocr_reaches_left": bool(row.get("ocr_reaches_left")),
                 "pixel_reaches_left": bool(row.get("pixel_reaches_left")),
