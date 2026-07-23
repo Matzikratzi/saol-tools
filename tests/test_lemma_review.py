@@ -206,8 +206,50 @@ class LemmaReviewTests(unittest.TestCase):
             ["afrodisiakum"],
         )
 
+    def test_agave_plural_plus_noun_marker_is_not_a_lemma(self):
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("agave", 100, 0.40),
+                                token("(-a've)", 230, 0.00),
+                                token("-n", 350, 0.10),
+                                token("-rs.", 410, 0.10),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "agave",
+                    "stem_headword": "agave",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["agave"],
+        )
+
     def test_merged_noun_marker_is_not_a_suffix(self):
         self.assertTrue(merged_pos_inflection("-ers.", "-ers", 0.80))
+        self.assertTrue(merged_pos_inflection("-rs.", "-rs", 0.80))
         self.assertTrue(merged_pos_inflection("-ers", "-ers", 0.10))
         self.assertFalse(merged_pos_inflection("-ers", "-ers", 0.80))
 
