@@ -104,8 +104,8 @@ class LemmaReviewTests(unittest.TestCase):
                             "bottom": 124.0,
                             "tokens": [
                                 token("affrikatla", 100, 0.40),
-                                token("s.", 300, 0.10),
-                                token("ord", 360, 0.10),
+                                token("ss.", 300, 0.10),
+                                token("förbindelse", 360, 0.10),
                             ],
                         }
                     ],
@@ -122,7 +122,10 @@ class LemmaReviewTests(unittest.TestCase):
             ]
         }
         candidates = extract_candidates(articles, heads)
-        self.assertEqual(candidates[0]["lemma"], "affrikata")
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["affrikata"],
+        )
 
     def test_same_printed_row_is_ordered_left_to_right(self):
         right = {
