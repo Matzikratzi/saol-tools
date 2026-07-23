@@ -286,6 +286,10 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
         result.append(
             {
                 "article_number": article["number"],
+                "homonym": heads[article["number"]].get("homonym"),
+                "homonym_marker_detected": heads[article["number"]].get(
+                    "homonym_marker_detected", False
+                ),
                 "page": article["start_page"],
                 "column": article["start_column"],
                 "lemma": lemma,
@@ -490,6 +494,14 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
     return remove_alphabetic_family_outliers(result, heads)
 
 
+def display_lemma(item: dict) -> str:
+    """Make a detected homonym visible without changing the lemma itself."""
+    homonym = item.get("homonym")
+    if homonym is not None and item.get("method") == "artikelhuvud":
+        return f"[H{homonym}] {item['lemma']}"
+    return item["lemma"]
+
+
 def _review_font(size: int = 28):
     for path in (
         "/System/Library/Fonts/Supplemental/Arial.ttf",
@@ -574,7 +586,7 @@ def render_review_images(
             row_widths = []
             for row in column_rows:
                 widths = [
-                    measuring.textbbox((0, 0), item["lemma"], font=font)[2]
+                    measuring.textbbox((0, 0), display_lemma(item), font=font)[2]
                     for item in row
                 ]
                 row_widths.append(
@@ -602,8 +614,9 @@ def render_review_images(
                         if item["status"] == "osäker"
                         else "#00695c"
                     )
+                    visible_lemma = display_lemma(item)
                     text_box = draw.textbbox(
-                        (0, 0), item["lemma"], font=font
+                        (0, 0), visible_lemma, font=font
                     )
                     text_width = text_box[2] - text_box[0]
                     source_x = margin + int(
@@ -630,7 +643,7 @@ def render_review_images(
                     )
                     draw.text(
                         (label_x, label_y),
-                        item["lemma"],
+                        visible_lemma,
                         font=font,
                         fill=color,
                     )
@@ -657,7 +670,7 @@ def report_html(items: list[dict], images: list[Path] | None = None) -> str:
             '<tr class="%s"><td>%d</td><td>%d:%d</td><td><b>%s</b></td>'
             '<td>%s</td><td>%.2f</td><td><code>%s</code></td><td>%s</td></tr>' % (
                 css, item["article_number"], item["page"], item["column"],
-                html.escape(item["lemma"]), html.escape(item["method"]),
+                html.escape(display_lemma(item)), html.escape(item["method"]),
                 item["bold_score"], html.escape(item["raw"]),
                 html.escape("; ".join(item["reasons"]) or "—"),
             )
