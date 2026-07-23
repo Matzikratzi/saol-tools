@@ -194,7 +194,7 @@ def _rows_from_lines(lines, models, width: int, height: int, page: int) -> list[
 
 
 def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict]:
-    cache_file = cache_dir / f"page-{page:04d}-columns-v2.json"
+    cache_file = cache_dir / f"page-{page:04d}-columns-v3.json"
     if cache_file.exists() and not refresh:
         return json.loads(cache_file.read_text(encoding="utf-8"))
 
@@ -232,8 +232,10 @@ def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict
                 replace(item, left=item.left + left)
                 for item in module.extract_observations(buffer.getvalue())
             )
-    corrected = module.reconcile_contextual_observations(observations, source_response.text)
-    lines, models = module._build_lines(corrected, width, height)
+    # Context reconciliation assumes full-width Tesseract lines. Applying it
+    # after column OCR shifts words between unrelated rows and may copy raw TSV
+    # payload into tokens, so the ML track deliberately uses clean OCR boxes.
+    lines, models = module._build_lines(observations, width, height)
     rows = _rows_from_lines(lines, models, width, height, page)
     for row in rows:
         row["deskew_degrees"] = float(angle)
@@ -511,7 +513,12 @@ def main() -> None:
         )
     args.features_json.write_text(
         json.dumps(
-            {"feature_names": FEATURE_NAMES, "rows": details, "alignment": alignment},
+            {
+                "feature_names": FEATURE_NAMES,
+                "rows": details,
+                "all_rows": rows,
+                "alignment": alignment,
+            },
             ensure_ascii=False,
             indent=2,
         ),
