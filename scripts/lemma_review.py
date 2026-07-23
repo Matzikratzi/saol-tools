@@ -521,9 +521,33 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     at_line_start = False
                     continue
                 if cleaned.startswith("-"):
+                    following_series_prefix = next(
+                        (
+                            candidate["text"]
+                            .strip()
+                            .strip(";,:.()[]{}")
+                            .split("|", 1)[0]
+                            .split("¦", 1)[0]
+                            .lstrip("-")
+                            for candidate in following_tokens
+                            if (
+                                candidate["text"]
+                                .strip()
+                                .strip(";,:.()[]{}")
+                                .startswith("-")
+                                and (
+                                    "|" in candidate["text"]
+                                    or "¦" in candidate["text"]
+                                )
+                            )
+                        ),
+                        "",
+                    )
                     inferred_suffix_boundary = (
                         infer_suffix_boundary_from_series(
-                            cleaned, suffix_series_prefix
+                            cleaned,
+                            suffix_series_prefix
+                            or following_series_prefix,
                         )
                     )
                     if inferred_suffix_boundary:
