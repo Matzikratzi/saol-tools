@@ -36,6 +36,16 @@ def expand_compound(base: str, suffix: str) -> str:
     return normalize_lemma(base + suffix[1:])
 
 
+def merged_pos_inflection(raw: str, normalized_suffix: str) -> bool:
+    """Recognize OCR joins such as '-ers.' meaning inflection '-er' + noun 's.'."""
+    compact = raw.strip().casefold()
+    return (
+        compact.endswith("s.")
+        and normalized_suffix.endswith("s")
+        and normalized_suffix[:-1] in NON_LEMMA_SUFFIXES
+    )
+
+
 def optional_parenthesis_variants(value: str) -> list[str]:
     """Include SAOL's parenthesized ending without inventing a short variant."""
     match = re.match(r"^(.*)\(([^()]*)\)$", value)
@@ -350,6 +360,9 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                         )
                         if (
                             normalized_suffix not in NON_LEMMA_SUFFIXES
+                            and not merged_pos_inflection(
+                                raw, normalized_suffix
+                            )
                             and len(normalized_suffix) > 2
                             and not repeated_full_word
                         ):
