@@ -21,6 +21,13 @@ class HeadwordReviewTests(unittest.TestCase):
         self.assertEqual(raw_headword("amöb|a (-ö'-) -an -or s."), "amöba")
         self.assertEqual(raw_headword("alabaster (-ast'-) -n s."), "alabaster")
         self.assertEqual(raw_headword("^aga ei. åga s. i uttr."), "aga")
+        self.assertEqual(
+            raw_headword(
+                "aggiutination -en -ers. agglutiner|a",
+                preserve_boundaries=True,
+            ),
+            "aggiutination",
+        )
 
     def test_monotonic_secondary_alignment_uses_rest_of_line(self):
         items = [
