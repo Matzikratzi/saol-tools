@@ -7,6 +7,8 @@ from pathlib import Path
 from PIL import Image
 
 from scripts.lemma_review import (
+    approve_pages,
+    apply_review_facit,
     _items_by_printed_row,
     _items_in_reading_order,
     display_lemma,
@@ -1268,6 +1270,109 @@ class LemmaReviewTests(unittest.TestCase):
         )
         self.assertEqual(candidates[1]["source_page"], 23)
         self.assertEqual(candidates[1]["source_column"], 1)
+
+    def test_review_facit_marks_matches_and_detects_changes(self):
+        items = [
+            {
+                "article_number": 10,
+                "lemma": "afrodisiakum",
+                "source_page": 23,
+            },
+            {
+                "article_number": 22,
+                "lemma": "aggande",
+                "source_page": 23,
+            },
+            {
+                "article_number": 40,
+                "lemma": "akademi",
+                "source_page": 24,
+            },
+        ]
+        facit = {"version": 1, "pages": {}}
+        approve_pages(facit, items, [23])
+
+        missing = apply_review_facit(items, facit)
+        self.assertEqual(missing, [])
+        self.assertEqual(
+            [item["review_state"] for item in items],
+            ["approved", "approved", "unread"],
+        )
+        self.assertEqual(display_lemma(items[0]), "✓ afrodisiakum")
+
+        changed = [
+            {
+                "article_number": 10,
+                "lemma": "afrodisiakum",
+                "source_page": 23,
+            },
+            {
+                "article_number": 22,
+                "lemma": "agg",
+                "source_page": 23,
+            },
+        ]
+        missing = apply_review_facit(changed, facit)
+        self.assertEqual(changed[0]["review_state"], "approved")
+        self.assertEqual(changed[1]["review_state"], "facit_new")
+        self.assertEqual(
+            missing,
+            [{"page": 23, "article_number": 22, "lemma": "aggande"}],
+        )
+        self.assertEqual(display_lemma(changed[1]), "⚠ agg")
+
+    def test_el_abbreviation_after_agglutinin_is_not_a_lemma(self):
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("agglutination", 100, 0.40),
+                                token("-en", 350, 0.10),
+                                token("s.", 430, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("agglutinin", 140, 0.40),
+                                token("(-i'n)", 340, 0.10),
+                                token("-et", 450, 0.10),
+                                token("el.", 540, 0.40),
+                                token("eller", 620, 0.40),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "agglutination",
+                    "stem_headword": "agglutination",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["agglutination", "agglutinin"],
+        )
 
     def test_renders_two_column_review_images(self):
         with tempfile.TemporaryDirectory() as directory:
