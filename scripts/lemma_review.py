@@ -17,7 +17,7 @@ from scripts.article_start_ml import DEFAULT_CACHE, extract_page
 POS = {"adj", "adv", "interj", "prep", "pron", "s", "v"}
 NON_LEMMA_SUFFIXES = {
     "-a", "-ad", "-ade", "-an", "-ar", "-are", "-at", "-de", "-dde",
-    "-e", "-en", "-er", "-et", "-la", "-na", "-n", "-or", "-ra", "-t",
+    "-e", "-en", "-er", "-et", "-la", "-na", "-n", "-or", "-r", "-ra", "-t",
     "-te",
 }
 
@@ -60,7 +60,7 @@ def inflection_of_previous(previous: str, candidate: str) -> bool:
 def merged_pos_inflection(
     raw: str, normalized_suffix: str, bold_score: float
 ) -> bool:
-    """Recognize '-ers.' as non-bold inflection '-er' plus noun marker 's.'."""
+    """Recognize e.g. '-ers.' or '-rs.' as inflection plus noun marker 's.'."""
     compact = raw.strip().casefold()
     return (
         normalized_suffix.endswith("s")
