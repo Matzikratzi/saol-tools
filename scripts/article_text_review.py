@@ -26,6 +26,58 @@ def reading_order(rows: list[dict]) -> list[dict]:
     return sorted(rows, key=lambda row: (row["page"], row["column"], row["top"]))
 
 
+def merge_overlapping_rows(rows: list[dict]) -> list[dict]:
+    """Join Tesseract fragments that occupy the same physical printed row."""
+    merged: list[dict] = []
+    for row in reading_order(rows):
+        if merged and (merged[-1]["page"], merged[-1]["column"]) == (
+            row["page"],
+            row["column"],
+        ):
+            previous = merged[-1]
+            overlap = min(previous["bottom"], row["bottom"]) - max(
+                previous["top"], row["top"]
+            )
+            previous_height = max(1.0, previous["bottom"] - previous["top"])
+            row_height = max(1.0, row["bottom"] - row["top"])
+            shorter = min(previous_height, row_height)
+            previous_centre = (previous["top"] + previous["bottom"]) / 2
+            row_centre = (row["top"] + row["bottom"]) / 2
+            same_printed_row = (
+                overlap >= shorter * 0.65
+                and abs(previous_centre - row_centre) <= shorter * 0.30
+            )
+            if same_printed_row:
+                fragments = sorted(
+                    (previous, row), key=lambda item: (item["left"], item["top"])
+                )
+                combined = dict(fragments[0])
+                combined["top"] = min(previous["top"], row["top"])
+                combined["bottom"] = max(previous["bottom"], row["bottom"])
+                combined["left"] = min(previous["left"], row["left"])
+                combined["right"] = max(previous["right"], row["right"])
+                combined["text"] = " ".join(
+                    fragment["text"].strip() for fragment in fragments
+                )
+                combined["match_text"] = " ".join(
+                    fragment.get("match_text", "") for fragment in fragments
+                ).strip()
+                for key in (
+                    "baseline",
+                    "chapter_heading",
+                    "ocr_reaches_left",
+                    "pixel_reaches_left",
+                ):
+                    combined[key] = bool(previous.get(key) or row.get(key))
+                combined["left_ink"] = previous.get("left_ink", 0) + row.get(
+                    "left_ink", 0
+                )
+                merged[-1] = combined
+                continue
+        merged.append(dict(row))
+    return merged
+
+
 def group_articles(rows: list[dict]) -> tuple[list[dict], list[dict], list[dict]]:
     """Return articles, unattached lines and excluded chapter headings."""
     articles: list[dict] = []
@@ -33,7 +85,7 @@ def group_articles(rows: list[dict]) -> tuple[list[dict], list[dict], list[dict]
     headings: list[dict] = []
     current: dict | None = None
 
-    for row in reading_order(rows):
+    for row in merge_overlapping_rows(rows):
         if row.get("chapter_heading"):
             headings.append(row)
             current = None
