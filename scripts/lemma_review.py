@@ -126,6 +126,37 @@ def _after_inflection_prefix(tokens: list[dict]) -> list[dict]:
     return tokens[1:]
 
 
+def remove_alphabetic_family_outliers(
+    items: list[dict], heads: dict[int, dict]
+) -> list[dict]:
+    """Drop definition words before the text returns to the headword family."""
+    kept = []
+    by_article: dict[int, list[dict]] = {}
+    for item in items:
+        by_article.setdefault(item["article_number"], []).append(item)
+    rejected_ids = set()
+    for article_number, article_items in by_article.items():
+        family = normalize_lemma(heads[article_number]["headword"])
+        for index, item in enumerate(article_items):
+            lemma = normalize_lemma(item["lemma"])
+            if item["method"] == "artikelhuvud" or lemma.startswith(family):
+                continue
+            later_family = next(
+                (
+                    normalize_lemma(following["lemma"])
+                    for following in article_items[index + 1 :]
+                    if normalize_lemma(following["lemma"]).startswith(family)
+                ),
+                "",
+            )
+            if later_family and lemma > later_family:
+                rejected_ids.add(id(item))
+    for item in items:
+        if id(item) not in rejected_ids:
+            kept.append(item)
+    return kept
+
+
 def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict]:
     heads = {item["article_number"]: item for item in heads_payload["headwords"]}
     ordinary, bold = _references(articles_payload)
@@ -327,7 +358,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                         current_base = suffix_base(cleaned)
                 previous_separator = False
                 at_line_start = False
-    return result
+    return remove_alphabetic_family_outliers(result, heads)
 
 
 def _review_font(size: int = 28):
