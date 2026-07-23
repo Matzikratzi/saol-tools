@@ -36,13 +36,15 @@ def expand_compound(base: str, suffix: str) -> str:
     return normalize_lemma(base + suffix[1:])
 
 
-def merged_pos_inflection(raw: str, normalized_suffix: str) -> bool:
-    """Recognize OCR joins such as '-ers.' meaning inflection '-er' + noun 's.'."""
+def merged_pos_inflection(
+    raw: str, normalized_suffix: str, bold_score: float
+) -> bool:
+    """Recognize '-ers.' as non-bold inflection '-er' plus noun marker 's.'."""
     compact = raw.strip().casefold()
     return (
-        compact.endswith("s.")
-        and normalized_suffix.endswith("s")
+        normalized_suffix.endswith("s")
         and normalized_suffix[:-1] in NON_LEMMA_SUFFIXES
+        and (compact.endswith("s.") or bold_score < 0.25)
     )
 
 
@@ -361,7 +363,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                         if (
                             normalized_suffix not in NON_LEMMA_SUFFIXES
                             and not merged_pos_inflection(
-                                raw, normalized_suffix
+                                raw, normalized_suffix, score
                             )
                             and len(normalized_suffix) > 2
                             and not repeated_full_word
