@@ -114,14 +114,15 @@ def fetch_and_enrich(items: list[dict]) -> None:
                 reason.startswith("låg OCR-säkerhet") for reason in item["reasons"]
             )
             same_headword = secondary == item["headword"]
-            if same_headword and score >= 0.85:
+            if same_headword and score >= 0.75:
                 if "|" in secondary_stem:
                     item["stem_headword"] = secondary_stem
-                item["reasons"] = [
-                    reason for reason in item["reasons"]
-                    if not reason.startswith("låg OCR-säkerhet")
-                ]
-                item["status"] = "osäker" if item["reasons"] else "preliminär"
+                if score >= 0.85:
+                    item["reasons"] = [
+                        reason for reason in item["reasons"]
+                        if not reason.startswith("låg OCR-säkerhet")
+                    ]
+                    item["status"] = "osäker" if item["reasons"] else "preliminär"
                 continue
             headword_similarity = difflib.SequenceMatcher(
                 None, item["headword"], secondary
