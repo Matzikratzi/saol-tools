@@ -199,7 +199,6 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     if (
                         normalized_suffix not in NON_LEMMA_SUFFIXES
                         and len(normalized_suffix) > 2
-                        and score >= 0.25
                     ):
                         lemma = expand_compound(current_base, cleaned)
                         add(
