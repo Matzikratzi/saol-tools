@@ -210,7 +210,12 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     continue
                 plausible_position = previous_separator or at_line_start
                 clearly_semibold = score >= 0.70
-                if (plausible_position and score >= 0.35) or clearly_semibold:
+                has_stem_boundary = "|" in cleaned or "¦" in cleaned
+                if (
+                    (plausible_position and score >= 0.35)
+                    or clearly_semibold
+                    or has_stem_boundary
+                ):
                     lemma = normalize_lemma(cleaned)
                     if lemma and lemma not in POS:
                         add(
