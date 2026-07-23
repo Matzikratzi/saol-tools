@@ -15,6 +15,7 @@ from scripts.lemma_review import (
     infer_boundary_from_previous,
     infer_boundary_from_repeated_suffix,
     infer_compound_series_boundary,
+    infer_suffix_boundary_from_series,
     inflection_of_previous,
     merged_pos_inflection,
     extract_candidates,
@@ -546,6 +547,60 @@ class LemmaReviewTests(unittest.TestCase):
                 "afrikaresa",
                 "afroamerikan",
             ],
+        )
+
+    def test_previous_suffix_boundary_repairs_following_suffix(self):
+        self.assertEqual(
+            infer_suffix_boundary_from_series("-allös", "a"),
+            "-a|lös",
+        )
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("agla", 100, 0.40),
+                                token("-an", 250, 0.10),
+                                token("s.", 330, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("-a|förbud", 140, 0.40),
+                                token("-allös", 340, 0.40),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "aga",
+                    "stem_headword": "ag|a",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["aga", "agaförbud", "agalös"],
         )
 
     def test_ocr_l_becomes_compound_boundary_when_order_proves_it(self):
