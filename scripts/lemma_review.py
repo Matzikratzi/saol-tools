@@ -97,6 +97,21 @@ def infer_boundary_from_previous(value: str, previous: str) -> str:
     return ""
 
 
+
+def infer_boundary_from_article_family(value: str, article_head: str) -> str:
+    """Recover family|ending when OCR renders SAOL's boundary as l."""
+    normalized = normalize_lemma(value)
+    head = normalize_lemma(article_head)
+    family = head[:-1] if len(head) > 5 else head
+    marker_prefix = family + "l"
+    if (
+        len(family) >= 3
+        and normalized.startswith(marker_prefix)
+        and len(normalized) > len(marker_prefix)
+    ):
+        return family + "|" + normalized[len(marker_prefix):]
+    return ""
+
 def infer_boundary_from_repeated_suffix(
     value: str, following_tokens: list[dict]
 ) -> str:
@@ -353,11 +368,16 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 previous_boundary = infer_boundary_from_previous(
                     cleaned, last_lookup_lemma
                 )
+                family_boundary = infer_boundary_from_article_family(
+                    cleaned, current_head
+                )
                 repeated_boundary = infer_boundary_from_repeated_suffix(
                     cleaned, following_tokens
                 )
                 if previous_boundary:
                     cleaned = previous_boundary
+                elif family_boundary:
+                    cleaned = family_boundary
                 elif repeated_boundary:
                     cleaned = repeated_boundary
                 series_position = line_index == 0 and at_line_start
