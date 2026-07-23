@@ -22,6 +22,7 @@ from scripts.lemma_review import (
     normalize_lemma,
     optional_parenthesis_variants,
     plural_of_previous,
+    pronunciation_then_inflection,
     render_review_images,
     repair_mixed_case_duplicate,
     suffix_base,
@@ -166,6 +167,92 @@ class LemmaReviewTests(unittest.TestCase):
         self.assertEqual(
             [item["lemma"] for item in candidates],
             ["afrodisiakum"],
+        )
+
+    def test_agentur_grammar_sets_base_for_following_compound(self):
+        self.assertTrue(
+            pronunciation_then_inflection(
+                [token("(-u'r)", 100, 0.10), token("-en", 200, 0.10)]
+            )
+        )
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("agent", 100, 0.40),
+                                token("-en", 250, 0.10),
+                                token("-ers.", 330, 0.10),
+                                token("ombud", 430, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("—", 100, 0.10),
+                                token("agentskap", 140, 0.20),
+                                token("-et;", 330, 0.10),
+                                token("pl.", 410, 0.10),
+                                token("=", 470, 0.10),
+                                token("s.", 520, 0.10),
+                                token("agentur", 570, 0.20),
+                                token("(-u'r)", 730, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 180.0,
+                            "bottom": 204.0,
+                            "tokens": [
+                                token("-en", 140, 0.10),
+                                token("-er", 220, 0.10),
+                                token("s.", 300, 0.10),
+                                token("verksamhet", 360, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 220.0,
+                            "bottom": 244.0,
+                            "tokens": [
+                                token("av", 140, 0.40),
+                                token("agent", 220, 0.10),
+                                token("o.d.", 330, 0.10),
+                                token("-firma", 430, 0.40),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "agent",
+                    "stem_headword": "agent",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["agent", "agentskap", "agentur", "agenturfirma"],
         )
 
     def test_stem_suffix_inflection_is_not_a_lemma(self):
