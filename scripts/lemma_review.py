@@ -465,7 +465,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 clearly_semibold = score >= 0.70
                 has_stem_boundary = "|" in cleaned or "¦" in cleaned
                 if (
-                    (plausible_position and score >= 0.35)
+                    (plausible_position and score >= 0.45)
                     or previous_separator
                     or clearly_semibold
                     or has_stem_boundary
