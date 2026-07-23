@@ -881,21 +881,66 @@ def render_review_images(
             outputs.append(output)
     return outputs
 
-def report_html(items: list[dict], images: list[Path] | None = None) -> str:
+def report_html(
+    items: list[dict],
+    images: list[Path] | None = None,
+    missing: list[dict] | None = None,
+) -> str:
+    missing = missing or []
     rows = []
+    state_labels = {
+        "approved": "✓ tidigare godkänd",
+        "facit_new": "⚠ nytillkommen/ändrad",
+        "unread": "oläst",
+    }
     for item in items:
-        css = "uncertain" if item["status"] == "osäker" else ""
+        state = item.get("review_state", "unread")
+        if state == "facit_new":
+            css = "mismatch"
+        elif state == "approved":
+            css = "approved"
+        elif item["status"] == "osäker":
+            css = "uncertain"
+        else:
+            css = ""
         rows.append(
             '<tr class="%s"><td>%d</td><td>%d:%d</td><td><b>%s</b></td>'
-            '<td>%s</td><td>%.2f</td><td><code>%s</code></td><td>%s</td></tr>' % (
-                css, item["article_number"], item["page"], item["column"],
-                html.escape(display_lemma(item)), html.escape(item["method"]),
-                item["bold_score"], html.escape(item["raw"]),
+            '<td>%s</td><td>%s</td><td>%.2f</td><td><code>%s</code></td>'
+            '<td>%s</td></tr>' % (
+                css,
+                item["article_number"],
+                item["page"],
+                item["column"],
+                html.escape(display_lemma(item)),
+                html.escape(state_labels.get(state, state)),
+                html.escape(item["method"]),
+                item["bold_score"],
+                html.escape(item["raw"]),
                 html.escape("; ".join(item["reasons"]) or "—"),
             )
         )
     uncertain = sum(item["status"] == "osäker" for item in items)
     unique = {item["lemma"] for item in items}
+    approved = sum(
+        item.get("review_state") == "approved" for item in items
+    )
+    changed = sum(
+        item.get("review_state") == "facit_new" for item in items
+    )
+    missing_rows = "".join(
+        "<li>Sida %d, artikel %d: <b>%s</b> saknas nu</li>"
+        % (
+            value["page"],
+            value["article_number"],
+            html.escape(value["lemma"]),
+        )
+        for value in missing
+    )
+    mismatch_block = (
+        "<h2>Facitavvikelser</h2><ul>%s</ul>" % missing_rows
+        if missing_rows
+        else ""
+    )
     image_blocks = "".join(
         '<figure><img src="%s" loading="lazy"><figcaption>%s</figcaption></figure>'
         % (html.escape(str(path)), html.escape(path.stem.replace("-", " ")))
@@ -903,44 +948,124 @@ def report_html(items: list[dict], images: list[Path] | None = None) -> str:
     )
     return f"""<!doctype html><html lang="sv"><head><meta charset="utf-8">
 <title>SAOL – grundformskandidater</title><style>
-body{{font:15px system-ui;margin:24px;max-width:1800px}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #ccc;padding:6px;text-align:left;vertical-align:top}}th{{position:sticky;top:0;background:#eee}}tr.uncertain{{background:#fff3cd}}code{{white-space:pre-wrap}}figure{{margin:24px 0;border:1px solid #aaa;padding:10px;background:#eee}}figure img{{display:block;width:100%;height:auto}}figcaption{{margin-top:6px;color:#555}}
+body{{font:15px system-ui;margin:24px;max-width:1800px}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #ccc;padding:6px;text-align:left;vertical-align:top}}th{{position:sticky;top:0;background:#eee}}tr.uncertain{{background:#fff3cd}}tr.approved{{background:#eee;color:#666}}tr.mismatch{{background:#ffd6d6}}code{{white-space:pre-wrap}}figure{{margin:24px 0;border:1px solid #aaa;padding:10px;background:#eee}}figure img{{display:block;width:100%;height:auto}}figcaption{{margin-top:6px;color:#555}}
 </style></head><body><h1>Grundformskandidater</h1>
-<p>{len(items)} träffar; {len(unique)} unika grundformer; {uncertain} röda kandidater.</p>
-<p>Grönt är en säker kandidat. Rött bör kontrolleras. Linjen visar den tryckta källa som kandidaten kommer från.</p>
+<p>{len(items)} träffar; {len(unique)} unika grundformer; {uncertain} osäkra kandidater.</p>
+<p>{approved} poster stämmer med tidigare facit. {changed + len(missing)} facitavvikelser.</p>
+<p>Grått med ✓ är redan godkänt och oförändrat. Rött med ⚠ är nytt eller ändrat på en godkänd sida. Olästa poster visas som tidigare.</p>
+{mismatch_block}
 {image_blocks}
 <h2>Alla kandidater som tabell</h2>
-<table><thead><tr><th>Artikel</th><th>Sida:spalt</th><th>Grundform</th><th>Metod</th><th>Fet</th><th>OCR</th><th>Anmärkning</th></tr></thead><tbody>{''.join(rows)}</tbody></table>
+<table><thead><tr><th>Artikel</th><th>Sida:spalt</th><th>Grundform</th><th>Granskning</th><th>Metod</th><th>Fet</th><th>OCR</th><th>Anmärkning</th></tr></thead><tbody>{''.join(rows)}</tbody></table>
 </body></html>"""
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--articles", type=Path, default=Path("article-text-review.json"))
-    parser.add_argument("--headwords", type=Path, default=Path("headword-review.json"))
+    parser.add_argument(
+        "--articles",
+        type=Path,
+        default=Path("article-text-review.json"),
+    )
+    parser.add_argument(
+        "--headwords",
+        type=Path,
+        default=Path("headword-review.json"),
+    )
     parser.add_argument("--json", type=Path, default=Path("lemma-review.json"))
-    parser.add_argument("--report", type=Path, default=Path("lemma-review.html"))
+    parser.add_argument(
+        "--report", type=Path, default=Path("lemma-review.html")
+    )
     parser.add_argument("--cache-dir", type=Path, default=DEFAULT_CACHE)
-    parser.add_argument("--image-dir", type=Path, default=Path("lemma-review-pages"))
+    parser.add_argument(
+        "--image-dir", type=Path, default=Path("lemma-review-pages")
+    )
+    parser.add_argument("--facit", type=Path, default=DEFAULT_FACIT)
+    parser.add_argument(
+        "--approve-page",
+        type=int,
+        action="append",
+        default=[],
+        help="Spara aktuell tolkning av sidan som korrekturläst facit",
+    )
     args = parser.parse_args()
     articles = json.loads(args.articles.read_text(encoding="utf-8"))
     heads = json.loads(args.headwords.read_text(encoding="utf-8"))
     for page in articles.get("pages", []):
         extract_page(page, args.cache_dir, False)
     items = extract_candidates(articles, heads)
+
+    if args.facit.exists():
+        facit = json.loads(args.facit.read_text(encoding="utf-8"))
+    else:
+        facit = {"version": 1, "pages": {}}
+    available_pages = {int(page) for page in articles.get("pages", [])}
+    unknown_pages = set(args.approve_page) - available_pages
+    if unknown_pages:
+        parser.error(
+            "kan inte godkänna sidor som inte ingår i körningen: "
+            + ", ".join(map(str, sorted(unknown_pages)))
+        )
+    if args.approve_page:
+        approve_pages(facit, items, args.approve_page)
+        args.facit.parent.mkdir(parents=True, exist_ok=True)
+        args.facit.write_text(
+            json.dumps(facit, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        print(
+            "Facit sparat för sida: "
+            + ", ".join(map(str, sorted(set(args.approve_page))))
+        )
+    missing = apply_review_facit(items, facit)
     images = render_review_images(
         items, articles.get("pages", []), args.cache_dir, args.image_dir
+    )
+    facit_new_count = sum(
+        item.get("review_state") == "facit_new" for item in items
     )
     output = {
         "candidate_count": len(items),
         "unique_lemma_count": len({item["lemma"] for item in items}),
-        "uncertain_count": sum(item["status"] == "osäker" for item in items),
+        "uncertain_count": sum(
+            item["status"] == "osäker" for item in items
+        ),
+        "approved_pages": sorted(
+            int(page) for page in facit.get("pages", {})
+        ),
+        "facit_new_count": facit_new_count,
+        "facit_missing": missing,
         "candidates": items,
     }
-    args.json.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
-    args.report.write_text(report_html(items, images), encoding="utf-8")
+    args.json.write_text(
+        json.dumps(output, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    args.report.write_text(
+        report_html(items, images, missing),
+        encoding="utf-8",
+    )
     print(f"Kandidater: {output['candidate_count']}")
     print(f"Unika grundformer: {output['unique_lemma_count']}")
     print(f"Osäkra: {output['uncertain_count']}")
+    print(
+        "Godkända sidor: "
+        + (
+            ", ".join(map(str, output["approved_pages"]))
+            if output["approved_pages"]
+            else "—"
+        )
+    )
+    print(f"Facitavvikelser: {facit_new_count + len(missing)}")
+    for value in missing:
+        print(
+            "  SAKNAS sida=%d artikel=%d lemma=%s"
+            % (
+                value["page"],
+                value["article_number"],
+                value["lemma"],
+            )
+        )
     print(f"Data: {args.json.resolve()}")
     print(f"Rapport: {args.report.resolve()}")
     print(f"Bildsidor: {args.image_dir.resolve()}")
