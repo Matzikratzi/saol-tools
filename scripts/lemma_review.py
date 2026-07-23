@@ -93,6 +93,25 @@ def suffix_base(value: str) -> str:
     return normalize_lemma(value)
 
 
+
+def infer_era_boundary_from_verb_grammar(
+    value: str, following_tokens: list[dict]
+) -> str:
+    """Recover ...er|a when the following grammar is '-ade v.'."""
+    if len(following_tokens) < 2:
+        return ""
+    first = following_tokens[0].get("text", "").strip().strip(";,:.()[]{}")
+    second = normalize_lemma(following_tokens[1].get("text", ""))
+    if normalize_lemma(first) != "ade" or not first.startswith("-") or second != "v":
+        return ""
+    cleaned = value.strip().strip(";,:.()[]{}")
+    if cleaned.casefold().endswith("erl|a"):
+        return cleaned[:-3] + "|a"
+    normalized = normalize_lemma(cleaned)
+    if normalized.endswith("erla"):
+        return normalized[:-2] + "|a"
+    return ""
+
 def infer_boundary_from_previous(value: str, previous: str) -> str:
     """Recover previous|ending when OCR renders the boundary as l."""
     normalized = normalize_lemma(value)
@@ -419,6 +438,9 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             key=lambda candidate: candidate["left"],
                         )
                     )
+                era_boundary = infer_era_boundary_from_verb_grammar(
+                    cleaned, following_tokens
+                )
                 previous_boundary = infer_boundary_from_previous(
                     cleaned, last_lookup_lemma
                 )
@@ -428,7 +450,9 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 repeated_boundary = infer_boundary_from_repeated_suffix(
                     cleaned, following_tokens
                 )
-                if previous_boundary:
+                if era_boundary:
+                    cleaned = era_boundary
+                elif previous_boundary:
                     cleaned = previous_boundary
                 elif family_boundary:
                     cleaned = family_boundary
