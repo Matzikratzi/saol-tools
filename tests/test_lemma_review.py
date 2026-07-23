@@ -16,6 +16,7 @@ from scripts.lemma_review import (
     extract_candidates,
     normalize_lemma,
     optional_parenthesis_variants,
+    plural_of_previous,
     render_review_images,
     repair_mixed_case_duplicate,
     suffix_base,
@@ -36,6 +37,61 @@ def token(text: str, left: float, density: float) -> dict:
 class LemmaReviewTests(unittest.TestCase):
     def test_normalizes_stem_boundary_for_game_word(self):
         self.assertEqual(normalize_lemma("amp|el"), "ampel")
+
+    def test_plural_of_previous_a_noun_is_not_a_lemma(self):
+        self.assertTrue(plural_of_previous("afrikanska", "afrikanskor"))
+        self.assertFalse(plural_of_previous("afrikansk", "afrikanskor"))
+
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("afrik", 100, 0.40),
+                                token("s.", 250, 0.10),
+                                token("ord", 320, 0.10),
+                                token("text", 390, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("-anska", 140, 0.40),
+                                token("-n", 300, 0.10),
+                                token("-anskor", 360, 0.10),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "afrik",
+                    "stem_headword": "afrik",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["afrik", "afrikanska"],
+        )
 
     def test_merged_noun_marker_is_not_a_suffix(self):
         self.assertTrue(merged_pos_inflection("-ers.", "-ers", 0.80))
