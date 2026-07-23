@@ -210,6 +210,25 @@ def _after_inflection_prefix(tokens: list[dict]) -> list[dict]:
     return tokens[1:]
 
 
+
+def alternative_headword_tokens(tokens: list[dict]) -> list[dict]:
+    """Find explicit alternatives in 'headword el. alternative s.'."""
+    alternatives = []
+    for index, token in enumerate(tokens[:-1]):
+        plain = normalize_lemma(token.get("text", ""))
+        if plain not in {"el", "eller"}:
+            continue
+        candidate = tokens[index + 1]
+        value = candidate.get("text", "").strip().strip(";,:.()[]{}")
+        normalized = normalize_lemma(value)
+        if (
+            normalized
+            and normalized not in POS
+            and not value.startswith("-")
+        ):
+            alternatives.append(candidate)
+    return alternatives
+
 def remove_alphabetic_family_outliers(
     items: list[dict], heads: dict[int, dict]
 ) -> list[dict]:
@@ -344,6 +363,22 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
             first_line,
             head_token,
         )
+        for alternative_token in alternative_headword_tokens(
+            head_tokens
+        ):
+            alternative_raw = alternative_token["text"].strip().strip(
+                ";,:.()[]{}"
+            )
+            add(
+                article,
+                alternative_raw,
+                alternative_raw,
+                "alternativt huvudord",
+                _token_score(alternative_token, ordinary, bold),
+                alternative_raw,
+                first_line,
+                alternative_token,
+            )
         for line_index, line in enumerate(article["lines"]):
             tokens = sorted(line.get("tokens", []), key=lambda token: token["left"])
             if line_index == 0:
