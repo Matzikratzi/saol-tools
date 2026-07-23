@@ -192,6 +192,11 @@ def reconcile_homonym_neighbours(items: list[dict]) -> None:
                 item["corrected_from"] = item["headword"]
                 item["correction_method"] = "angränsande homonym"
                 item["headword"] = canonical
+                if (
+                    item.get("runeberg_headword") == canonical
+                    and "|" in item.get("runeberg_stem_headword", "")
+                ):
+                    item["stem_headword"] = item["runeberg_stem_headword"]
                 item["reasons"] = [
                     reason for reason in item["reasons"]
                     if not reason.startswith(("låg OCR-säkerhet", "homonymtecknet"))
