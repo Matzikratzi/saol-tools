@@ -643,49 +643,6 @@ def display_lemma(item: dict) -> str:
     return item["lemma"]
 
 
-def _overlay_font(size: int = 64):
-    for path in (
-        "/System/Library/Fonts/Supplemental/Times New Roman.ttf",
-        "/Library/Fonts/Times New Roman.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf",
-    ):
-        try:
-            return ImageFont.truetype(path, size)
-        except OSError:
-            pass
-    return _review_font(size)
-
-
-def _draw_fitted_text(
-    canvas: Image.Image,
-    text: str,
-    box: tuple[int, int, int, int],
-    color: str,
-) -> None:
-    """Fit regular text exactly inside the OCR word rectangle."""
-    left, top, right, bottom = box
-    target_width = max(1, right - left)
-    target_height = max(1, bottom - top)
-    font = _overlay_font()
-    text_box = font.getbbox(text)
-    width = max(1, text_box[2] - text_box[0])
-    height = max(1, text_box[3] - text_box[1])
-    mask = Image.new("L", (width, height), 0)
-    mask_draw = ImageDraw.Draw(mask)
-    mask_draw.text(
-        (-text_box[0], -text_box[1]),
-        text,
-        font=font,
-        fill=255,
-    )
-    mask = mask.resize(
-        (target_width, target_height),
-        Image.Resampling.LANCZOS,
-    )
-    ink = Image.new("RGB", (target_width, target_height), color)
-    canvas.paste(ink, (left, top), mask)
-
-
 def _review_font(size: int = 28):
     for path in (
         "/System/Library/Fonts/Supplemental/Arial.ttf",
@@ -742,9 +699,9 @@ def _items_in_reading_order(items: list[dict]) -> list[dict]:
 def render_review_images(
     items: list[dict], pages: list[int], cache_dir: Path, image_dir: Path
 ) -> list[Path]:
-    """Overlay simple lemmas on print; keep compounds in the left margin."""
+    """Render candidate rows beside the same physical rows in the facsimile."""
     image_dir.mkdir(parents=True, exist_ok=True)
-    margin_font = _review_font()
+    font = _review_font()
     outputs = []
     separator = "  ·  "
     for page in pages:
@@ -757,53 +714,31 @@ def render_review_images(
         page_items = [item for item in items if item["source_page"] == page]
         for column, (left, right) in enumerate(((0, split), (split, image.width)), 1):
             crop = image.crop((left, 0, right, image.height))
-            column_items = [
-                item
-                for item in page_items
-                if item["source_column"] == column
-            ]
-            compound_rows = _items_by_printed_row(
+            column_rows = _items_by_printed_row(
                 [
                     item
-                    for item in column_items
-                    if item.get("method") == "sammansättningssuffix"
-                ]
-            )
-            overlay_rows = _items_by_printed_row(
-                [
-                    item
-                    for item in column_items
-                    if item.get("method") != "sammansättningssuffix"
+                    for item in page_items
+                    if item["source_column"] == column
                 ]
             )
             measuring = ImageDraw.Draw(Image.new("RGB", (1, 1), "white"))
-            separator_box = measuring.textbbox(
-                (0, 0), separator, font=margin_font
-            )
+            separator_box = measuring.textbbox((0, 0), separator, font=font)
             separator_width = separator_box[2] - separator_box[0]
             row_widths = []
-            for row in compound_rows:
+            for row in column_rows:
                 widths = [
-                    measuring.textbbox(
-                        (0, 0), display_lemma(item), font=margin_font
-                    )[2]
+                    measuring.textbbox((0, 0), display_lemma(item), font=font)[2]
                     for item in row
                 ]
                 row_widths.append(
-                    sum(widths)
-                    + separator_width * max(0, len(widths) - 1)
+                    sum(widths) + separator_width * max(0, len(widths) - 1)
                 )
-            margin = max(
-                460, crop.width // 3, max(row_widths, default=0) + 40
-            )
-            canvas = Image.new(
-                "RGB", (crop.width + margin, crop.height), "white"
-            )
+            margin = max(460, crop.width // 3, max(row_widths, default=0) + 40)
+            canvas = Image.new("RGB", (crop.width + margin, crop.height), "white")
             canvas.paste(crop, (margin, 0))
             draw = ImageDraw.Draw(canvas)
-
             last_label_y = -100
-            for row, row_width in zip(compound_rows, row_widths):
+            for row, row_width in zip(column_rows, row_widths):
                 source_y = int(
                     statistics.median(
                         (item["source_top"] + item["source_bottom"]) / 2
@@ -818,11 +753,11 @@ def render_review_images(
                     color = (
                         "#c62828"
                         if item["status"] == "osäker"
-                        else "#008b57"
+                        else "#00695c"
                     )
                     visible_lemma = display_lemma(item)
                     text_box = draw.textbbox(
-                        (0, 0), visible_lemma, font=margin_font
+                        (0, 0), visible_lemma, font=font
                     )
                     text_width = text_box[2] - text_box[0]
                     source_x = margin + int(
@@ -850,7 +785,7 @@ def render_review_images(
                     draw.text(
                         (label_x, label_y),
                         visible_lemma,
-                        font=margin_font,
+                        font=font,
                         fill=color,
                     )
                     label_x += text_width
@@ -858,64 +793,10 @@ def render_review_images(
                         draw.text(
                             (label_x, label_y),
                             separator,
-                            font=margin_font,
+                            font=font,
                             fill="#777777",
                         )
                         label_x += separator_width
-
-            for row in overlay_rows:
-                source_y = int(
-                    statistics.median(
-                        (item["source_top"] + item["source_bottom"]) / 2
-                        for item in row
-                    )
-                )
-                row_uncertain = any(
-                    item["status"] == "osäker" for item in row
-                )
-                dot_color = "#c62828" if row_uncertain else "#00a651"
-                dot_x = margin - 14
-                draw.ellipse(
-                    (
-                        dot_x - 7,
-                        source_y - 7,
-                        dot_x + 7,
-                        source_y + 7,
-                    ),
-                    fill=dot_color,
-                )
-                for item in row:
-                    color = (
-                        "#c62828"
-                        if item["status"] == "osäker"
-                        else "#00a651"
-                    )
-                    source_box = (
-                        margin
-                        + int(max(0, item["source_left"] - left)),
-                        int(item["source_top"]),
-                        margin
-                        + int(max(1, item["source_right"] - left)),
-                        int(item["source_bottom"]),
-                    )
-                    _draw_fitted_text(
-                        canvas,
-                        item["lemma"],
-                        source_box,
-                        color,
-                    )
-                    homonym = item.get("homonym")
-                    if (
-                        homonym is not None
-                        and item.get("method") == "artikelhuvud"
-                    ):
-                        draw.text(
-                            (margin - 82, source_y - 15),
-                            f"H{homonym}",
-                            font=margin_font,
-                            fill=dot_color,
-                        )
-
             output = image_dir / f"page-{page:04d}-column-{column}.png"
             canvas.save(output, format="PNG")
             outputs.append(output)
