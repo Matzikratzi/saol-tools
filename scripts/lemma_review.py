@@ -825,11 +825,15 @@ def render_review_images(
                 last_label_y = label_y
                 label_x = max(8, margin - 18 - row_width)
                 for index, item in enumerate(row):
-                    color = (
-                        "#c62828"
-                        if item["status"] == "osäker"
-                        else "#00695c"
-                    )
+                    if item.get("review_state") == "approved":
+                        color = "#777777"
+                    elif (
+                        item.get("review_state") == "facit_new"
+                        or item["status"] == "osäker"
+                    ):
+                        color = "#c62828"
+                    else:
+                        color = "#00695c"
                     visible_lemma = display_lemma(item)
                     text_box = draw.textbbox(
                         (0, 0), visible_lemma, font=font
