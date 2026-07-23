@@ -15,6 +15,7 @@ from scripts.article_start_ml import DEFAULT_CACHE, extract_page
 
 
 POS = {"adj", "adv", "interj", "prep", "pron", "s", "v"}
+GRAMMAR_MARKERS = POS | {"best", "komp", "oböjl", "pl", "superl"}
 NON_LEMMA_SUFFIXES = {
     "-a", "-ad", "-ade", "-an", "-ar", "-are", "-at", "-de", "-dde",
     "-e", "-en", "-er", "-et", "-la", "-na", "-n", "-or", "-r", "-ra", "-t",
@@ -595,7 +596,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     )
                     if (
                         lemma
-                        and lemma not in POS
+                        and lemma not in GRAMMAR_MARKERS
                         and len(lemma) > 1
                         and not bare_inflection_before_pos
                     ):
