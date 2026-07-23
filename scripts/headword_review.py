@@ -35,6 +35,32 @@ def _plain_token(value: str) -> str:
     return normalize_headword(value).replace("-", "")
 
 
+def swedish_sort_key(value: str) -> tuple[int, ...]:
+    """Collation key where accented a/e sort with a/e and å follows z."""
+    value = normalize_headword(value).translate(str.maketrans({"à": "a", "á": "a", "é": "e"}))
+    order = {character: index for index, character in enumerate("abcdefghijklmnopqrstuvwxyzåäö", 1)}
+    return tuple(order[character] for character in value if character in order)
+
+
+def repair_alphabetic_accents(items: list[dict]) -> None:
+    """Repair OCR accents only when the neighbouring article order proves it."""
+    for index in range(1, len(items) - 1):
+        original = items[index]["headword"]
+        if not original.startswith("å "):
+            continue
+        candidate = "à " + original[2:]
+        previous_key = swedish_sort_key(items[index - 1]["headword"])
+        original_key = swedish_sort_key(original)
+        candidate_key = swedish_sort_key(candidate)
+        following_key = swedish_sort_key(items[index + 1]["headword"])
+        original_fits = previous_key <= original_key <= following_key
+        candidate_fits = previous_key <= candidate_key <= following_key
+        if candidate_fits and not original_fits:
+            items[index]["corrected_from"] = original
+            items[index]["correction_method"] = "alfabetisk ordning"
+            items[index]["headword"] = candidate
+
+
 def extract_head(article: dict) -> dict:
     line = article["lines"][0]
     tokens = sorted(line.get("tokens", []), key=lambda token: token["left"])
@@ -146,11 +172,16 @@ def extract_heads(
             "homonym_inferred": False,
             **extract_head(article),
         }
-        corrected = corrections.get(item["headword"])
-        item["corrected_from"] = item["headword"] if corrected else ""
-        if corrected:
-            item["headword"] = corrected
+        item["corrected_from"] = ""
+        item["correction_method"] = ""
         result.append(item)
+    repair_alphabetic_accents(result)
+    for item in result:
+        corrected = corrections.get(item["headword"])
+        if corrected:
+            item["corrected_from"] = item["headword"]
+            item["correction_method"] = "manuell korrektionsfil"
+            item["headword"] = corrected
     infer_homonym_runs(result)
     return result
 
@@ -160,7 +191,9 @@ def report_html(items: list[dict]) -> str:
     for item in items:
         notes = list(item["reasons"])
         if item.get("corrected_from"):
-            notes.append(f"manuellt OCR-rättad från {item['corrected_from']}")
+            notes.append(
+                f"rättad från {item['corrected_from']} via {item['correction_method']}"
+            )
         reasons = "; ".join(notes) or "—"
         homonym = "—" if item["homonym"] is None else str(item["homonym"])
         css = "uncertain" if item["status"] == "osäker" else ""
