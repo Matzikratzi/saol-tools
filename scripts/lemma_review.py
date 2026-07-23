@@ -519,12 +519,19 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 has_lemma_grammar = pronunciation_then_inflection(
                     following_tokens
                 )
+                followed_by_pos = bool(
+                    following_tokens
+                    and normalize_lemma(
+                        following_tokens[0].get("text", "")
+                    ) in POS
+                )
                 if (
                     (plausible_position and score >= 0.45)
                     or previous_separator
                     or clearly_semibold
                     or has_stem_boundary
                     or has_lemma_grammar
+                    or followed_by_pos
                     or series_first
                 ):
                     lemma = normalize_lemma(cleaned)
@@ -540,6 +547,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             previous_separator
                             or has_stem_boundary
                             or has_lemma_grammar
+                            or followed_by_pos
                             or series_first
                             or (
                                 at_line_start
