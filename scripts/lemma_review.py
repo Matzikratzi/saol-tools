@@ -435,8 +435,14 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             article, lemma, cleaned, "halvfet token",
                             score, line=line, token=token
                         )
-                        last_lookup_lemma = lemma
-                        current_base = suffix_base(cleaned)
+                        structurally_new_base = (
+                            plausible_position
+                            or has_stem_boundary
+                            or series_first
+                        )
+                        if structurally_new_base:
+                            last_lookup_lemma = lemma
+                            current_base = suffix_base(cleaned)
                 previous_separator = False
                 at_line_start = False
     return remove_alphabetic_family_outliers(result, heads)
