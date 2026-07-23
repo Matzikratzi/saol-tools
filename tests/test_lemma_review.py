@@ -295,6 +295,84 @@ class LemmaReviewTests(unittest.TestCase):
             ],
         )
 
+    def test_definition_word_does_not_replace_stem_before_later_suffix(self):
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("afrikan", 100, 0.40),
+                                token("-en", 250, 0.10),
+                                token("-er", 310, 0.10),
+                                token("s.", 370, 0.10),
+                                token("person", 430, 0.10),
+                                token("text", 510, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("afrikaniser|a", 140, 0.40),
+                                token("-ade", 360, 0.10),
+                                token("v.", 430, 0.10),
+                                token("göra", 480, 0.10),
+                                token("mera", 550, 0.40),
+                                token("afrikansk", 640, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 180.0,
+                            "bottom": 204.0,
+                            "tokens": [
+                                token("vanlig", 140, 0.10),
+                                token("förklarande", 250, 0.10),
+                                token("text", 430, 0.10),
+                                token("-ing", 520, 0.40),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 220.0,
+                            "bottom": 244.0,
+                            "tokens": [
+                                token("afrika|resa", 140, 0.40),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "afrikan",
+                    "stem_headword": "afrikan",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["afrikan", "afrikanisera", "afrikanisering", "afrikaresa"],
+        )
+
     def test_ocr_l_becomes_compound_boundary_when_order_proves_it(self):
         self.assertEqual(
             infer_compound_series_boundary(
