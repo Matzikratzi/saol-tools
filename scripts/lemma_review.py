@@ -849,15 +849,43 @@ def render_review_images(
                     overlay_font = _review_font(
                         max(18, min(46, int(source_height * 0.82)))
                     )
-                    source_x = margin + int(
-                        max(0, item["source_left"] - left)
+                    color = (
+                        "#c62828"
+                        if item["status"] == "osäker"
+                        else "#00a651"
                     )
-                    source_top = int(item["source_top"])
+                    source_center_x = margin + (
+                        (
+                            item["source_left"]
+                            + item["source_right"]
+                        )
+                        / 2
+                        - left
+                    )
+                    source_center_y = (
+                        item["source_top"]
+                        + item["source_bottom"]
+                    ) / 2
+                    text_box = draw.textbbox(
+                        (0, 0), item["lemma"], font=overlay_font
+                    )
+                    text_width = text_box[2] - text_box[0]
+                    text_height = text_box[3] - text_box[1]
+                    text_x = (
+                        source_center_x
+                        - text_width / 2
+                        - text_box[0]
+                    )
+                    text_y = (
+                        source_center_y
+                        - text_height / 2
+                        - text_box[1]
+                    )
                     draw.text(
-                        (source_x, source_top),
+                        (text_x, text_y),
                         item["lemma"],
                         font=overlay_font,
-                        fill="#00a6d6",
+                        fill=color,
                     )
                     homonym = item.get("homonym")
                     if (
