@@ -202,10 +202,6 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
         )
         for line_index, line in enumerate(article["lines"]):
             tokens = sorted(line.get("tokens", []), key=lambda token: token["left"])
-            compound_series = line_index == 0 and any(
-                re.sub(r"[^a-zåäö]+", "", token["text"].casefold()) == "ss"
-                for token in tokens
-            )
             if line_index == 0:
                 tokens = _after_inflection_prefix(tokens)
             previous_separator = False
@@ -229,8 +225,9 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     continue
                 score = _token_score(token, ordinary, bold)
                 cleaned = raw.strip(";,:.()[]{}")
-                series_first = compound_series and at_line_start
-                if series_first:
+                series_position = line_index == 0 and at_line_start
+                inferred = ""
+                if series_position:
                     next_suffix = next(
                         (
                             candidate["text"].strip().strip(";,:.()[]{}")[1:]
@@ -244,6 +241,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     )
                     if inferred:
                         cleaned = inferred
+                series_first = bool(inferred)
                 lexical = bool(re.search(r"[A-Za-zÅÄÖåäöÀÁÉàáé]", cleaned))
                 if not lexical:
                     previous_separator = False
