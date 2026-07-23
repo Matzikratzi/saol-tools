@@ -215,6 +215,26 @@ def pronunciation_then_inflection(tokens: list[dict]) -> bool:
             )
     return False
 
+
+def inflections_then_part_of_speech(tokens: list[dict]) -> bool:
+    """Recognize a lemma followed by one or more inflections and a POS marker."""
+    if not tokens or not tokens[0].get("text", "").strip().startswith("-"):
+        return False
+    index = 0
+    while index < len(tokens):
+        raw = tokens[index].get("text", "").strip()
+        if not raw.startswith("-"):
+            break
+        cleaned = raw.strip(";,:.()[]{}")
+        normalized = "-" + normalize_lemma(cleaned[1:])
+        if merged_pos_inflection(raw, normalized, 0.0):
+            return True
+        index += 1
+    return (
+        index < len(tokens)
+        and normalize_lemma(tokens[index].get("text", "")) in POS
+    )
+
 def _token_score(token: dict, ordinary: float, bold: float) -> float:
     density = float(token.get("ink_density", 0.0))
     span = max(0.005, bold - ordinary)
@@ -554,6 +574,9 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                         following_tokens[0].get("text", "")
                     ) in POS
                 )
+                followed_by_inflection_grammar = (
+                    inflections_then_part_of_speech(following_tokens)
+                )
                 if (
                     (plausible_position and score >= 0.45)
                     or previous_separator
@@ -561,6 +584,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     or has_stem_boundary
                     or has_lemma_grammar
                     or followed_by_pos
+                    or followed_by_inflection_grammar
                     or series_first
                 ):
                     lemma = normalize_lemma(cleaned)
@@ -587,6 +611,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             or has_stem_boundary
                             or has_lemma_grammar
                             or followed_by_pos
+                            or followed_by_inflection_grammar
                             or series_first
                             or (
                                 at_line_start
@@ -666,9 +691,9 @@ def _items_in_reading_order(items: list[dict]) -> list[dict]:
 def render_review_images(
     items: list[dict], pages: list[int], cache_dir: Path, image_dir: Path
 ) -> list[Path]:
-    """Render candidate rows beside the same physical rows in the facsimile."""
+    """Overlay simple lemmas on print; keep compounds in the left margin."""
     image_dir.mkdir(parents=True, exist_ok=True)
-    font = _review_font()
+    margin_font = _review_font()
     outputs = []
     separator = "  ·  "
     for page in pages:
@@ -681,31 +706,53 @@ def render_review_images(
         page_items = [item for item in items if item["source_page"] == page]
         for column, (left, right) in enumerate(((0, split), (split, image.width)), 1):
             crop = image.crop((left, 0, right, image.height))
-            column_rows = _items_by_printed_row(
+            column_items = [
+                item
+                for item in page_items
+                if item["source_column"] == column
+            ]
+            compound_rows = _items_by_printed_row(
                 [
                     item
-                    for item in page_items
-                    if item["source_column"] == column
+                    for item in column_items
+                    if item.get("method") == "sammansättningssuffix"
+                ]
+            )
+            overlay_rows = _items_by_printed_row(
+                [
+                    item
+                    for item in column_items
+                    if item.get("method") != "sammansättningssuffix"
                 ]
             )
             measuring = ImageDraw.Draw(Image.new("RGB", (1, 1), "white"))
-            separator_box = measuring.textbbox((0, 0), separator, font=font)
+            separator_box = measuring.textbbox(
+                (0, 0), separator, font=margin_font
+            )
             separator_width = separator_box[2] - separator_box[0]
             row_widths = []
-            for row in column_rows:
+            for row in compound_rows:
                 widths = [
-                    measuring.textbbox((0, 0), display_lemma(item), font=font)[2]
+                    measuring.textbbox(
+                        (0, 0), display_lemma(item), font=margin_font
+                    )[2]
                     for item in row
                 ]
                 row_widths.append(
-                    sum(widths) + separator_width * max(0, len(widths) - 1)
+                    sum(widths)
+                    + separator_width * max(0, len(widths) - 1)
                 )
-            margin = max(460, crop.width // 3, max(row_widths, default=0) + 40)
-            canvas = Image.new("RGB", (crop.width + margin, crop.height), "white")
+            margin = max(
+                460, crop.width // 3, max(row_widths, default=0) + 40
+            )
+            canvas = Image.new(
+                "RGB", (crop.width + margin, crop.height), "white"
+            )
             canvas.paste(crop, (margin, 0))
             draw = ImageDraw.Draw(canvas)
+
             last_label_y = -100
-            for row, row_width in zip(column_rows, row_widths):
+            for row, row_width in zip(compound_rows, row_widths):
                 source_y = int(
                     statistics.median(
                         (item["source_top"] + item["source_bottom"]) / 2
@@ -720,11 +767,11 @@ def render_review_images(
                     color = (
                         "#c62828"
                         if item["status"] == "osäker"
-                        else "#00695c"
+                        else "#008b57"
                     )
                     visible_lemma = display_lemma(item)
                     text_box = draw.textbbox(
-                        (0, 0), visible_lemma, font=font
+                        (0, 0), visible_lemma, font=margin_font
                     )
                     text_width = text_box[2] - text_box[0]
                     source_x = margin + int(
@@ -752,7 +799,7 @@ def render_review_images(
                     draw.text(
                         (label_x, label_y),
                         visible_lemma,
-                        font=font,
+                        font=margin_font,
                         fill=color,
                     )
                     label_x += text_width
@@ -760,15 +807,66 @@ def render_review_images(
                         draw.text(
                             (label_x, label_y),
                             separator,
-                            font=font,
+                            font=margin_font,
                             fill="#777777",
                         )
                         label_x += separator_width
+
+            for row in overlay_rows:
+                source_y = int(
+                    statistics.median(
+                        (item["source_top"] + item["source_bottom"]) / 2
+                        for item in row
+                    )
+                )
+                row_uncertain = any(
+                    item["status"] == "osäker" for item in row
+                )
+                dot_color = "#c62828" if row_uncertain else "#00a651"
+                dot_x = margin - 14
+                draw.ellipse(
+                    (
+                        dot_x - 7,
+                        source_y - 7,
+                        dot_x + 7,
+                        source_y + 7,
+                    ),
+                    fill=dot_color,
+                )
+                for item in row:
+                    source_height = max(
+                        1.0,
+                        item["source_bottom"] - item["source_top"],
+                    )
+                    overlay_font = _review_font(
+                        max(18, min(46, int(source_height * 0.82)))
+                    )
+                    source_x = margin + int(
+                        max(0, item["source_left"] - left)
+                    )
+                    source_top = int(item["source_top"])
+                    draw.text(
+                        (source_x, source_top),
+                        item["lemma"],
+                        font=overlay_font,
+                        fill="#00a6d6",
+                    )
+                    homonym = item.get("homonym")
+                    if (
+                        homonym is not None
+                        and item.get("method") == "artikelhuvud"
+                    ):
+                        draw.text(
+                            (margin - 82, source_y - 15),
+                            f"H{homonym}",
+                            font=margin_font,
+                            fill=dot_color,
+                        )
+
             output = image_dir / f"page-{page:04d}-column-{column}.png"
             canvas.save(output, format="PNG")
             outputs.append(output)
     return outputs
-
 
 def report_html(items: list[dict], images: list[Path] | None = None) -> str:
     rows = []
