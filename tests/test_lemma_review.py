@@ -10,6 +10,7 @@ from scripts.lemma_review import (
     _items_by_printed_row,
     _items_in_reading_order,
     expand_compound,
+    infer_boundary_from_article_family,
     infer_boundary_from_previous,
     infer_boundary_from_repeated_suffix,
     infer_compound_series_boundary,
@@ -174,6 +175,12 @@ class LemmaReviewTests(unittest.TestCase):
         self.assertEqual(
             [item["lemma"] for item in candidates],
             ["afghan", "afghanhund", "afghansk", "afghanska"],
+        )
+
+    def test_article_family_proves_l_is_boundary(self):
+        self.assertEqual(
+            infer_boundary_from_article_family("afrikalresa", "afrikan"),
+            "afrika|resa",
         )
 
     def test_previous_family_word_proves_l_is_boundary(self):
@@ -351,7 +358,7 @@ class LemmaReviewTests(unittest.TestCase):
                             "top": 220.0,
                             "bottom": 244.0,
                             "tokens": [
-                                token("afrika|resa", 140, 0.40),
+                                token("afrikalresa", 140, 0.40),
                             ],
                         },
                         {
