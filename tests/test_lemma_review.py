@@ -12,6 +12,7 @@ from scripts.lemma_review import (
     display_lemma,
     expand_compound,
     infer_boundary_from_article_family,
+    infer_era_boundary_from_verb_grammar,
     infer_boundary_from_previous,
     infer_boundary_from_repeated_suffix,
     infer_compound_series_boundary,
@@ -749,6 +750,100 @@ class LemmaReviewTests(unittest.TestCase):
                 "afrikanisering",
                 "afrikaresa",
                 "afroamerikan",
+            ],
+        )
+
+    def test_era_boundary_is_recovered_from_verb_grammar(self):
+        grammar = [token("-ade", 100, 0.10), token("v.", 200, 0.10)]
+        self.assertEqual(
+            infer_era_boundary_from_verb_grammar(
+                "agglomererl|a", grammar
+            ),
+            "agglomerer|a",
+        )
+        self.assertEqual(
+            infer_era_boundary_from_verb_grammar(
+                "agglutinerla", grammar
+            ),
+            "agglutiner|a",
+        )
+
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("agglutination", 100, 0.40),
+                                token("-en", 350, 0.10),
+                                token("-er", 430, 0.10),
+                                token("s.", 510, 0.10),
+                                token("agglutinerla", 570, 0.20),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("-ade", 140, 0.10),
+                                token("v.", 230, 0.10),
+                                token("hopklumpa", 300, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 180.0,
+                            "bottom": 204.0,
+                            "tokens": [
+                                token("-ing", 140, 0.20),
+                                token("s.", 240, 0.10),
+                                token("—", 300, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 220.0,
+                            "bottom": 244.0,
+                            "tokens": [
+                                token("agglutinin", 140, 0.30),
+                                token("(-i'n)", 340, 0.10),
+                                token("-et", 450, 0.10),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "agglutination",
+                    "stem_headword": "agglutination",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            [
+                "agglutination",
+                "agglutinera",
+                "agglutinering",
+                "agglutinin",
             ],
         )
 
