@@ -60,7 +60,8 @@ class LemmaReviewTests(unittest.TestCase):
                                 token("afghan", 100, 0.40),
                                 token("s.", 250, 0.10),
                                 token("inv.", 310, 0.10),
-                                token("person", 380, 0.10),
+                                token("i", 370, 0.40),
+                                token("Afghanistan", 400, 0.10),
                             ],
                         },
                         {
