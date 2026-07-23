@@ -132,7 +132,7 @@ class LemmaReviewTests(unittest.TestCase):
                             "bottom": 204.0,
                             "tokens": [
                                 token("–", 130, 0.10),
-                                token("-yrke", 170, 0.40),
+                                token("-yrke", 170, 0.10),
                                 token("-en", 300, 0.40),
                             ],
                         },
