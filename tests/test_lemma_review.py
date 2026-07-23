@@ -886,9 +886,12 @@ class LemmaReviewTests(unittest.TestCase):
                             "top": 180.0,
                             "bottom": 204.0,
                             "tokens": [
-                                token("-ing", 140, 0.20),
-                                token("s.", 240, 0.10),
-                                token("—", 300, 0.10),
+                                token("förändring", 140, 0.10),
+                                token("av", 300, 0.10),
+                                token("ordstammarna", 370, 0.10),
+                                token("-ing", 620, 0.20),
+                                token("s.", 720, 0.10),
+                                token("—", 780, 0.10),
                             ],
                         },
                         {
