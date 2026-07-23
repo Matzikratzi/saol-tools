@@ -193,6 +193,7 @@ def extract_heads(
         }
         item["corrected_from"] = ""
         item["correction_method"] = ""
+        item["stem_headword"] = item["raw_headword"] or item["headword"]
         result.append(item)
     repair_alphabetic_accents(result)
     for item in result:
@@ -219,6 +220,10 @@ def report_html(items: list[dict]) -> str:
                 f"rättad från {item['corrected_from']} via {item['correction_method']}"
             )
         reasons = "; ".join(notes) or "—"
+        stem = item.get("stem_headword", "")
+        displayed_headword = item["headword"] or "—"
+        if stem and "|" in stem:
+            displayed_headword += f"  [{stem}]"
         homonym = "—" if item["homonym"] is None else str(item["homonym"])
         css = "uncertain" if item["status"] == "osäker" else ""
         rows.append(
@@ -226,7 +231,7 @@ def report_html(items: list[dict]) -> str:
             '<td>%s%s</td><td>%s</td><td>%s</td></tr>' % (
                 css,
                 item["article_number"], item["page"], item["column"],
-                html.escape(item["headword"] or "—"), homonym,
+                html.escape(displayed_headword), homonym,
                 " (tolkad)" if item["homonym_inferred"] else "",
                 html.escape(item["source_line"]), html.escape(reasons),
             )
