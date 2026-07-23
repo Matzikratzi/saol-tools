@@ -48,6 +48,7 @@ FEATURE_NAMES = [
     "gap_before",
     "gap_after",
     "mean_confidence",
+    "chapter_heading",
 ]
 
 
@@ -125,6 +126,17 @@ def _haf_for_column(column: int) -> tuple[float, float, float] | None:
     return debug._HAF_LEVELS if column == 1 else debug._RIGHT_HAF_LEVELS
 
 
+def _is_chapter_heading(text: str, height: float, median_height: float) -> bool:
+    letters = "".join(character for character in text.strip() if character.isalpha())
+    return (
+        len(letters) == 2
+        and letters[0].isupper()
+        and letters[1].islower()
+        and letters[0].casefold() == letters[1].casefold()
+        and height >= median_height * 1.60
+    )
+
+
 def _slanted_geometry(ordered, median_height: float, fallback):
     """Estimate parallel A/F margins as x = intercept + slope*y."""
     if not ordered:
@@ -196,7 +208,11 @@ def _rows_from_lines(lines, models, width: int, height: int, page: int) -> list[
             correction = slope * (line_y - anchor_y)
             letter_x = float(line.letter_start_x) - correction
             raw_x = float(line.raw_start_x) - correction
-            baseline = any(
+            line_height = max(1.0, float(line.bottom - line.top))
+            chapter_heading = _is_chapter_heading(
+                line.text, line_height, median_height
+            )
+            baseline = not chapter_heading and any(
                 normalize_word(item.text) and float(item.left) - correction < threshold_x
                 for item in line.items
             )
@@ -211,6 +227,7 @@ def _rows_from_lines(lines, models, width: int, height: int, page: int) -> list[
                     "text": line.text,
                     "match_text": match_text,
                     "baseline": bool(baseline),
+                    "chapter_heading": chapter_heading,
                     "margin_slope": slope,
                     "geometry": [float(value) for value in haf] if haf else None,
                     "features": [
@@ -238,6 +255,7 @@ def _rows_from_lines(lines, models, width: int, height: int, page: int) -> list[
                             else 2.0
                         ),
                         _mean_confidence(line.items),
+                        float(chapter_heading),
                     ],
                 }
             )
@@ -245,7 +263,7 @@ def _rows_from_lines(lines, models, width: int, height: int, page: int) -> list[
 
 
 def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict]:
-    cache_file = cache_dir / f"page-{page:04d}-columns-v6.json"
+    cache_file = cache_dir / f"page-{page:04d}-columns-v7.json"
     if cache_file.exists() and not refresh:
         return json.loads(cache_file.read_text(encoding="utf-8"))
 
