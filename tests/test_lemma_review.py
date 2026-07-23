@@ -10,6 +10,7 @@ from scripts.lemma_review import (
     _items_by_printed_row,
     _items_in_reading_order,
     expand_compound,
+    infer_boundary_from_previous,
     infer_boundary_from_repeated_suffix,
     infer_compound_series_boundary,
     merged_pos_inflection,
@@ -141,7 +142,19 @@ class LemmaReviewTests(unittest.TestCase):
                                 token("afghanhund", 140, 0.40),
                                 token("-hund", 350, 0.40),
                                 token("—", 470, 0.10),
-                                token("afghansk", 520, 0.40),
+                                token("afghansk", 520, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 180.0,
+                            "bottom": 204.0,
+                            "tokens": [
+                                token("afghanskla", 140, 0.10),
+                                token("-an", 350, 0.10),
+                                token("-or", 430, 0.10),
+                                token("s.", 500, 0.10),
                             ],
                         },
                     ],
@@ -160,7 +173,13 @@ class LemmaReviewTests(unittest.TestCase):
         candidates = extract_candidates(articles, heads)
         self.assertEqual(
             [item["lemma"] for item in candidates],
-            ["afghan", "afghanhund", "afghansk"],
+            ["afghan", "afghanhund", "afghansk", "afghanska"],
+        )
+
+    def test_previous_family_word_proves_l_is_boundary(self):
+        self.assertEqual(
+            infer_boundary_from_previous("afghanskla", "afghansk"),
+            "afghansk|a",
         )
 
     def test_repairs_mixed_case_ocr_duplicate(self):
