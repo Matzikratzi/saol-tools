@@ -8,6 +8,7 @@ from PIL import Image
 
 from scripts.lemma_review import (
     approve_pages,
+    approve_through,
     apply_review_facit,
     _items_by_printed_row,
     _items_in_reading_order,
@@ -1539,6 +1540,97 @@ class LemmaReviewTests(unittest.TestCase):
             [item["lemma"] for item in candidates],
             ["affisch", "affischera", "affischering"],
         )
+
+    def test_word_limited_facit_tracks_exact_approved_prefix(self):
+        items = [
+            {
+                "article_number": 1,
+                "lemma": "affisch",
+                "source_page": 23,
+                "source_column": 1,
+                "source_top": 100.0,
+                "source_left": 100.0,
+            },
+            {
+                "article_number": 2,
+                "lemma": "aga",
+                "source_page": 23,
+                "source_column": 1,
+                "source_top": 200.0,
+                "source_left": 100.0,
+            },
+            {
+                "article_number": 3,
+                "lemma": "aggressionsdrift",
+                "source_page": 23,
+                "source_column": 2,
+                "source_top": 300.0,
+                "source_left": 1600.0,
+            },
+            {
+                "article_number": 3,
+                "lemma": "aggressionshämmad",
+                "source_page": 23,
+                "source_column": 2,
+                "source_top": 300.0,
+                "source_left": 1900.0,
+            },
+        ]
+        facit = {"version": 1, "pages": {}}
+        approve_through(facit, items, "aggressionsdrift")
+        self.assertEqual(facit["version"], 2)
+        self.assertEqual(
+            facit["reviewed_prefix"]["through"]["lemma"],
+            "aggressionsdrift",
+        )
+
+        missing = apply_review_facit(items, facit)
+        self.assertEqual(missing, [])
+        self.assertEqual(
+            [item["review_state"] for item in items],
+            ["approved", "approved", "approved", "unread"],
+        )
+
+        changed = [
+            items[0].copy(),
+            {
+                "article_number": 2,
+                "lemma": "agaförbud",
+                "source_page": 23,
+                "source_column": 1,
+                "source_top": 240.0,
+                "source_left": 100.0,
+            },
+            items[2].copy(),
+            items[3].copy(),
+        ]
+        missing = apply_review_facit(changed, facit)
+        self.assertEqual(
+            [item["review_state"] for item in changed],
+            ["approved", "facit_new", "approved", "unread"],
+        )
+        self.assertEqual(
+            missing,
+            [{"page": 23, "article_number": 2, "lemma": "aga"}],
+        )
+
+    def test_word_limited_facit_requires_unique_boundary(self):
+        items = [
+            {
+                "article_number": 1,
+                "lemma": "aga",
+                "source_page": 23,
+            },
+            {
+                "article_number": 2,
+                "lemma": "aga",
+                "source_page": 23,
+            },
+        ]
+        with self.assertRaisesRegex(ValueError, "inte entydig"):
+            approve_through({"version": 1, "pages": {}}, items, "aga")
+        with self.assertRaisesRegex(ValueError, "finns inte"):
+            approve_through({"version": 1, "pages": {}}, items, "saknas")
 
     def test_review_facit_marks_matches_and_detects_changes(self):
         items = [
