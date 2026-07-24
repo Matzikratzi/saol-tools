@@ -160,6 +160,35 @@ def infer_suffix_boundary_from_series(value: str, prefix: str) -> str:
         return "-" + prefix + "|" + cleaned[len(marker_prefix):]
     return ""
 
+def infer_boundary_at_article_divergence(
+    value: str, article_head: str, following_tokens: list[dict]
+) -> str:
+    """Recover a | read as l where a related word diverges before a suffix."""
+    if (
+        not following_tokens
+        or not following_tokens[0].get("text", "").strip().startswith("-")
+    ):
+        return ""
+    normalized = normalize_lemma(value)
+    head = normalize_lemma(article_head)
+    common_length = 0
+    for left, right in zip(normalized, head):
+        if left != right:
+            break
+        common_length += 1
+    if (
+        common_length >= 4
+        and common_length < len(normalized) - 1
+        and normalized[common_length] in "li1"
+    ):
+        return (
+            normalized[:common_length]
+            + "|"
+            + normalized[common_length + 1 :]
+        )
+    return ""
+
+
 def infer_boundary_from_article_family(value: str, article_head: str) -> str:
     """Recover family|ending when OCR renders SAOL's boundary as l."""
     normalized = normalize_lemma(value)
@@ -484,6 +513,9 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 previous_boundary = infer_boundary_from_previous(
                     cleaned, last_lookup_lemma
                 )
+                divergence_boundary = infer_boundary_at_article_divergence(
+                    cleaned, current_head, same_line_following
+                )
                 family_boundary = infer_boundary_from_article_family(
                     cleaned, current_head
                 )
@@ -494,6 +526,8 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     cleaned = era_boundary
                 elif previous_boundary:
                     cleaned = previous_boundary
+                elif divergence_boundary:
+                    cleaned = divergence_boundary
                 elif family_boundary:
                     cleaned = family_boundary
                 elif repeated_boundary:
