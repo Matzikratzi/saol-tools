@@ -3,12 +3,12 @@
   "pages": {},
   "reviewed_prefix": {
     "through": {
-      "article_number": 29,
-      "lemma": "agitationstal",
-      "source_page": 23,
-      "source_column": 2,
-      "source_top": 3513,
-      "source_left": 2335
+      "article_number": 31,
+      "lemma": "agnfisk",
+      "source_page": 24,
+      "source_column": 1,
+      "source_top": 256,
+      "source_left": 941
     },
     "candidates": [
       {
@@ -1290,6 +1290,70 @@
         "source_column": 2,
         "source_top": 3513,
         "source_left": 2335
+      },
+      {
+        "article_number": 29,
+        "lemma": "agitator",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3585,
+        "source_left": 1490
+      },
+      {
+        "article_number": 29,
+        "lemma": "agitatorisk",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3585,
+        "source_left": 2149
+      },
+      {
+        "article_number": 29,
+        "lemma": "agitera",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3647,
+        "source_left": 1647
+      },
+      {
+        "article_number": 29,
+        "lemma": "agitering",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3784,
+        "source_left": 1863
+      },
+      {
+        "article_number": 30,
+        "lemma": "agn",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3847,
+        "source_left": 1434
+      },
+      {
+        "article_number": 30,
+        "lemma": "agnborst",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3986,
+        "source_left": 1495
+      },
+      {
+        "article_number": 31,
+        "lemma": "agn",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 242,
+        "source_left": 182
+      },
+      {
+        "article_number": 31,
+        "lemma": "agnfisk",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 256,
+        "source_left": 941
       }
     ]
   },
