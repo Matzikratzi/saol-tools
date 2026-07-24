@@ -2018,6 +2018,37 @@ class LemmaReviewTests(unittest.TestCase):
             "affärs|angelägenhet",
         )
 
+    def test_trailing_definition_word_is_bounded_by_next_article(self):
+        items = [
+            {
+                "article_number": 40,
+                "lemma": "agremang",
+                "raw": "agremang",
+                "method": "artikelhuvud",
+            },
+            {
+                "article_number": 40,
+                "lemma": "av",
+                "raw": "av",
+                "method": "halvfet token",
+            },
+            {
+                "article_number": 41,
+                "lemma": "agrikultur",
+                "raw": "agrikultur",
+                "method": "artikelhuvud",
+            },
+        ]
+        heads = {
+            40: {"headword": "agremang"},
+            41: {"headword": "agrikultur"},
+        }
+        filtered = remove_alphabetic_family_outliers(items, heads)
+        self.assertEqual(
+            [item["lemma"] for item in filtered],
+            ["agremang", "agrikultur"],
+        )
+
     def test_unbold_alternative_suffix_in_definition_is_rejected(self):
         self.assertTrue(weak_alternative_suffix("el.", 0.0))
         self.assertTrue(weak_alternative_suffix("eller", 0.44))
