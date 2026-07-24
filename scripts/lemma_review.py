@@ -1515,15 +1515,14 @@ def report_html(
         None,
     )
     first_target = (
-        "review-page-%d-column-%d"
-        % (first_review["source_page"], first_review["source_column"])
+        (int(first_review["source_page"]), int(first_review["source_column"]))
         if first_review
-        else ""
+        else None
     )
     jump_button = (
-        '<p><a class="jump" href="#%s">Gå till första nya eller felaktiga '
-        'ordet: %s</a></p>'
-        % (first_target, html.escape(display_lemma(first_review)))
+        '<p><a class="jump" href="#first-review">Gå till första nya eller '
+        'felaktiga ordet: %s</a></p>'
+        % html.escape(display_lemma(first_review))
         if first_review
         else ""
     )
@@ -1531,15 +1530,31 @@ def report_html(
     for path in images or []:
         match = re.search(r"page-(\\d+)-column-(\\d+)", path.stem)
         figure_id = ""
+        review_anchor = ""
         if match:
-            figure_id = ' id="review-page-%d-column-%d"' % (
-                int(match.group(1)),
-                int(match.group(2)),
-            )
+            path_target = (int(match.group(1)), int(match.group(2)))
+            figure_id = ' id="review-page-%d-column-%d"' % path_target
+            if path_target == first_target:
+                with Image.open(path) as review_image:
+                    image_height = max(1, review_image.height)
+                anchor_top = max(
+                    0.0,
+                    min(
+                        100.0,
+                        100.0
+                        * float(first_review["source_top"])
+                        / image_height,
+                    ),
+                )
+                review_anchor = (
+                    '<span id="first-review" class="review-anchor" '
+                    'style="top:%.3f%%"></span>' % anchor_top
+                )
         image_parts.append(
-            '<figure%s><img src="%s" loading="lazy"><figcaption>%s</figcaption></figure>'
+            '<figure%s>%s<img src="%s" loading="lazy"><figcaption>%s</figcaption></figure>'
             % (
                 figure_id,
+                review_anchor,
                 html.escape(str(path)),
                 html.escape(path.stem.replace("-", " ")),
             )
@@ -1547,7 +1562,7 @@ def report_html(
     image_blocks = "".join(image_parts)
     return f"""<!doctype html><html lang="sv"><head><meta charset="utf-8">
 <title>SAOL – grundformskandidater</title><style>
-body{{font:15px system-ui;margin:24px;max-width:1800px}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #ccc;padding:6px;text-align:left;vertical-align:top}}th{{position:sticky;top:0;background:#eee}}tr.uncertain{{background:#fff3cd}}tr.approved{{background:#eee;color:#666}}tr.mismatch{{background:#ffd6d6}}code{{white-space:pre-wrap}}figure{{margin:24px 0;border:1px solid #aaa;padding:10px;background:#eee}}figure img{{display:block;width:100%;height:auto}}figcaption{{margin-top:6px;color:#555}}.jump{{display:inline-block;padding:10px 14px;background:#1769e0;color:white;text-decoration:none;border-radius:7px;font-weight:700}}figure[id]{{scroll-margin-top:12px}}
+body{{font:15px system-ui;margin:24px;max-width:1800px}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #ccc;padding:6px;text-align:left;vertical-align:top}}th{{position:sticky;top:0;background:#eee}}tr.uncertain{{background:#fff3cd}}tr.approved{{background:#eee;color:#666}}tr.mismatch{{background:#ffd6d6}}code{{white-space:pre-wrap}}figure{{margin:24px 0;border:1px solid #aaa;padding:10px;background:#eee}}figure img{{display:block;width:100%;height:auto}}figcaption{{margin-top:6px;color:#555}}.jump{{display:inline-block;padding:10px 14px;background:#1769e0;color:white;text-decoration:none;border-radius:7px;font-weight:700}}figure[id]{{position:relative}}.review-anchor{{position:absolute;left:0;scroll-margin-top:12px}}
 </style></head><body><h1>Grundformskandidater</h1>
 <p>{len(items)} träffar; {len(unique)} unika grundformer; {uncertain} osäkra kandidater.</p>
 <p>{approved} poster stämmer med tidigare facit. {changed + len(missing)} facitavvikelser.</p>
