@@ -22,8 +22,7 @@ DEFAULT_FACIT = ROOT / "data" / "lemma_review_facit.json"
 
 POS = {"adj", "adv", "interj", "prep", "pron", "s", "v"}
 GRAMMAR_MARKERS = POS | {
-    "att", "best", "el", "eller", "komp", "oböjl", "om", "pl",
-    "som", "superl", "äv",
+    "best", "el", "eller", "komp", "oböjl", "pl", "superl", "äv",
 }
 # "-lt" is Tesseract's recurring reading of a thin separator plus adjective -t.
 NON_LEMMA_SUFFIXES = {
@@ -442,43 +441,61 @@ def _after_inflection_prefix(tokens: list[dict]) -> list[dict]:
 
 
 
+def swedish_sort_key(value: str) -> str:
+    """Return a comparison key using Swedish a–z, å, ä, ö order."""
+    normalized = normalize_lemma(value)
+    return normalized.translate(
+        str.maketrans(
+            {
+                "à": "a",
+                "á": "a",
+                "é": "e",
+                "å": "{a",
+                "ä": "{b",
+                "ö": "{c",
+            }
+        )
+    )
+
+
 def remove_alphabetic_family_outliers(
     items: list[dict], heads: dict[int, dict]
 ) -> list[dict]:
-    """Drop definition words before the text returns to the headword family."""
-    kept = []
+    """Drop candidates outside the interval between secure printed anchors."""
     by_article: dict[int, list[dict]] = {}
     for item in items:
         by_article.setdefault(item["article_number"], []).append(item)
+
     rejected_ids = set()
     for article_number, article_items in by_article.items():
-        headword = normalize_lemma(heads[article_number]["headword"])
-        family = headword[:-1] if len(headword) > 5 else headword
-        for index, item in enumerate(article_items):
-            lemma = normalize_lemma(item["lemma"])
+        previous_anchor = normalize_lemma(
+            heads[article_number]["headword"]
+        )
+        pending: list[dict] = []
+        for item in article_items:
+            if item["method"] == "artikelhuvud":
+                previous_anchor = normalize_lemma(item["lemma"])
+                pending.clear()
+                continue
             explicit_boundary = any(
                 marker in item.get("raw", "") for marker in ("|", "¦")
             )
-            if (
-                item["method"] == "artikelhuvud"
-                or lemma.startswith(family)
-                or explicit_boundary
-            ):
+            if not explicit_boundary:
+                pending.append(item)
                 continue
-            later_family = next(
-                (
-                    normalize_lemma(following["lemma"])
-                    for following in article_items[index + 1 :]
-                    if normalize_lemma(following["lemma"]).startswith(family)
-                ),
-                "",
-            )
-            if later_family and lemma > later_family:
-                rejected_ids.add(id(item))
-    for item in items:
-        if id(item) not in rejected_ids:
-            kept.append(item)
-    return kept
+
+            next_anchor = normalize_lemma(item["lemma"])
+            lower = swedish_sort_key(previous_anchor)
+            upper = swedish_sort_key(next_anchor)
+            if lower <= upper:
+                for candidate in pending:
+                    candidate_key = swedish_sort_key(candidate["lemma"])
+                    if not lower <= candidate_key <= upper:
+                        rejected_ids.add(id(candidate))
+            pending.clear()
+            previous_anchor = next_anchor
+
+    return [item for item in items if id(item) not in rejected_ids]
 
 
 def recover_runeberg_boundary_series(
