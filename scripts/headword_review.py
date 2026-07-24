@@ -23,7 +23,7 @@ DEFAULT_CORRECTIONS = ROOT / "data" / "headword_corrections.json"
 MARKERS = set("'\"“”„`´¹²³⁴⁵⁶⁷⁸⁹")
 SUPERSCRIPT = {character: index for index, character in enumerate("¹²³⁴⁵⁶⁷⁸⁹", 1)}
 STOP_WORDS = {
-    "adj", "adv", "best", "el", "eller", "i", "interj", "jfr", "komp",
+    "adj", "adv", "av", "best", "el", "eller", "i", "interj", "jfr", "komp",
     "mus", "n", "oböjl", "pl", "prep", "pron", "s", "se", "ss", "subst",
     "v", "vard", "äv", "åld",
 }
@@ -343,6 +343,58 @@ def infer_homonym_runs(items: list[dict]) -> None:
         position = end
 
 
+
+def recover_short_homonym_run(items: list[dict]) -> None:
+    """Recover a numbered run when OCR loses tiny homonym digits.
+
+    The printed homonym digit may survive only as a quote-like marker on the
+    first entry. Three consecutive one-letter Runeberg heads provide enough
+    redundant evidence to repair the whole run without naming the letter.
+    """
+    accent_fold = str.maketrans({"à": "a", "á": "a", "å": "a"})
+    for index in range(len(items) - 2):
+        run = items[index : index + 3]
+        first = run[0]
+        if not first.get("homonym_marker_detected"):
+            continue
+        runeberg_heads = [
+            normalize_headword(item.get("runeberg_headword", ""))
+            for item in run
+        ]
+        first_letter = next(
+            (
+                character
+                for character in runeberg_heads[0]
+                if character.isalpha()
+            ),
+            "",
+        )
+        if not first_letter:
+            continue
+        folded = first_letter.translate(accent_fold)
+        if not all(
+            len(head) == 1 and head.translate(accent_fold) == folded
+            for head in runeberg_heads[1:]
+        ):
+            continue
+        for number, item in enumerate(run, 1):
+            if item["headword"] != folded:
+                item["corrected_from"] = item["headword"]
+                item["correction_method"] = "sammanhängande homonymserie"
+            item["headword"] = folded
+            item["raw_headword"] = folded
+            item["stem_headword"] = folded
+            item["homonym"] = number
+            item["homonym_inferred"] = True
+            item["homonym_marker_detected"] = True
+            item["reasons"] = [
+                reason for reason in item["reasons"]
+                if not reason.startswith(("homonymtecknet", "inget huvudord"))
+            ]
+            item["status"] = "osäker" if item["reasons"] else "preliminär"
+        break
+
+
 def extract_heads(
     payload: dict, corrections: dict[str, str] | None = None
 ) -> list[dict]:
@@ -442,6 +494,7 @@ def main() -> None:
                     if not reason.startswith("låg OCR-säkerhet")
                 ]
                 item["status"] = "osäker" if item["reasons"] else "preliminär"
+        recover_short_homonym_run(items)
         reconcile_homonym_neighbours(items)
         infer_homonym_runs(items)
     output = {"article_count": len(items), "headwords": items}
