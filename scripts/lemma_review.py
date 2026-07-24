@@ -822,6 +822,29 @@ def facit_signature(item: dict) -> dict:
     }
 
 
+def _signature_tuple(item: dict) -> tuple[int, str]:
+    return int(item["article_number"]), item["lemma"]
+
+
+def _at_or_before_boundary(item: dict, boundary: dict) -> bool:
+    """Compare an item with a stored physical boundary if its signature changed."""
+    article = int(item["article_number"])
+    boundary_article = int(boundary["article_number"])
+    if article != boundary_article:
+        return article < boundary_article
+    return (
+        int(item.get("source_page", 0)),
+        int(item.get("source_column", 0)),
+        float(item.get("source_top", 0.0)),
+        float(item.get("source_left", 0.0)),
+    ) <= (
+        int(boundary.get("source_page", 0)),
+        int(boundary.get("source_column", 0)),
+        float(boundary.get("source_top", 0.0)),
+        float(boundary.get("source_left", 0.0)),
+    )
+
+
 def apply_review_facit(
     items: list[dict], facit: dict
 ) -> list[dict]:
@@ -833,20 +856,18 @@ def apply_review_facit(
     for page_text, page_data in pages.items():
         page = int(page_text)
         expected = {
-            (int(value["article_number"]), value["lemma"])
+            _signature_tuple(value)
             for value in page_data.get("candidates", [])
         }
         current_items = [
             item for item in items if int(item["source_page"]) == page
         ]
-        current = {
-            (int(item["article_number"]), item["lemma"])
-            for item in current_items
-        }
+        current = {_signature_tuple(item) for item in current_items}
         for item in current_items:
-            signature = (int(item["article_number"]), item["lemma"])
             item["review_state"] = (
-                "approved" if signature in expected else "facit_new"
+                "approved"
+                if _signature_tuple(item) in expected
+                else "facit_new"
             )
         for article_number, lemma in sorted(expected - current):
             missing.append(
@@ -856,7 +877,90 @@ def apply_review_facit(
                     "lemma": lemma,
                 }
             )
-    return missing
+
+    prefix = facit.get("reviewed_prefix")
+    if prefix:
+        boundary = prefix["through"]
+        boundary_signature = _signature_tuple(boundary)
+        boundary_indexes = [
+            index
+            for index, item in enumerate(items)
+            if _signature_tuple(item) == boundary_signature
+        ]
+        if len(boundary_indexes) == 1:
+            current_items = items[: boundary_indexes[0] + 1]
+        else:
+            current_items = [
+                item
+                for item in items
+                if _at_or_before_boundary(item, boundary)
+            ]
+        expected_values = prefix.get("candidates", [])
+        expected = {_signature_tuple(value) for value in expected_values}
+        current = {_signature_tuple(item) for item in current_items}
+        for item in current_items:
+            item["review_state"] = (
+                "approved"
+                if _signature_tuple(item) in expected
+                else "facit_new"
+            )
+        stored_by_signature = {
+            _signature_tuple(value): value for value in expected_values
+        }
+        for signature in sorted(expected - current):
+            stored = stored_by_signature[signature]
+            missing.append(
+                {
+                    "page": int(stored.get("source_page", 0)),
+                    "article_number": signature[0],
+                    "lemma": signature[1],
+                }
+            )
+
+    deduplicated = {
+        (value["page"], value["article_number"], value["lemma"]): value
+        for value in missing
+    }
+    return [deduplicated[key] for key in sorted(deduplicated)]
+
+
+def approve_through(facit: dict, items: list[dict], lemma: str) -> dict:
+    """Snapshot the exact interpreted sequence through one requested lemma."""
+    requested = normalize_lemma(lemma)
+    matches = [
+        index
+        for index, item in enumerate(items)
+        if normalize_lemma(item["lemma"]) == requested
+    ]
+    if not matches:
+        raise ValueError(f"grundformen finns inte i körningen: {requested}")
+    if len(matches) > 1:
+        articles = ", ".join(
+            str(items[index]["article_number"]) for index in matches
+        )
+        raise ValueError(
+            f"grundformen är inte entydig: {requested} (artiklar {articles})"
+        )
+    boundary_index = matches[0]
+    boundary_item = items[boundary_index]
+    candidates = []
+    for item in items[: boundary_index + 1]:
+        value = facit_signature(item)
+        value.update(
+            {
+                "source_page": int(item.get("source_page", 0)),
+                "source_column": int(item.get("source_column", 0)),
+                "source_top": float(item.get("source_top", 0.0)),
+                "source_left": float(item.get("source_left", 0.0)),
+            }
+        )
+        candidates.append(value)
+    facit["version"] = max(2, int(facit.get("version", 1)))
+    facit["reviewed_prefix"] = {
+        "through": candidates[-1].copy(),
+        "candidates": candidates,
+    }
+    return facit
 
 
 def approve_pages(
@@ -1163,7 +1267,14 @@ def main() -> None:
         default=[],
         help="Spara aktuell tolkning av sidan som korrekturläst facit",
     )
+    parser.add_argument(
+        "--approve-through",
+        metavar="GRUNDFORM",
+        help="Spara aktuell tolkning till och med grundformen som facit",
+    )
     args = parser.parse_args()
+    if args.approve_page and args.approve_through:
+        parser.error("--approve-page och --approve-through kan inte kombineras")
     articles = json.loads(args.articles.read_text(encoding="utf-8"))
     heads = json.loads(args.headwords.read_text(encoding="utf-8"))
     for page in articles.get("pages", []):
@@ -1183,14 +1294,26 @@ def main() -> None:
         )
     if args.approve_page:
         approve_pages(facit, items, args.approve_page)
+    if args.approve_through:
+        try:
+            approve_through(facit, items, args.approve_through)
+        except ValueError as error:
+            parser.error(str(error))
+    if args.approve_page or args.approve_through:
         args.facit.parent.mkdir(parents=True, exist_ok=True)
         args.facit.write_text(
             json.dumps(facit, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
+    if args.approve_page:
         print(
             "Facit sparat för sida: "
             + ", ".join(map(str, sorted(set(args.approve_page))))
+        )
+    if args.approve_through:
+        print(
+            "Facit sparat till och med: "
+            + facit["reviewed_prefix"]["through"]["lemma"]
         )
     missing = apply_review_facit(items, facit)
     images = render_review_images(
@@ -1207,6 +1330,9 @@ def main() -> None:
         ),
         "approved_pages": sorted(
             int(page) for page in facit.get("pages", {})
+        ),
+        "approved_through": (
+            facit.get("reviewed_prefix", {}).get("through", {}).get("lemma")
         ),
         "facit_new_count": facit_new_count,
         "facit_missing": missing,
@@ -1230,6 +1356,10 @@ def main() -> None:
             if output["approved_pages"]
             else "—"
         )
+    )
+    print(
+        "Godkänt till och med: "
+        + (output["approved_through"] or "—")
     )
     print(f"Facitavvikelser: {facit_new_count + len(missing)}")
     for value in missing:
