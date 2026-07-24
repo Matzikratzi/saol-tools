@@ -12,6 +12,7 @@ import difflib
 import html
 import json
 import re
+import statistics
 from pathlib import Path
 
 from scripts.runeberg_headwords import fetch_and_enrich
@@ -36,6 +37,75 @@ def normalize_headword(value: str) -> str:
 
 def _plain_token(value: str) -> str:
     return normalize_headword(value).replace("-", "")
+
+
+def visibly_lighter_than_head(
+    selected: list[dict], candidate: dict
+) -> bool:
+    """Detect plain definition text following a bold, unmarked headword."""
+    if not selected:
+        return False
+    first = _plain_token(selected[0].get("text", ""))
+    # A very short first token can begin a genuine phrase such as à jour.
+    if len(first) < 4 and len(selected) == 1:
+        return False
+    head_densities = [
+        float(token.get("ink_density", 0.0))
+        for token in selected
+        if float(token.get("ink_density", 0.0)) > 0
+    ]
+    candidate_density = float(candidate.get("ink_density", 0.0))
+    if not head_densities or candidate_density <= 0:
+        return False
+    return candidate_density < statistics.median(head_densities) * 0.82
+
+
+def trim_plain_definition_tails_by_order(
+    items: list[dict], articles: list[dict]
+) -> None:
+    """Trim a light definition tail when neighbouring heads prove the split."""
+    articles_by_number = {
+        int(article["number"]): article for article in articles
+    }
+    for index in range(1, len(items) - 1):
+        item = items[index]
+        article = articles_by_number.get(int(item["article_number"]))
+        if article is None:
+            continue
+        tokens = sorted(
+            article["lines"][0].get("tokens", []),
+            key=lambda token: token["left"],
+        )
+        if len(tokens) < 2:
+            continue
+        previous_key = swedish_sort_key(items[index - 1]["headword"])
+        following_key = swedish_sort_key(items[index + 1]["headword"])
+        for split in range(1, len(tokens)):
+            selected = tokens[:split]
+            tail = tokens[split]
+            if not visibly_lighter_than_head(selected, tail):
+                continue
+            prefix_raw = " ".join(
+                token.get("text", "").strip() for token in selected
+            )
+            prefix = normalize_headword(prefix_raw)
+            tail_word = normalize_headword(tail.get("text", ""))
+            prefix_key = swedish_sort_key(prefix)
+            tail_key = swedish_sort_key(tail_word)
+            if (
+                prefix
+                and item["headword"].startswith(prefix)
+                and previous_key <= prefix_key <= following_key
+                and not previous_key <= tail_key <= following_key
+            ):
+                item["corrected_from"] = item["headword"]
+                item["correction_method"] = (
+                    "fetstil och alfabetisk ordning"
+                )
+                item["headword"] = prefix
+                item["raw_headword"] = prefix_raw
+                item["stem_headword"] = prefix_raw
+                break
 
 
 def swedish_sort_key(value: str) -> tuple[int, ...]:
@@ -268,6 +338,7 @@ def extract_heads(
         item["correction_method"] = ""
         item["stem_headword"] = item["raw_headword"] or item["headword"]
         result.append(item)
+    trim_plain_definition_tails_by_order(result, payload["articles"])
     repair_alphabetic_accents(result)
     for item in result:
         corrected = corrections.get(item["headword"])
