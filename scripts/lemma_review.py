@@ -362,16 +362,17 @@ def infer_boundary_from_previous(value: str, previous: str) -> str:
 
 
 def infer_suffix_boundary_from_series(value: str, prefix: str) -> str:
-    """Recover -prefix|tail when OCR renders the series boundary as l."""
+    """Recover -prefix|tail when OCR renders the thin boundary as l/j/i/1."""
     cleaned = value.strip().strip(";,:.()[]{}")
     prefix = normalize_lemma(prefix)
-    marker_prefix = "-" + prefix + "l"
-    if (
-        prefix
-        and cleaned.casefold().startswith(marker_prefix)
-        and len(cleaned) > len(marker_prefix)
-    ):
-        return "-" + prefix + "|" + cleaned[len(marker_prefix):]
+    for false_marker in "lji1":
+        marker_prefix = "-" + prefix + false_marker
+        if (
+            prefix
+            and cleaned.casefold().startswith(marker_prefix)
+            and len(cleaned) > len(marker_prefix)
+        ):
+            return "-" + prefix + "|" + cleaned[len(marker_prefix):]
     return ""
 
 def infer_boundary_at_article_divergence(
