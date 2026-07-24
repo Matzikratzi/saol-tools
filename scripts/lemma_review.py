@@ -464,12 +464,16 @@ def pronunciation_then_inflection(tokens: list[dict]) -> bool:
     if not tokens or not tokens[0].get("text", "").strip().startswith("("):
         return False
     depth = 0
+    parenthetical = []
     for index, token in enumerate(tokens):
         text = token.get("text", "").strip()
+        parenthetical.append(text)
         depth += text.count("(") - text.count(")")
         if depth <= 0:
+            pronunciation = " ".join(parenthetical)
             return (
-                index + 1 < len(tokens)
+                bool(re.search(r"[-'’\\\"]", pronunciation))
+                and index + 1 < len(tokens)
                 and tokens[index + 1].get("text", "").strip().startswith("-")
             )
     return False
