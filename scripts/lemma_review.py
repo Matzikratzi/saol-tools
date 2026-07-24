@@ -3,6 +3,7 @@ from __future__ import annotations
 """Find all bold and semibold SAOL lemma candidates inside grouped articles."""
 
 import argparse
+import difflib
 import html
 import json
 import re
@@ -75,6 +76,33 @@ def inflection_of_previous(previous: str, candidate: str) -> bool:
         for suffix in NON_LEMMA_SUFFIXES
     )
     return suffix_inflection or present_form_of_previous(previous, candidate)
+
+def runeberg_short_inflection(raw: str, head: dict) -> bool:
+    """Use aligned Runeberg grammar to reject a corrupt short inflection."""
+    if (
+        not any(character.isupper() for character in raw)
+        or float(head.get("runeberg_match_score", 0.0)) < 0.80
+    ):
+        return False
+    candidate = normalize_lemma(raw)
+    if not candidate or len(candidate) > 4:
+        return False
+    suffixes = [
+        normalize_lemma(value)
+        for value in re.findall(
+            r"-[A-Za-zÅÄÖåäöÀÁÉàáé]+\.?",
+            head.get("runeberg_line", ""),
+        )
+    ]
+    return any(
+        suffix
+        and len(suffix) <= 4
+        and difflib.SequenceMatcher(
+            None, candidate, suffix
+        ).ratio() >= 0.60
+        for suffix in suffixes
+    )
+
 
 def merged_pos_inflection(
     raw: str, normalized_suffix: str, bold_score: float
@@ -586,6 +614,15 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     )
                     if inferred_suffix_boundary:
                         cleaned = inferred_suffix_boundary
+                    runeberg_inflection = (
+                        line_index == 0
+                        and score < 0.25
+                        and runeberg_short_inflection(raw, head)
+                    )
+                    if runeberg_inflection:
+                        previous_separator = False
+                        at_line_start = False
+                        continue
                     repaired_suffix = repair_mixed_case_duplicate(cleaned)
                     for marker in ("|", "¦"):
                         if marker in repaired_suffix:
