@@ -39,6 +39,7 @@ from scripts.lemma_review import (
     repair_mixed_case_duplicate,
     report_html,
     runeberg_short_inflection,
+    same_lexical_family,
     suffix_base,
     swedish_sort_key,
     write_review_bundle,
@@ -2014,6 +2015,37 @@ class LemmaReviewTests(unittest.TestCase):
                 "affärs|angelägenhet", "affär"
             ),
             "affärs|angelägenhet",
+        )
+
+    def test_compound_before_new_family_base_is_preserved(self):
+        self.assertTrue(same_lexical_family("agn", "agnfisk"))
+        self.assertTrue(same_lexical_family("agn", "agna"))
+        items = [
+            {
+                "article_number": 31,
+                "lemma": "agn",
+                "raw": "agn",
+                "method": "artikelhuvud",
+            },
+            {
+                "article_number": 31,
+                "lemma": "agnfisk",
+                "raw": "-fisk",
+                "method": "sammansättningssuffix",
+            },
+            {
+                "article_number": 31,
+                "lemma": "agna",
+                "raw": "agn|a",
+                "method": "Runebergs lodstrecksserie",
+            },
+        ]
+        filtered = remove_alphabetic_family_outliers(
+            items, {31: {"headword": "agn"}}
+        )
+        self.assertEqual(
+            [item["lemma"] for item in filtered],
+            ["agn", "agnfisk", "agna"],
         )
 
     def test_definition_words_are_rejected_by_alphabetic_interval(self):
