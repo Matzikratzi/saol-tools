@@ -458,42 +458,54 @@ def swedish_sort_key(value: str) -> str:
     )
 
 
+def same_lexical_family(headword: str, candidate: str) -> bool:
+    """Recognize words that retain a useful prefix of the article headword."""
+    headword = normalize_lemma(headword)
+    candidate = normalize_lemma(candidate)
+    required = min(4, len(headword))
+    common = 0
+    for left, right in zip(headword, candidate):
+        if left != right:
+            break
+        common += 1
+    return bool(required) and common >= required
+
+
 def remove_alphabetic_family_outliers(
     items: list[dict], heads: dict[int, dict]
 ) -> list[dict]:
-    """Drop candidates outside the interval between secure printed anchors."""
+    """Drop non-family definition words between two lexical family anchors."""
     by_article: dict[int, list[dict]] = {}
     for item in items:
         by_article.setdefault(item["article_number"], []).append(item)
 
     rejected_ids = set()
     for article_number, article_items in by_article.items():
-        previous_anchor = normalize_lemma(
-            heads[article_number]["headword"]
-        )
+        headword = normalize_lemma(heads[article_number]["headword"])
+        previous_anchor = headword
         pending: list[dict] = []
         for item in article_items:
-            if item["method"] == "artikelhuvud":
-                previous_anchor = normalize_lemma(item["lemma"])
+            lemma = normalize_lemma(item["lemma"])
+            if (
+                item["method"] == "artikelhuvud"
+                or same_lexical_family(headword, lemma)
+            ):
+                if pending:
+                    lower = swedish_sort_key(previous_anchor)
+                    upper = swedish_sort_key(lemma)
+                    for candidate in pending:
+                        candidate_key = swedish_sort_key(
+                            candidate["lemma"]
+                        )
+                        if (
+                            lower > upper
+                            or not lower <= candidate_key <= upper
+                        ):
+                            rejected_ids.add(id(candidate))
                 pending.clear()
-                continue
-            explicit_boundary = any(
-                marker in item.get("raw", "") for marker in ("|", "¦")
-            )
-            if not explicit_boundary:
+                previous_anchor = lemma
+            else:
                 pending.append(item)
-                continue
-
-            next_anchor = normalize_lemma(item["lemma"])
-            lower = swedish_sort_key(previous_anchor)
-            upper = swedish_sort_key(next_anchor)
-            if lower <= upper:
-                for candidate in pending:
-                    candidate_key = swedish_sort_key(candidate["lemma"])
-                    if not lower <= candidate_key <= upper:
-                        rejected_ids.add(id(candidate))
-            pending.clear()
-            previous_anchor = next_anchor
 
     return [item for item in items if id(item) not in rejected_ids]
 
@@ -1545,7 +1557,7 @@ def report_html(
     )
     image_parts = []
     for path in images or []:
-        match = re.search(r"page-(\\d+)-column-(\\d+)", path.stem)
+        match = re.search(r"page-(\d+)-column-(\d+)", path.stem)
         figure_id = ""
         review_anchor = ""
         if match:
