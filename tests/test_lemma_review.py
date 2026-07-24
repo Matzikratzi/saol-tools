@@ -1616,6 +1616,37 @@ class LemmaReviewTests(unittest.TestCase):
             "Runebergkorrigerad lodstrecksserie",
         )
 
+    def test_full_lodstreck_word_is_placed_after_preceding_compound(self):
+        head = {
+            "article_number": 31,
+            "headword": "agn",
+            "runeberg_line": "^agn -et; pi. = s. bete vid fiske -fisk - agn|a",
+            "runeberg_match_score": 0.95,
+        }
+        items = [
+            {
+                "article_number": 31,
+                "lemma": "agn",
+                "stem_lemma": "agn",
+                "raw": "agn",
+                "method": "artikelhuvud",
+            },
+            {
+                "article_number": 31,
+                "lemma": "agnfisk",
+                "stem_lemma": "agnfisk",
+                "raw": "-fisk",
+                "method": "sammansättningssuffix",
+            },
+        ]
+        recover_runeberg_boundary_series(items, {31: head})
+        self.assertEqual(
+            [item["lemma"] for item in items],
+            ["agn", "agnfisk", "agna"],
+        )
+        self.assertEqual(items[2]["raw"], "agn|a")
+        self.assertEqual(items[2]["method"], "Runebergs lodstrecksserie")
+
     def test_manual_facit_insertion_recovers_ocr_omission(self):
         items = [
             {
