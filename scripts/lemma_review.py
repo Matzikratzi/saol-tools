@@ -429,6 +429,126 @@ def remove_alphabetic_family_outliers(
     return kept
 
 
+def recover_runeberg_boundary_series(
+    items: list[dict], heads: dict[int, dict]
+) -> list[dict]:
+    """Recover explicit lodstreck compounds from a well-aligned Runeberg line."""
+    for article_number, head in heads.items():
+        if float(head.get("runeberg_match_score", 0.0)) < 0.80:
+            continue
+        raw_series = re.findall(
+            r"-[A-Za-zÅÄÖåäöÀÁÉàáé]*[|¦][A-Za-zÅÄÖåäöÀÁÉàáé]+",
+            head.get("runeberg_line", ""),
+        )
+        if not raw_series:
+            continue
+        expected = [
+            (
+                raw,
+                expand_compound(head["headword"], raw),
+            )
+            for raw in raw_series
+        ]
+        article_items = [
+            item for item in items
+            if int(item["article_number"]) == int(article_number)
+        ]
+        head_item = next(
+            (
+                item for item in article_items
+                if item.get("method") == "artikelhuvud"
+            ),
+            None,
+        )
+        if head_item is None:
+            continue
+
+        recovered = []
+        used_ids = set()
+        for raw, lemma in expected:
+            exact = next(
+                (
+                    item for item in article_items
+                    if item["lemma"] == lemma and id(item) not in used_ids
+                ),
+                None,
+            )
+            if exact is not None:
+                exact["stem_lemma"] = lemma
+                exact["raw"] = raw
+                recovered.append(exact)
+                used_ids.add(id(exact))
+                continue
+
+            candidates = [
+                item
+                for item in article_items
+                if (
+                    id(item) not in used_ids
+                    and item.get("method") != "artikelhuvud"
+                    and item.get("raw", "").strip().startswith("-")
+                )
+            ]
+            similar = max(
+                candidates,
+                key=lambda item: difflib.SequenceMatcher(
+                    None, lemma, item["lemma"]
+                ).ratio(),
+                default=None,
+            )
+            similarity = (
+                difflib.SequenceMatcher(
+                    None, lemma, similar["lemma"]
+                ).ratio()
+                if similar is not None
+                else 0.0
+            )
+            if similar is not None and similarity >= 0.82:
+                similar["lemma"] = lemma
+                similar["stem_lemma"] = lemma
+                similar["raw"] = raw
+                similar["method"] = "Runebergkorrigerad lodstrecksserie"
+                similar["reasons"] = [
+                    reason
+                    for reason in similar.get("reasons", [])
+                    if reason != "svag halvfetssignal"
+                ]
+                recovered.append(similar)
+                used_ids.add(id(similar))
+                continue
+
+            inserted = head_item.copy()
+            inserted.update(
+                {
+                    "lemma": lemma,
+                    "stem_lemma": lemma,
+                    "raw": raw,
+                    "method": "Runebergs lodstrecksserie",
+                    "bold_score": 0.0,
+                    "status": "osäker",
+                    "reasons": [
+                        "saknades i bild-OCR; återställd från Runebergs parallella OCR"
+                    ],
+                }
+            )
+            recovered.append(inserted)
+            article_items.append(inserted)
+
+        if not recovered:
+            continue
+        recovered_ids = {id(item) for item in recovered}
+        items[:] = [
+            item for item in items
+            if id(item) not in recovered_ids
+        ]
+        head_index = next(
+            index for index, item in enumerate(items)
+            if item is head_item
+        )
+        items[head_index + 1 : head_index + 1] = recovered
+    return items
+
+
 def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict]:
     heads = {item["article_number"]: item for item in heads_payload["headwords"]}
     ordinary, bold = _references(articles_payload)
@@ -811,6 +931,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             current_base = suffix_base(cleaned)
                 previous_separator = False
                 at_line_start = False
+    recover_runeberg_boundary_series(result, heads)
     return remove_alphabetic_family_outliers(result, heads)
 
 
