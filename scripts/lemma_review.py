@@ -472,7 +472,7 @@ def pronunciation_then_inflection(tokens: list[dict]) -> bool:
         if depth <= 0:
             pronunciation = " ".join(parenthetical)
             return (
-                bool(re.search(r"[-'’\\\"]", pronunciation))
+                any(marker in pronunciation for marker in "-'’\"")
                 and index + 1 < len(tokens)
                 and tokens[index + 1].get("text", "").strip().startswith("-")
             )
