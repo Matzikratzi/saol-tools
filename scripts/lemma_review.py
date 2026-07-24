@@ -215,6 +215,34 @@ def repair_intrusion_before_boundary(value: str, article_head: str) -> str:
     return cleaned
 
 
+def repair_compacted_multiword_boundary(
+    value: str, article_head: str
+) -> str:
+    """Recover a compact compound base derived from a spaced headword.
+
+    Tesseract may render ``à jour|föra`` as ``åjourl|föra``: the accent is
+    confused with å and a thin stroke immediately before | becomes l.
+    """
+    cleaned = value.strip().strip(";,:.()[]{}")
+    head = normalize_lemma(article_head)
+    if " " not in head or not any(marker in cleaned for marker in ("|", "¦")):
+        return cleaned
+
+    marker = "|" if "|" in cleaned else "¦"
+    raw_base, tail = cleaned.split(marker, 1)
+    expected = re.sub(r"[-\s]+", "", head).translate(
+        str.maketrans({"à": "a", "á": "a", "é": "e"})
+    )
+    observed = normalize_lemma(raw_base).translate(
+        str.maketrans({"à": "a", "á": "a", "å": "a", "é": "e"})
+    )
+    if observed.endswith("l") and observed[:-1] == expected:
+        return expected + "|" + tail
+    if observed == expected:
+        return expected + "|" + tail
+    return cleaned
+
+
 def suffix_base(value: str) -> str:
     """Return the repeatable stem before SAOL's vertical boundary marker."""
     for marker in ("|", "¦"):
@@ -874,6 +902,9 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 intrusion_boundary = repair_intrusion_before_boundary(
                     cleaned, current_head
                 )
+                multiword_boundary = repair_compacted_multiword_boundary(
+                    cleaned, current_head
+                )
                 era_boundary = infer_era_boundary_from_verb_grammar(
                     cleaned, following_tokens
                 )
@@ -891,6 +922,8 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 )
                 if intrusion_boundary != cleaned:
                     cleaned = intrusion_boundary
+                elif multiword_boundary != cleaned:
+                    cleaned = multiword_boundary
                 elif era_boundary:
                     cleaned = era_boundary
                 elif previous_boundary:
