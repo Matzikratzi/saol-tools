@@ -3,11 +3,11 @@
   "pages": {},
   "reviewed_prefix": {
     "through": {
-      "article_number": 55,
-      "lemma": "akacia",
+      "article_number": 56,
+      "lemma": "akademi",
       "source_page": 24,
       "source_column": 1,
-      "source_top": 3880,
+      "source_top": 3956,
       "source_left": 187
     },
     "candidates": [
@@ -1697,6 +1697,22 @@
         "source_page": 24,
         "source_column": 1,
         "source_top": 3880,
+        "source_left": 187
+      },
+      {
+        "article_number": 55,
+        "lemma": "akacieträd",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3882,
+        "source_left": 949
+      },
+      {
+        "article_number": 56,
+        "lemma": "akademi",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3956,
         "source_left": 187
       }
     ]
