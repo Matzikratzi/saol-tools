@@ -7,6 +7,7 @@ from pathlib import Path
 from PIL import Image
 
 from scripts.lemma_review import (
+    alternative_inflection_before_marker,
     approve_pages,
     approve_through,
     apply_manual_insertions,
@@ -556,6 +557,22 @@ class LemmaReviewTests(unittest.TestCase):
     def test_merged_alternative_marker_is_not_a_suffix(self):
         self.assertTrue(merged_alternative_inflection("-etel.", "-etel"))
         self.assertFalse(merged_alternative_inflection("-kredit", "-kredit"))
+
+    def test_suffix_before_alternative_marker_is_an_inflection(self):
+        self.assertTrue(
+            alternative_inflection_before_marker(
+                "-onet",
+                [{"text": "el."}, {"text": "-et;"}],
+                0.0,
+            )
+        )
+        self.assertFalse(
+            alternative_inflection_before_marker(
+                "-kredit",
+                [{"text": "el."}, {"text": "-et;"}],
+                0.8,
+            )
+        )
 
     def test_long_dash_inflections_identify_a_new_lemma(self):
         self.assertTrue(
