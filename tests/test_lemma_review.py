@@ -1651,6 +1651,43 @@ class LemmaReviewTests(unittest.TestCase):
         recover_runeberg_boundary_series(items, {1: head})
         self.assertEqual([item["lemma"] for item in items], ["bas", "xy"])
 
+    def test_runeberg_suffix_uses_headword_stem_before_boundary(self):
+        head = {
+            "article_number": 55,
+            "headword": "akacia",
+            "stem_headword": "akaci|a",
+            "runeberg_stem_headword": "akaci|a",
+            "runeberg_line": "akaci|a (aka’-) -an -or s. växt -e|träd",
+            "runeberg_match_score": 0.98,
+        }
+        items = [
+            {
+                "article_number": 55,
+                "lemma": "akacia",
+                "stem_lemma": "akaci|a",
+                "raw": "akacila",
+                "method": "artikelhuvud",
+            },
+            {
+                "article_number": 55,
+                "lemma": "akaciaeträd",
+                "stem_lemma": "akaciaeträd",
+                "raw": "-e|träd",
+                "method": "sammansättningssuffix",
+                "status": "osäker",
+                "reasons": ["svag halvfetssignal"],
+            },
+        ]
+        recover_runeberg_boundary_series(items, {55: head})
+        self.assertEqual(
+            [item["lemma"] for item in items],
+            ["akacia", "akacieträd"],
+        )
+        self.assertEqual(
+            items[1]["method"],
+            "Runebergkorrigerad lodstrecksserie",
+        )
+
     def test_full_lodstreck_word_is_placed_after_preceding_compound(self):
         head = {
             "article_number": 31,
