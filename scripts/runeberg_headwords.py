@@ -98,8 +98,19 @@ def fetch_and_enrich(items: list[dict]) -> None:
             for line in module._runeberg_ocr_text(response.text).splitlines()
             if line.strip()
         ]
-        for item, (line_index, score) in zip(page_items, align_lines(page_items, raw_lines)):
+        matches = align_lines(page_items, raw_lines)
+        for position, (item, (line_index, score)) in enumerate(
+            zip(page_items, matches)
+        ):
+            next_line_index = (
+                matches[position + 1][0]
+                if position + 1 < len(matches)
+                else len(raw_lines)
+            )
             raw_line = raw_lines[line_index]
+            item["runeberg_article_lines"] = raw_lines[
+                line_index:next_line_index
+            ]
             secondary = raw_headword(raw_line)
             secondary_stem = raw_headword(raw_line, preserve_boundaries=True)
             item["runeberg_line"] = raw_line
