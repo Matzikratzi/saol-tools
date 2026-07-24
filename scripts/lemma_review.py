@@ -22,9 +22,10 @@ DEFAULT_FACIT = ROOT / "data" / "lemma_review_facit.json"
 
 POS = {"adj", "adv", "interj", "prep", "pron", "s", "v"}
 GRAMMAR_MARKERS = POS | {"best", "el", "eller", "komp", "oböjl", "pl", "superl", "äv"}
+# "-lt" is Tesseract's recurring reading of a thin separator plus adjective -t.
 NON_LEMMA_SUFFIXES = {
     "-a", "-ad", "-ade", "-an", "-ar", "-are", "-at", "-de", "-dde",
-    "-e", "-en", "-er", "-et", "-la", "-na", "-n", "-or", "-r", "-ra", "-t",
+    "-e", "-en", "-er", "-et", "-la", "-lt", "-na", "-n", "-or", "-r", "-ra", "-t",
     "-te",
 }
 
