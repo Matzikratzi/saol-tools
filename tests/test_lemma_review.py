@@ -13,6 +13,7 @@ from scripts.lemma_review import (
     _items_in_reading_order,
     display_lemma,
     expand_compound,
+    infer_boundary_at_article_divergence,
     infer_boundary_from_article_family,
     infer_era_boundary_from_verb_grammar,
     infer_boundary_from_previous,
@@ -1160,6 +1161,22 @@ class LemmaReviewTests(unittest.TestCase):
             expand_compound(suffix_base("affirm|ation"), "-era"), "affirmera"
         )
 
+    def test_lodstreck_at_article_family_divergence(self):
+        self.assertEqual(
+            infer_boundary_at_article_divergence(
+                "affirmlation",
+                "affirmativ",
+                [token("-era", 100, 0.10)],
+            ),
+            "affirm|ation",
+        )
+        self.assertEqual(
+            infer_boundary_at_article_divergence(
+                "affirmlation", "affirmativ", []
+            ),
+            "",
+        )
+
     def test_finds_semibold_word_mid_line_before_its_suffix(self):
         articles = {
             "pages": [23],
@@ -1191,7 +1208,7 @@ class LemmaReviewTests(unittest.TestCase):
                                 token("bekräftande", 140, 0.10),
                                 token("vanlig", 260, 0.10),
                                 token("text", 340, 0.10),
-                                token("affirm|ation", 430, 0.10),
+                                token("affirmlation", 430, 0.10),
                                 token("-era", 600, 0.40),
                             ],
                         },
