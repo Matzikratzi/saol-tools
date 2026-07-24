@@ -42,6 +42,7 @@ from scripts.lemma_review import (
     same_lexical_family,
     suffix_base,
     swedish_sort_key,
+    weak_alternative_suffix,
     write_review_bundle,
 )
 
@@ -2015,6 +2016,73 @@ class LemmaReviewTests(unittest.TestCase):
                 "affärs|angelägenhet", "affär"
             ),
             "affärs|angelägenhet",
+        )
+
+    def test_unbold_alternative_suffix_in_definition_is_rejected(self):
+        self.assertTrue(weak_alternative_suffix("el.", 0.0))
+        self.assertTrue(weak_alternative_suffix("eller", 0.44))
+        self.assertFalse(weak_alternative_suffix("el.", 0.45))
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 8,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("afrikan", 100, 0.50),
+                                token("-en", 260, 0.10),
+                                token("s.", 340, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("afrik|anist", 140, 0.30),
+                                token("(-ist')", 360, 0.10),
+                                token("-en", 480, 0.10),
+                                token("s.", 560, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 180.0,
+                            "bottom": 204.0,
+                            "tokens": [
+                                token("afrikaforskare", 140, 0.20),
+                                token("el.", 430, 0.20),
+                                token("-kännare", 500, 0.20),
+                                token("-ansk", 680, 0.50),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 8,
+                    "headword": "afrikan",
+                    "stem_headword": "afrikan",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["afrikan", "afrikanist", "afrikansk"],
         )
 
     def test_compound_before_new_family_base_is_preserved(self):
