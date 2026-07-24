@@ -156,6 +156,30 @@ def weak_alternative_suffix(previous_raw: str, bold_score: float) -> bool:
     )
 
 
+def alternative_inflection_before_marker(
+    raw: str, following_tokens: list[dict], bold_score: float
+) -> bool:
+    """Reject e.g. '-onet el. -et' as two alternative inflections."""
+    if (
+        bold_score >= 0.25
+        or len(following_tokens) < 2
+        or not raw.strip().startswith("-")
+        or normalize_lemma(
+            following_tokens[0].get("text", "")
+        ) not in {"el", "eller"}
+    ):
+        return False
+    alternative_raw = normalize_leading_dash(
+        following_tokens[1].get("text", "")
+    )
+    if not alternative_raw.startswith("-"):
+        return False
+    alternative = "-" + normalize_lemma(
+        alternative_raw.strip(";,:.()[]{}")[1:]
+    )
+    return alternative in NON_LEMMA_SUFFIXES
+
+
 def optional_parenthesis_variants(value: str) -> list[str]:
     """Return both lemmas denoted by SAOL's optional parenthesized ending."""
     match = re.match(r"^(.*)\(([^()]*)\)?$", value)
@@ -1330,6 +1354,13 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                         continue
                     if weak_alternative_suffix(previous_raw, score):
                         rule_hit("filter.svag_eller_suffix")
+                        previous_separator = False
+                        at_line_start = False
+                        continue
+                    if alternative_inflection_before_marker(
+                        raw, same_line_following, score
+                    ):
+                        rule_hit("filter.alternativ_böjning")
                         previous_separator = False
                         at_line_start = False
                         continue
