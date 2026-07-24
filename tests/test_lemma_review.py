@@ -16,6 +16,7 @@ from scripts.lemma_review import (
     _items_in_reading_order,
     display_lemma,
     expand_compound,
+    expand_boundary_compound,
     GRAMMAR_MARKERS,
     infer_boundary_at_article_divergence,
     infer_boundary_from_article_family,
@@ -45,6 +46,7 @@ from scripts.lemma_review import (
     runeberg_short_inflection,
     same_lexical_family,
     suffix_base,
+    strip_merged_pos_marker,
     swedish_sort_key,
     weak_alternative_suffix,
     write_review_bundle,
@@ -557,6 +559,26 @@ class LemmaReviewTests(unittest.TestCase):
     def test_merged_alternative_marker_is_not_a_suffix(self):
         self.assertTrue(merged_alternative_inflection("-etel.", "-etel"))
         self.assertFalse(merged_alternative_inflection("-kredit", "-kredit"))
+
+    def test_merged_noun_marker_is_stripped_from_derived_lemma(self):
+        self.assertEqual(
+            strip_merged_pos_marker("-ings.", "-ings"),
+            "-ing",
+        )
+        self.assertEqual(
+            strip_merged_pos_marker("-ers.", "-ers"),
+            "-ers",
+        )
+
+    def test_boundary_overlap_is_not_duplicated(self):
+        self.assertEqual(
+            expand_boundary_compound("aga", "-a|förbud"),
+            "agaförbud",
+        )
+        self.assertEqual(
+            expand_boundary_compound("ag", "-a|förbud"),
+            "agaförbud",
+        )
 
     def test_suffix_before_alternative_marker_is_an_inflection(self):
         self.assertTrue(
