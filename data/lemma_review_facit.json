@@ -3,12 +3,12 @@
   "pages": {},
   "reviewed_prefix": {
     "through": {
-      "article_number": 51,
-      "lemma": "ajabaja",
+      "article_number": 55,
+      "lemma": "akacia",
       "source_page": 24,
       "source_column": 1,
-      "source_top": 3262,
-      "source_left": 195
+      "source_top": 3880,
+      "source_left": 187
     },
     "candidates": [
       {
@@ -1626,6 +1626,78 @@
         "source_column": 1,
         "source_top": 3262,
         "source_left": 195
+      },
+      {
+        "article_number": 52,
+        "lemma": "à jour",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3334,
+        "source_left": 194
+      },
+      {
+        "article_number": 52,
+        "lemma": "ajourföra",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3524,
+        "source_left": 230
+      },
+      {
+        "article_number": 52,
+        "lemma": "ajourföring",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3529,
+        "source_left": 527
+      },
+      {
+        "article_number": 52,
+        "lemma": "ajourhålla",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3529,
+        "source_left": 785
+      },
+      {
+        "article_number": 52,
+        "lemma": "ajourhållning",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3529,
+        "source_left": 969
+      },
+      {
+        "article_number": 53,
+        "lemma": "ajournera",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3663,
+        "source_left": 190
+      },
+      {
+        "article_number": 53,
+        "lemma": "ajournering",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3736,
+        "source_left": 1042
+      },
+      {
+        "article_number": 54,
+        "lemma": "ajöss",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3810,
+        "source_left": 188
+      },
+      {
+        "article_number": 55,
+        "lemma": "akacia",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3880,
+        "source_left": 187
       }
     ]
   },
