@@ -152,13 +152,13 @@ def optional_parenthesis_variants(value: str) -> list[str]:
 
 def optional_bracket_variants(value: str) -> list[str]:
     """Return both spellings denoted by SAOL's optional bracketed letters."""
-    match = re.match(r"^(.*)\\[([^][]+)\\](.*)$", value)
+    match = re.match(r"^(.*)\[([^][]+)\](.*)$", value)
     if match:
         prefix, optional, suffix = match.groups()
         return [prefix + suffix, prefix + optional + suffix]
     # Tesseract often reads the thin closing bracket as an l.
     match = re.match(
-        r"^(.*)\\[([A-Za-zÅÄÖåäöÀÁÉàáé])l(.*)$",
+        r"^(.*)\[([A-Za-zÅÄÖåäöÀÁÉàáé])l(.*)$",
         value,
     )
     if match:
