@@ -353,6 +353,15 @@ def expand_boundary_compound(base: str, suffix: str) -> str:
             normalized_prefix
         ):
             return normalize_lemma(normalized_base + tail)
+        for overlap in range(
+            min(len(normalized_base), len(normalized_prefix)) - 1,
+            1,
+            -1,
+        ):
+            if normalized_base.endswith(normalized_prefix[:overlap]):
+                return normalize_lemma(
+                    normalized_base + normalized_prefix[overlap:] + tail
+                )
     return expand_compound(base, suffix)
 
 
@@ -982,14 +991,23 @@ def recover_runeberg_boundary_series(
             ]
             if len(direct_matches) == 1:
                 direct = direct_matches[0]
-                direct_index = items.index(direct)
+                reading_order = (
+                    _items_in_reading_order(article_items)
+                    if all(
+                        "source_top" in item
+                        and "source_bottom" in item
+                        and "source_left" in item
+                        for item in article_items
+                    )
+                    else article_items
+                )
+                direct_index = reading_order.index(direct)
                 preceding_bases = [
                     item
-                    for item in items[:direct_index]
+                    for item in reading_order[:direct_index]
                     if (
                         int(item["article_number"]) == int(article_number)
-                        and item.get("method")
-                        in {"artikelhuvud", "halvfet token"}
+                        and normalize_lemma(item.get("lemma", ""))
                     )
                 ]
                 if preceding_bases:
@@ -1010,7 +1028,26 @@ def recover_runeberg_boundary_series(
                     expected_lemma = expand_boundary_compound(
                         suffix_base(base_value), raw
                     )
-                    if direct["lemma"] == expected_lemma:
+                    similarity = difflib.SequenceMatcher(
+                        None, direct["lemma"], expected_lemma
+                    ).ratio()
+                    if (
+                        direct["lemma"] == expected_lemma
+                        or similarity >= 0.82
+                    ):
+                        if direct["lemma"] != expected_lemma:
+                            direct["lemma"] = expected_lemma
+                            direct["stem_lemma"] = expected_lemma
+                            direct["raw"] = raw
+                            direct["method"] = (
+                                "Runebergkorrigerad lodstrecksserie"
+                            )
+                            direct["reasons"] = [
+                                reason
+                                for reason in direct.get("reasons", [])
+                                if reason != "svag halvfetssignal"
+                            ]
+                            rule_hit("runeberg.korrigerad_lodstrecksbas")
                         anchor = direct
                         compound_base = suffix_base(direct["lemma"])
                         used_ids.add(id(direct))
@@ -1038,6 +1075,54 @@ def recover_runeberg_boundary_series(
                 continue
             raw_lemma = normalize_lemma(raw)
             article_headword = normalize_lemma(head["headword"])
+            local_compound_base = compound_base
+            if raw.startswith("-"):
+                similar_position = max(
+                    (
+                        item
+                        for item in article_items
+                        if (
+                            id(item) not in used_ids
+                            and item.get("method") != "artikelhuvud"
+                        )
+                    ),
+                    key=lambda item: difflib.SequenceMatcher(
+                        None,
+                        normalize_lemma(raw),
+                        normalize_lemma(item.get("raw", "")),
+                    ).ratio(),
+                    default=None,
+                )
+                similarity = (
+                    difflib.SequenceMatcher(
+                        None,
+                        normalize_lemma(raw),
+                        normalize_lemma(similar_position.get("raw", "")),
+                    ).ratio()
+                    if similar_position is not None
+                    else 0.0
+                )
+                if (
+                    similar_position is not None
+                    and similarity >= 0.72
+                    and all(
+                        "source_top" in item
+                        and "source_bottom" in item
+                        and "source_left" in item
+                        for item in article_items
+                    )
+                ):
+                    reading_order = _items_in_reading_order(article_items)
+                    position = reading_order.index(similar_position)
+                    if position:
+                        preceding = reading_order[position - 1]
+                        preceding_raw = preceding.get("raw", "")
+                        base_value = (
+                            preceding_raw
+                            if "|" in preceding_raw or "¦" in preceding_raw
+                            else preceding["lemma"]
+                        )
+                        local_compound_base = suffix_base(base_value)
             standalone_boundary = (
                 raw.startswith("-")
                 and len(raw_lemma) > len(article_headword)
@@ -1047,7 +1132,7 @@ def recover_runeberg_boundary_series(
                 raw_lemma
                 if standalone_boundary
                 else (
-                    expand_boundary_compound(compound_base, raw)
+                    expand_boundary_compound(local_compound_base, raw)
                     if raw.startswith("-")
                     else raw_lemma
                 )
