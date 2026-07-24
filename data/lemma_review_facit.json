@@ -1882,12 +1882,12 @@
         "source_left": 238
       },
       "through": {
-        "article_number": 70,
-        "lemma": "ackumulera",
+        "article_number": 74,
+        "lemma": "ackvisitionskatalog",
         "source_page": 21,
         "source_column": 1,
-        "source_top": 1987,
-        "source_left": 256
+        "source_top": 2875,
+        "source_left": 744
       },
       "candidates": [
         {
@@ -3737,6 +3737,118 @@
           "source_column": 1,
           "source_top": 1987,
           "source_left": 256
+        },
+        {
+          "article_number": 70,
+          "lemma": "ackumulering",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 2063,
+          "source_left": 257
+        },
+        {
+          "article_number": 71,
+          "lemma": "ackurat",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 2139,
+          "source_left": 219
+        },
+        {
+          "article_number": 71,
+          "lemma": "ackuratess",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 2194,
+          "source_left": 864
+        },
+        {
+          "article_number": 72,
+          "lemma": "ackusativ",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 2341,
+          "source_left": 222
+        },
+        {
+          "article_number": 72,
+          "lemma": "ackusativform",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 2474,
+          "source_left": 265
+        },
+        {
+          "article_number": 72,
+          "lemma": "ackusativobjekt",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 2468,
+          "source_left": 554
+        },
+        {
+          "article_number": 73,
+          "lemma": "ackuschör",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 2544,
+          "source_left": 200
+        },
+        {
+          "article_number": 73,
+          "lemma": "ackuschörgroda",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 2599,
+          "source_left": 791
+        },
+        {
+          "article_number": 73,
+          "lemma": "ackuschörsgroda",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 2599,
+          "source_left": 791
+        },
+        {
+          "article_number": 73,
+          "lemma": "ackuschörska",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 2670,
+          "source_left": 268
+        },
+        {
+          "article_number": 74,
+          "lemma": "ackvirera",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 2746,
+          "source_left": 229
+        },
+        {
+          "article_number": 74,
+          "lemma": "ackvirering",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 2817,
+          "source_left": 621
+        },
+        {
+          "article_number": 74,
+          "lemma": "ackvisition",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 2811,
+          "source_left": 856
+        },
+        {
+          "article_number": 74,
+          "lemma": "ackvisitionskatalog",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 2875,
+          "source_left": 744
         }
       ]
     }
