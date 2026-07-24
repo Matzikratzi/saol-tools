@@ -1289,18 +1289,6 @@
         "stem_lemma": "aggressionshämmad",
         "raw": "-s|hämmad"
       }
-    },
-    {
-      "after": {
-        "article_number": 29,
-        "lemma": "agitation"
-      },
-      "candidate": {
-        "article_number": 29,
-        "lemma": "agitationsmöte",
-        "stem_lemma": "agitationsmöte",
-        "raw": "-s|möte"
-      }
     }
   ]
 }
