@@ -145,7 +145,7 @@ def weak_alternative_suffix(previous_raw: str, bold_score: float) -> bool:
 
 def optional_parenthesis_variants(value: str) -> list[str]:
     """Return both lemmas denoted by SAOL's optional parenthesized ending."""
-    match = re.match(r"^(.*)\\(([^()]*)\\)?$", value)
+    match = re.match(r"^(.*)\(([^()]*)\)?$", value)
     if not match or not match.group(1) or not match.group(2):
         return [value]
     return [match.group(1), match.group(1) + match.group(2)]
