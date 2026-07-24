@@ -25,6 +25,7 @@ from scripts.lemma_review import (
     infer_suffix_boundary_from_series,
     inflection_of_previous,
     inflections_then_part_of_speech,
+    merged_alternative_inflection,
     merged_pos_inflection,
     extract_candidates,
     normalize_lemma,
@@ -550,6 +551,21 @@ class LemmaReviewTests(unittest.TestCase):
         self.assertTrue(merged_pos_inflection("-rs.", "-rs", 0.80))
         self.assertTrue(merged_pos_inflection("-ers", "-ers", 0.10))
         self.assertFalse(merged_pos_inflection("-ers", "-ers", 0.80))
+
+    def test_merged_alternative_marker_is_not_a_suffix(self):
+        self.assertTrue(merged_alternative_inflection("-etel.", "-etel"))
+        self.assertFalse(merged_alternative_inflection("-kredit", "-kredit"))
+
+    def test_long_dash_inflections_identify_a_new_lemma(self):
+        self.assertTrue(
+            inflections_then_part_of_speech(
+                [
+                    {"text": "—en"},
+                    {"text": "—er"},
+                    {"text": "s."},
+                ]
+            )
+        )
 
     def test_expands_optional_parenthesized_ending(self):
         self.assertEqual(
