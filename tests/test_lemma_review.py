@@ -35,6 +35,7 @@ from scripts.lemma_review import (
     plural_of_previous,
     pronunciation_then_inflection,
     repair_false_boundary_from_runeberg,
+    repair_final_letter_from_runeberg,
     render_review_images,
     recover_runeberg_boundary_series,
     remove_alphabetic_family_outliers,
@@ -81,6 +82,8 @@ class LemmaReviewTests(unittest.TestCase):
     def test_plural_of_previous_a_noun_is_not_a_lemma(self):
         self.assertTrue(plural_of_previous("afrikanska", "afrikanskor"))
         self.assertFalse(plural_of_previous("afrikansk", "afrikanskor"))
+        self.assertTrue(plural_of_previous("adapter", "adaptrar"))
+        self.assertFalse(plural_of_previous("adapter", "adaptera"))
 
         articles = {
             "pages": [23],
@@ -468,6 +471,33 @@ class LemmaReviewTests(unittest.TestCase):
         self.assertEqual(
             [item["lemma"] for item in candidates],
             ["agent", "agentskap", "agentur", "agenturfirma"],
+        )
+
+    def test_runeberg_repairs_one_wrong_final_letter(self):
+        items = [
+            {
+                "article_number": 1,
+                "lemma": "ackvisitöt",
+                "stem_lemma": "ackvisitöt",
+                "raw": "ackvisitöt",
+                "method": "halvfet token",
+                "bold_score": 0.76,
+                "reasons": [],
+            }
+        ]
+        heads = {
+            1: {
+                "runeberg_match_score": 0.98,
+                "runeberg_article_lines": [
+                    "ackvisition -en -er -s|katalog — ackvisitör",
+                    "(-ö’r) -en -ers. person som anskaffar",
+                ],
+            }
+        }
+        repair_final_letter_from_runeberg(items, heads)
+        self.assertEqual(items[0]["lemma"], "ackvisitör")
+        self.assertEqual(
+            items[0]["method"], "Runebergkorrigerad slutbokstav"
         )
 
     def test_stem_suffix_inflection_is_not_a_lemma(self):
