@@ -1849,6 +1849,18 @@
         "stem_lemma": "aggressionshämmad",
         "raw": "-s|hämmad"
       }
+    },
+    {
+      "before": {
+        "article_number": 28,
+        "lemma": "abortfrågan"
+      },
+      "candidate": {
+        "article_number": 28,
+        "lemma": "abortfråga",
+        "stem_lemma": "abortfråga",
+        "raw": "-fråga(n)"
+      }
     }
   ],
   "reviewed_ranges": [
@@ -1862,12 +1874,12 @@
         "source_left": 238
       },
       "through": {
-        "article_number": 28,
-        "lemma": "abort",
-        "source_page": 19,
-        "source_column": 2,
-        "source_top": 2542,
-        "source_left": 1478
+        "article_number": 39,
+        "lemma": "absolut",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 1050,
+        "source_left": 166
       },
       "candidates": [
         {
@@ -2381,6 +2393,262 @@
           "source_column": 2,
           "source_top": 2542,
           "source_left": 1478
+        },
+        {
+          "article_number": 28,
+          "lemma": "abortfråga",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2670,
+          "source_left": 1503
+        },
+        {
+          "article_number": 28,
+          "lemma": "abortfrågan",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2670,
+          "source_left": 1691
+        },
+        {
+          "article_number": 28,
+          "lemma": "abortindikation",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2671,
+          "source_left": 1941
+        },
+        {
+          "article_number": 28,
+          "lemma": "abortingrepp",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2671,
+          "source_left": 2253
+        },
+        {
+          "article_number": 28,
+          "lemma": "abortklinik",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2739,
+          "source_left": 1518
+        },
+        {
+          "article_number": 28,
+          "lemma": "abortlag",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2739,
+          "source_left": 1699
+        },
+        {
+          "article_number": 28,
+          "lemma": "abortlagstiftning",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2737,
+          "source_left": 1932
+        },
+        {
+          "article_number": 28,
+          "lemma": "abortsökande",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2736,
+          "source_left": 2280
+        },
+        {
+          "article_number": 28,
+          "lemma": "abortera",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2797,
+          "source_left": 1517
+        },
+        {
+          "article_number": 28,
+          "lemma": "abortering",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2866,
+          "source_left": 2359
+        },
+        {
+          "article_number": 28,
+          "lemma": "abortiv",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2932,
+          "source_left": 1747
+        },
+        {
+          "article_number": 28,
+          "lemma": "abortivmedel",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 3128,
+          "source_left": 1520
+        },
+        {
+          "article_number": 29,
+          "lemma": "abortör",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 3201,
+          "source_left": 1481
+        },
+        {
+          "article_number": 30,
+          "lemma": "abradera",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 3338,
+          "source_left": 1481
+        },
+        {
+          "article_number": 31,
+          "lemma": "abrakadabra",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 3482,
+          "source_left": 1482
+        },
+        {
+          "article_number": 32,
+          "lemma": "abrasion",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 3623,
+          "source_left": 1483
+        },
+        {
+          "article_number": 32,
+          "lemma": "abrasionsbrant",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 3623,
+          "source_left": 1754
+        },
+        {
+          "article_number": 32,
+          "lemma": "abrasionsvittne",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 3682,
+          "source_left": 1523
+        },
+        {
+          "article_number": 33,
+          "lemma": "abrupt",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 3762,
+          "source_left": 1487
+        },
+        {
+          "article_number": 34,
+          "lemma": "abscess",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 3902,
+          "source_left": 1488
+        },
+        {
+          "article_number": 34,
+          "lemma": "abscessbildning",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 3963,
+          "source_left": 1734
+        },
+        {
+          "article_number": 35,
+          "lemma": "absens",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 215,
+          "source_left": 159
+        },
+        {
+          "article_number": 35,
+          "lemma": "absent",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 355,
+          "source_left": 203
+        },
+        {
+          "article_number": 35,
+          "lemma": "absentera",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 414,
+          "source_left": 549
+        },
+        {
+          "article_number": 36,
+          "lemma": "absid",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 565,
+          "source_left": 160
+        },
+        {
+          "article_number": 36,
+          "lemma": "absidkyrka",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 694,
+          "source_left": 394
+        },
+        {
+          "article_number": 37,
+          "lemma": "absint",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 770,
+          "source_left": 163
+        },
+        {
+          "article_number": 37,
+          "lemma": "absintflaska",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 763,
+          "source_left": 1034
+        },
+        {
+          "article_number": 37,
+          "lemma": "absintgrön",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 846,
+          "source_left": 202
+        },
+        {
+          "article_number": 38,
+          "lemma": "abskissa",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 903,
+          "source_left": 164
+        },
+        {
+          "article_number": 38,
+          "lemma": "abskissaxel",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 975,
+          "source_left": 203
+        },
+        {
+          "article_number": 39,
+          "lemma": "absolut",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 1050,
+          "source_left": 166
         }
       ]
     }
