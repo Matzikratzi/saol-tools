@@ -805,7 +805,6 @@ def recover_runeberg_boundary_series(
                     if (
                         id(item) not in used_ids
                         and item.get("method") != "artikelhuvud"
-                        and item.get("raw", "").strip().startswith("-")
                     )
                 ]
                 similar = max(
@@ -824,6 +823,22 @@ def recover_runeberg_boundary_series(
                 )
                 if similar is not None and similarity >= 0.82:
                     recovered = similar
+                    old_base = suffix_base(
+                        recovered.get("raw", "") or recovered["lemma"]
+                    )
+                    new_base = suffix_base(raw)
+                    for dependent in article_items:
+                        if (
+                            dependent is not recovered
+                            and dependent.get("raw", "").strip().startswith("-")
+                            and dependent["lemma"].startswith(old_base)
+                        ):
+                            dependent["lemma"] = (
+                                new_base
+                                + dependent["lemma"][len(old_base) :]
+                            )
+                            dependent["stem_lemma"] = dependent["lemma"]
+                            rule_hit("runeberg.ombyggd_följdändelse")
                     recovered["lemma"] = lemma
                     recovered["stem_lemma"] = lemma
                     recovered["raw"] = raw
