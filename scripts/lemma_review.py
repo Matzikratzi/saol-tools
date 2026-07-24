@@ -62,13 +62,20 @@ def expand_compound(base: str, suffix: str) -> str:
 
 
 def plural_of_previous(previous: str, candidate: str) -> bool:
-    """Recognize an -a noun's plural, e.g. afrikanska -> afrikanskor."""
+    """Recognize safe full-word plurals of the preceding noun."""
     previous = normalize_lemma(previous)
     candidate = normalize_lemma(candidate)
     return (
-        len(previous) > 2
-        and previous.endswith("a")
-        and candidate == previous[:-1] + "or"
+        (
+            len(previous) > 2
+            and previous.endswith("a")
+            and candidate == previous[:-1] + "or"
+        )
+        or (
+            len(previous) > 4
+            and previous.endswith("er")
+            and candidate == previous[:-2] + "rar"
+        )
     )
 
 
@@ -807,6 +814,59 @@ def repair_false_boundary_from_runeberg(
                 dependent["stem_lemma"] = rebuilt
                 dependent["raw"] = corrected_suffix
                 rule_hit("runeberg.ombyggd_följdändelse")
+    return items
+
+
+def repair_final_letter_from_runeberg(
+    items: list[dict], heads: dict[int, dict]
+) -> list[dict]:
+    """Repair a one-letter OCR ending when Runeberg has the same bold word."""
+    letters = "A-Za-zÅÄÖåäöÀÁÉàáé"
+    for item in items:
+        if (
+            item.get("method") == "artikelhuvud"
+            or float(item.get("bold_score", 0.0)) < 0.70
+            or any(marker in item.get("raw", "") for marker in "-|¦ ")
+        ):
+            continue
+        head = heads.get(int(item["article_number"]), {})
+        if float(head.get("runeberg_match_score", 0.0)) < 0.80:
+            continue
+        runeberg_text = " ".join(
+            head.get("runeberg_article_lines")
+            or [head.get("runeberg_line", "")]
+        )
+        lemma = normalize_lemma(item["lemma"])
+        if not lemma:
+            continue
+        runeberg_words = {
+            normalize_lemma(value)
+            for value in re.findall(rf"[{letters}]+", runeberg_text)
+        }
+        if lemma in runeberg_words:
+            continue
+        matches = [
+            word
+            for word in runeberg_words
+            if (
+                len(word) == len(lemma)
+                and len(word) >= 5
+                and word[:-1] == lemma[:-1]
+            )
+        ]
+        if len(matches) != 1:
+            continue
+        corrected = matches[0]
+        item["lemma"] = corrected
+        item["stem_lemma"] = corrected
+        item["raw"] = corrected
+        item["method"] = "Runebergkorrigerad slutbokstav"
+        item["reasons"] = [
+            reason
+            for reason in item.get("reasons", [])
+            if reason != "svag halvfetssignal"
+        ]
+        rule_hit("runeberg.korrigerad_slutbokstav")
     return items
 
 
@@ -1619,8 +1679,11 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     # morphology makes the reading unambiguous.  The broader
                     # suffix rule would wrongly remove real lemmas such as
                     # afghanska after afghansk and aforistiker after aforistik.
-                    full_word_inflection = present_form_of_previous(
-                        last_lookup_lemma, lemma
+                    full_word_inflection = (
+                        plural_of_previous(last_lookup_lemma, lemma)
+                        or present_form_of_previous(
+                            last_lookup_lemma, lemma
+                        )
                     )
                     same_article_family = lemma.startswith(
                         article_family
@@ -1676,6 +1739,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             current_base = suffix_base(cleaned)
                 previous_separator = False
                 at_line_start = False
+    repair_final_letter_from_runeberg(result, heads)
     repair_false_boundary_from_runeberg(result, heads)
     recover_runeberg_boundary_series(result, heads)
     return remove_alphabetic_family_outliers(result, heads)
