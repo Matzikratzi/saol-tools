@@ -135,6 +135,19 @@ def merged_pos_inflection(
     )
 
 
+def merged_alternative_inflection(
+    raw: str, normalized_suffix: str
+) -> bool:
+    """Recognize e.g. OCR '-etel.' as inflection '-et' plus 'el.'."""
+    compact = raw.strip().casefold()
+    match = re.fullmatch(r"-([a-zåäöàáé]+)el\\.", compact)
+    return bool(
+        match
+        and f"-{match.group(1)}" in NON_LEMMA_SUFFIXES
+        and normalized_suffix == f"-{match.group(1)}el"
+    )
+
+
 def weak_alternative_suffix(previous_raw: str, bold_score: float) -> bool:
     """Reject an ordinary-text '-suffix' after 'el.' or 'eller'."""
     return (
@@ -479,13 +492,23 @@ def pronunciation_then_inflection(tokens: list[dict]) -> bool:
     return False
 
 
+def normalize_leading_dash(value: str) -> str:
+    """Normalize OCR dash variants used before SAOL suffixes."""
+    value = value.strip()
+    if value.startswith(("—", "–", "~")):
+        return "-" + value[1:]
+    return value
+
+
 def inflections_then_part_of_speech(tokens: list[dict]) -> bool:
     """Recognize a lemma followed by one or more inflections and a POS marker."""
-    if not tokens or not tokens[0].get("text", "").strip().startswith("-"):
+    if not tokens or not normalize_leading_dash(
+        tokens[0].get("text", "")
+    ).startswith("-"):
         return False
     index = 0
     while index < len(tokens):
-        raw = tokens[index].get("text", "").strip()
+        raw = normalize_leading_dash(tokens[index].get("text", ""))
         if not raw.startswith("-"):
             break
         cleaned = raw.strip(";,:.()[]{}")
@@ -1301,6 +1324,9 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             and not merged_pos_inflection(
                                 raw, normalized_suffix, score
                             )
+                            and not merged_alternative_inflection(
+                                raw, normalized_suffix
+                            )
                             and len(normalized_suffix) > 2
                             and not repeated_full_word
                         ):
@@ -1368,9 +1394,9 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 )
                 followed_by_inflection_grammar = (
                     bool(same_line_following)
-                    and same_line_following[0].get(
-                        "text", ""
-                    ).strip().startswith("-")
+                    and normalize_leading_dash(
+                        same_line_following[0].get("text", "")
+                    ).startswith("-")
                     and inflections_then_part_of_speech(
                         following_tokens
                     )
