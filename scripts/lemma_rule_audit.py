@@ -40,12 +40,21 @@ def signatures(items: list[dict]) -> list[tuple[int, str]]:
     ]
 
 
-def extract(
-    articles: dict, heads: dict, facit: dict
-) -> list[tuple[int, str]]:
+def extract(articles: dict, heads: dict, facit: dict) -> list[dict]:
     items = lemma_review.extract_candidates(articles, heads)
     lemma_review.apply_manual_insertions(items, facit)
-    return signatures(items)
+    return items
+
+
+def facit_deviations(
+    items: list[dict], facit: dict
+) -> tuple[int, int]:
+    """Return unexpected and missing candidates inside reviewed material."""
+    missing = lemma_review.apply_review_facit(items, facit)
+    unexpected = sum(
+        item.get("review_state") == "facit_new" for item in items
+    )
+    return unexpected, len(missing)
 
 
 def main() -> None:
@@ -76,11 +85,17 @@ def main() -> None:
     heads = json.loads(args.headwords.read_text(encoding="utf-8"))
     facit = json.loads(args.facit.read_text(encoding="utf-8"))
 
-    baseline = extract(articles, heads, facit)
+    baseline_items = extract(articles, heads, facit)
+    baseline = signatures(baseline_items)
     baseline_set = set(baseline)
+    baseline_facit = facit_deviations(baseline_items, facit)
     baseline_hits = lemma_review.rule_stats()
 
     print(f"Grundresultat: {len(baseline)} kandidater")
+    print(
+        "Facitavvikelser i grundresultatet: "
+        f"+{baseline_facit[0]} −{baseline_facit[1]}"
+    )
     print("\nREGELTRÄFFAR")
     for name, count in baseline_hits.items():
         print(f"{count:4d}  {name}")
@@ -90,18 +105,27 @@ def main() -> None:
         original = getattr(lemma_review, name)
         setattr(lemma_review, name, neutral)
         try:
-            changed = extract(articles, heads, facit)
+            changed_items = extract(articles, heads, facit)
         finally:
             setattr(lemma_review, name, original)
+        changed = signatures(changed_items)
         changed_set = set(changed)
         added = len(changed_set - baseline_set)
         missing = len(baseline_set - changed_set)
+        facit_unexpected, facit_missing = facit_deviations(
+            changed_items, facit
+        )
         state = (
             "OFÖRÄNDRAT"
             if changed == baseline
             else f"+{added} −{missing}, totalt {len(changed)}"
         )
-        print(f"{name}: {state}")
+        facit_state = (
+            "facit OFÖRÄNDRAT"
+            if (facit_unexpected, facit_missing) == baseline_facit
+            else f"facit +{facit_unexpected} −{facit_missing}"
+        )
+        print(f"{name}: {state}; {facit_state}")
 
     corrections = json.loads(
         args.headword_corrections.read_text(encoding="utf-8")
