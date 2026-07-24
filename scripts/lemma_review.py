@@ -1039,6 +1039,11 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                         if token_index > 0
                         else ""
                     )
+                    if normalize_lemma(previous_raw) == "pl":
+                        rule_hit("filter.pluralmarkerad_böjning")
+                        previous_separator = False
+                        at_line_start = False
+                        continue
                     if weak_alternative_suffix(previous_raw, score):
                         rule_hit("filter.svag_eller_suffix")
                         previous_separator = False
