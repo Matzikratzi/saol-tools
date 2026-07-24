@@ -32,6 +32,7 @@ from scripts.lemma_review import (
     optional_parenthesis_variants,
     plural_of_previous,
     pronunciation_then_inflection,
+    repair_false_boundary_from_runeberg,
     render_review_images,
     recover_runeberg_boundary_series,
     remove_alphabetic_family_outliers,
@@ -565,6 +566,62 @@ class LemmaReviewTests(unittest.TestCase):
                     {"text": "s."},
                 ]
             )
+        )
+
+    def test_runeberg_restores_false_l_boundary_and_following_tails(self):
+        items = [
+            {
+                "article_number": 1,
+                "lemma": "acetyen",
+                "stem_lemma": "acetyen",
+                "raw": "acety|en",
+                "method": "halvfet token",
+                "reasons": ["svag halvfetssignal"],
+            },
+            {
+                "article_number": 1,
+                "lemma": "acetygass",
+                "stem_lemma": "acetygass",
+                "raw": "-gaSs",
+                "method": "sammansättningssuffix",
+                "reasons": [],
+            },
+            {
+                "article_number": 1,
+                "lemma": "acetylampa",
+                "stem_lemma": "acetylampa",
+                "raw": "-lampa",
+                "method": "sammansättningssuffix",
+                "reasons": [],
+            },
+            {
+                "article_number": 1,
+                "lemma": "acetysvetsning",
+                "stem_lemma": "acetysvetsning",
+                "raw": "-svetsning",
+                "method": "sammansättningssuffix",
+                "reasons": [],
+            },
+        ]
+        heads = {
+            1: {
+                "headword": "acetat",
+                "runeberg_match_score": 0.95,
+                "runeberg_article_lines": [
+                    "— acetylen (-e’n) -en ei. -ets. kolväte",
+                    "-gas -lampa -svetsning",
+                ],
+            }
+        }
+        repair_false_boundary_from_runeberg(items, heads)
+        self.assertEqual(
+            [item["lemma"] for item in items],
+            [
+                "acetylen",
+                "acetylengas",
+                "acetylenlampa",
+                "acetylensvetsning",
+            ],
         )
 
     def test_expands_optional_parenthesized_ending(self):
