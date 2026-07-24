@@ -1870,12 +1870,12 @@
         "source_left": 238
       },
       "through": {
-        "article_number": 39,
-        "lemma": "absolut",
+        "article_number": 43,
+        "lemma": "abstrahering",
         "source_page": 20,
         "source_column": 1,
-        "source_top": 1050,
-        "source_left": 166
+        "source_top": 2324,
+        "source_left": 209
       },
       "candidates": [
         {
@@ -2645,6 +2645,158 @@
           "source_column": 1,
           "source_top": 1050,
           "source_left": 166
+        },
+        {
+          "article_number": 39,
+          "lemma": "absoluthet",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 1182,
+          "source_left": 869
+        },
+        {
+          "article_number": 39,
+          "lemma": "absolution",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 1252,
+          "source_left": 207
+        },
+        {
+          "article_number": 39,
+          "lemma": "absolutism",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 1312,
+          "source_left": 207
+        },
+        {
+          "article_number": 39,
+          "lemma": "absolutist",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 1381,
+          "source_left": 564
+        },
+        {
+          "article_number": 39,
+          "lemma": "absolutistisk",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 1449,
+          "source_left": 209
+        },
+        {
+          "article_number": 40,
+          "lemma": "absolvera",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 1516,
+          "source_left": 171
+        },
+        {
+          "article_number": 40,
+          "lemma": "absolvering",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 1653,
+          "source_left": 211
+        },
+        {
+          "article_number": 41,
+          "lemma": "absorbent",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 1727,
+          "source_left": 174
+        },
+        {
+          "article_number": 41,
+          "lemma": "absorbera",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 1783,
+          "source_left": 547
+        },
+        {
+          "article_number": 41,
+          "lemma": "absorbering",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 1923,
+          "source_left": 495
+        },
+        {
+          "article_number": 41,
+          "lemma": "absorption",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 1919,
+          "source_left": 725
+        },
+        {
+          "article_number": 41,
+          "lemma": "absorptionsförmåga",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 1984,
+          "source_left": 361
+        },
+        {
+          "article_number": 42,
+          "lemma": "abstinens",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 2062,
+          "source_left": 186
+        },
+        {
+          "article_number": 42,
+          "lemma": "abstinensbesvär",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 2128,
+          "source_left": 619
+        },
+        {
+          "article_number": 42,
+          "lemma": "abstinensprocess",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 2138,
+          "source_left": 837
+        },
+        {
+          "article_number": 42,
+          "lemma": "abstinenssymtom",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 2193,
+          "source_left": 221
+        },
+        {
+          "article_number": 42,
+          "lemma": "abstinenssymptom",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 2193,
+          "source_left": 221
+        },
+        {
+          "article_number": 43,
+          "lemma": "abstrahera",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 2259,
+          "source_left": 530
+        },
+        {
+          "article_number": 43,
+          "lemma": "abstrahering",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 2324,
+          "source_left": 209
         }
       ]
     }
