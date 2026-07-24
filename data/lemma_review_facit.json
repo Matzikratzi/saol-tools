@@ -4,11 +4,11 @@
   "reviewed_prefix": {
     "through": {
       "article_number": 29,
-      "lemma": "agitation",
+      "lemma": "agitationstal",
       "source_page": 23,
       "source_column": 2,
-      "source_top": 3523,
-      "source_left": 1450
+      "source_top": 3513,
+      "source_left": 2335
     },
     "candidates": [
       {
@@ -1274,6 +1274,22 @@
         "source_column": 2,
         "source_top": 3523,
         "source_left": 1450
+      },
+      {
+        "article_number": 29,
+        "lemma": "agitationsmöte",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3523,
+        "source_left": 1450
+      },
+      {
+        "article_number": 29,
+        "lemma": "agitationstal",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3513,
+        "source_left": 2335
       }
     ]
   },
