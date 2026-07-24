@@ -1857,6 +1857,18 @@
         "stem_lemma": "aggressionshämmad",
         "raw": "-s|hämmad"
       }
+    },
+    {
+      "before": {
+        "article_number": 52,
+        "lemma": "accelerera"
+      },
+      "candidate": {
+        "article_number": 52,
+        "lemma": "acceleratoranläggning",
+        "stem_lemma": "acceleratoranläggning",
+        "raw": "-anläggning"
+      }
     }
   ],
   "reviewed_ranges": [
@@ -1870,12 +1882,12 @@
         "source_left": 238
       },
       "through": {
-        "article_number": 47,
-        "lemma": "absurdism",
+        "article_number": 52,
+        "lemma": "accelerator",
         "source_page": 20,
-        "source_column": 1,
-        "source_top": 3380,
-        "source_left": 203
+        "source_column": 2,
+        "source_top": 505,
+        "source_left": 1809
       },
       "candidates": [
         {
@@ -2869,6 +2881,118 @@
           "source_column": 1,
           "source_top": 3380,
           "source_left": 203
+        },
+        {
+          "article_number": 47,
+          "lemma": "absurdist",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 3450,
+          "source_left": 617
+        },
+        {
+          "article_number": 47,
+          "lemma": "absurdistisk",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 3447,
+          "source_left": 1018
+        },
+        {
+          "article_number": 47,
+          "lemma": "absurditet",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 3515,
+          "source_left": 297
+        },
+        {
+          "article_number": 48,
+          "lemma": "absurdum",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 3590,
+          "source_left": 165
+        },
+        {
+          "article_number": 49,
+          "lemma": "abundans",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 3725,
+          "source_left": 168
+        },
+        {
+          "article_number": 49,
+          "lemma": "abundant",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 3731,
+          "source_left": 1111
+        },
+        {
+          "article_number": 50,
+          "lemma": "acajounöt",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 3931,
+          "source_left": 171
+        },
+        {
+          "article_number": 50,
+          "lemma": "acajouträd",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 4001,
+          "source_left": 570
+        },
+        {
+          "article_number": 51,
+          "lemma": "accedera",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 226,
+          "source_left": 1383
+        },
+        {
+          "article_number": 52,
+          "lemma": "acceleration",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 377,
+          "source_left": 1378
+        },
+        {
+          "article_number": 52,
+          "lemma": "accelerationsförmåga",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 437,
+          "source_left": 1714
+        },
+        {
+          "article_number": 52,
+          "lemma": "accelerationshastighet",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 433,
+          "source_left": 2030
+        },
+        {
+          "article_number": 52,
+          "lemma": "accelerationssträcka",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 503,
+          "source_left": 1418
+        },
+        {
+          "article_number": 52,
+          "lemma": "accelerator",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 505,
+          "source_left": 1809
         }
       ]
     }
