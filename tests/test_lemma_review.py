@@ -2107,6 +2107,7 @@ class LemmaReviewTests(unittest.TestCase):
                 "raw": "agnost|iker",
                 "source_page": 24,
                 "source_column": 1,
+                "source_top": 100.0,
                 "review_state": "unread",
             },
         ]
@@ -2115,11 +2116,12 @@ class LemmaReviewTests(unittest.TestCase):
             [Path("lemma-review-pages/page-0024-column-1.png")],
         )
         self.assertIn(
-            'href="#review-page-24-column-1"', output
+            'href="#first-review"', output
         )
         self.assertIn(
             'id="review-page-24-column-1"', output
         )
+        self.assertIn('id="first-review"', output)
 
     def test_packages_three_review_json_files(self):
         with tempfile.TemporaryDirectory() as directory:
