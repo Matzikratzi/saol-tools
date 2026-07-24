@@ -608,6 +608,11 @@ def recover_runeberg_boundary_series(
         if head_item is None:
             continue
 
+        compound_base = suffix_base(
+            head.get("runeberg_stem_headword")
+            or head.get("stem_headword")
+            or head["headword"]
+        )
         anchor = head_item
         cursor = 0
         used_ids = set()
@@ -616,7 +621,7 @@ def recover_runeberg_boundary_series(
                 runeberg_line[cursor : match.start()]
             ):
                 possible = (
-                    expand_compound(head["headword"], token_value)
+                    expand_compound(compound_base, token_value)
                     if token_value.startswith("-")
                     else normalize_lemma(token_value)
                 )
@@ -632,7 +637,7 @@ def recover_runeberg_boundary_series(
 
             raw = match.group(0)
             lemma = (
-                expand_compound(head["headword"], raw)
+                expand_compound(compound_base, raw)
                 if raw.startswith("-")
                 else normalize_lemma(raw)
             )
