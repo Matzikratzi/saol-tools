@@ -51,7 +51,10 @@ def normalize_lemma(value: str) -> str:
 
 
 def expand_compound(base: str, suffix: str) -> str:
+    trailing_hyphen = base.rstrip().endswith("-")
     base = normalize_lemma(base)
+    if trailing_hyphen:
+        base += "-"
     suffix = suffix.strip().strip(";,:.()")
     if not suffix.startswith("-"):
         return normalize_lemma(suffix)
@@ -259,7 +262,11 @@ def suffix_base(value: str) -> str:
     """Return the repeatable stem before SAOL's vertical boundary marker."""
     for marker in ("|", "¦"):
         if marker in value:
-            return normalize_lemma(value.split(marker, 1)[0])
+            raw_base = value.split(marker, 1)[0]
+            base = normalize_lemma(raw_base)
+            if raw_base.rstrip().endswith("-"):
+                base += "-"
+            return base
     return normalize_lemma(value)
 
 
