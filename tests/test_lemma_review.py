@@ -29,6 +29,7 @@ from scripts.lemma_review import (
     plural_of_previous,
     pronunciation_then_inflection,
     render_review_images,
+    repair_initial_i_suffix_from_order,
     repair_mixed_case_duplicate,
     runeberg_short_inflection,
     suffix_base,
@@ -1348,6 +1349,78 @@ class LemmaReviewTests(unittest.TestCase):
         )
         self.assertEqual(candidates[1]["source_page"], 23)
         self.assertEqual(candidates[1]["source_column"], 1)
+
+    def test_initial_capital_i_suffix_is_repaired_by_order(self):
+        following = [token("-man", 500, 0.40)]
+        self.assertEqual(
+            repair_initial_i_suffix_from_order(
+                "-Iokal", "affärs", "affärsliv", following
+            ),
+            "-lokal",
+        )
+        self.assertEqual(
+            repair_initial_i_suffix_from_order(
+                "-Igel", "affärs", "affärsliv", following
+            ),
+            "-Igel",
+        )
+
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("affär", 100, 0.40),
+                                token("-en", 250, 0.10),
+                                token("s.", 330, 0.10),
+                                token("affärs|angelägenhet", 400, 0.40),
+                            ],
+                        },
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("-liv", 140, 0.40),
+                                token("-Iokal", 280, 0.40),
+                                token("-man", 450, 0.40),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "affär",
+                    "stem_headword": "affär",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            [
+                "affär",
+                "affärsangelägenhet",
+                "affärsliv",
+                "affärslokal",
+                "affärsman",
+            ],
+        )
 
     def test_corrupt_short_inflection_uses_aligned_runeberg_grammar(self):
         head = {
