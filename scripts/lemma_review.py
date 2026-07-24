@@ -135,6 +135,16 @@ def merged_pos_inflection(
     )
 
 
+def strip_merged_pos_marker(raw: str, normalized_suffix: str) -> str:
+    """Turn OCR '-ings.' into lemma suffix '-ing' plus noun marker 's.'."""
+    compact = raw.strip().casefold()
+    if compact.endswith("s.") and normalized_suffix.endswith("s"):
+        stem = normalized_suffix[:-1]
+        if stem not in NON_LEMMA_SUFFIXES and len(stem) > 2:
+            return stem
+    return normalized_suffix
+
+
 def merged_alternative_inflection(
     raw: str, normalized_suffix: str
 ) -> bool:
@@ -322,6 +332,21 @@ def suffix_base(value: str) -> str:
                 base += "-"
             return base
     return normalize_lemma(value)
+
+
+def expand_boundary_compound(base: str, suffix: str) -> str:
+    """Expand a | suffix without duplicating its printed stem overlap."""
+    for marker in ("|", "¦"):
+        if marker not in suffix:
+            continue
+        prefix, tail = suffix.lstrip("-").split(marker, 1)
+        normalized_base = normalize_lemma(base)
+        normalized_prefix = normalize_lemma(prefix)
+        if normalized_prefix and normalized_base.endswith(
+            normalized_prefix
+        ):
+            return normalize_lemma(normalized_base + tail)
+    return expand_compound(base, suffix)
 
 
 
@@ -831,7 +856,7 @@ def recover_runeberg_boundary_series(
                 runeberg_text[cursor : match.start()]
             ):
                 possible = (
-                    expand_compound(compound_base, token_value)
+                    expand_boundary_compound(compound_base, token_value)
                     if token_value.startswith("-")
                     else normalize_lemma(token_value)
                 )
@@ -889,7 +914,7 @@ def recover_runeberg_boundary_series(
                             if "|" in preceding_raw or "¦" in preceding_raw
                             else preceding_base["lemma"]
                         )
-                    expected_lemma = expand_compound(
+                    expected_lemma = expand_boundary_compound(
                         suffix_base(base_value), raw
                     )
                     if direct["lemma"] == expected_lemma:
@@ -929,7 +954,7 @@ def recover_runeberg_boundary_series(
                 raw_lemma
                 if standalone_boundary
                 else (
-                    expand_compound(compound_base, raw)
+                    expand_boundary_compound(compound_base, raw)
                     if raw.startswith("-")
                     else raw_lemma
                 )
@@ -946,6 +971,32 @@ def recover_runeberg_boundary_series(
                 ),
                 None,
             )
+            equivalent = next(
+                (
+                    item
+                    for item in article_items
+                    if (
+                        id(item) not in used_ids
+                        and item.get("method") != "artikelhuvud"
+                        and normalize_lemma(item["lemma"]).translate(
+                            str.maketrans(
+                                {"à": "a", "á": "a", "é": "e"}
+                            )
+                        )
+                        == normalize_lemma(lemma).translate(
+                            str.maketrans(
+                                {"à": "a", "á": "a", "é": "e"}
+                            )
+                        )
+                    )
+                ),
+                None,
+            )
+            if recovered is None and equivalent is not None:
+                anchor = equivalent
+                used_ids.add(id(equivalent))
+                rule_hit("runeberg.befintlig_lodstrecksform")
+                continue
             if recovered is not None:
                 recovered["stem_lemma"] = lemma
                 recovered["raw"] = raw
@@ -1418,6 +1469,15 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     repaired_suffix = repair_mixed_case_duplicate(cleaned)
                     if repaired_suffix != cleaned:
                         rule_hit("repair.dubblerad_blandad_versal")
+                    normalized_repaired_suffix = (
+                        "-" + normalize_lemma(repaired_suffix[1:])
+                    )
+                    stripped_suffix = strip_merged_pos_marker(
+                        raw, normalized_repaired_suffix
+                    )
+                    if stripped_suffix != normalized_repaired_suffix:
+                        repaired_suffix = stripped_suffix
+                        rule_hit("repair.sammanslagen_ordklassmarkör")
                     for marker in ("|", "¦"):
                         if marker in repaired_suffix:
                             suffix_series_prefix = repaired_suffix.split(
@@ -2193,19 +2253,58 @@ def report_html(
                     '<span id="first-review" class="review-anchor" '
                     'style="top:%.3f%%"></span>' % anchor_top
                 )
+            page, column = path_target
+            copy_rows = []
+            if path.exists():
+                with Image.open(path) as review_image:
+                    image_height = max(1, review_image.height)
+            else:
+                image_height = 1
+            column_items = [
+                item
+                for item in items
+                if int(item.get("source_page", 0)) == page
+                and int(item.get("source_column", 0)) == column
+                and all(
+                    key in item
+                    for key in (
+                        "source_top",
+                        "source_bottom",
+                        "source_left",
+                    )
+                )
+            ]
+            for row in _items_by_printed_row(column_items):
+                source_y = statistics.median(
+                    (item["source_top"] + item["source_bottom"]) / 2
+                    for item in row
+                )
+                top = max(0.0, min(100.0, 100.0 * source_y / image_height))
+                labels = "  ·  ".join(display_lemma(item) for item in row)
+                copy_rows.append(
+                    '<div class="copy-row" style="top:%.3f%%">%s</div>'
+                    % (top, html.escape(labels))
+                )
+            copy_layer = '<div class="copy-layer">%s</div>' % "".join(
+                copy_rows
+            )
+        else:
+            copy_layer = ""
         image_parts.append(
-            '<figure%s>%s<img src="%s" loading="lazy"><figcaption>%s</figcaption></figure>'
+            '<figure%s>%s<div class="review-image-wrap"><img src="%s" '
+            'loading="lazy">%s</div><figcaption>%s</figcaption></figure>'
             % (
                 figure_id,
                 review_anchor,
                 html.escape(str(path)),
+                copy_layer,
                 html.escape(path.stem.replace("-", " ")),
             )
         )
     image_blocks = "".join(image_parts)
     return f"""<!doctype html><html lang="sv"><head><meta charset="utf-8">
 <title>SAOL – grundformskandidater</title><style>
-body{{font:15px system-ui;margin:24px;max-width:1800px}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #ccc;padding:6px;text-align:left;vertical-align:top}}th{{position:sticky;top:0;background:#eee}}tr.uncertain{{background:#fff3cd}}tr.approved{{background:#eee;color:#666}}tr.mismatch{{background:#ffd6d6}}code{{white-space:pre-wrap}}figure{{margin:24px 0;border:1px solid #aaa;padding:10px;background:#eee}}figure img{{display:block;width:100%;height:auto}}figcaption{{margin-top:6px;color:#555}}.jump{{display:inline-block;padding:10px 14px;background:#1769e0;color:white;text-decoration:none;border-radius:7px;font-weight:700}}figure[id]{{position:relative}}.review-anchor{{position:absolute;left:0;scroll-margin-top:12px}}
+body{{font:15px system-ui;margin:24px;max-width:1800px}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #ccc;padding:6px;text-align:left;vertical-align:top}}th{{position:sticky;top:0;background:#eee}}tr.uncertain{{background:#fff3cd}}tr.approved{{background:#eee;color:#666}}tr.mismatch{{background:#ffd6d6}}code{{white-space:pre-wrap}}figure{{margin:24px 0;border:1px solid #aaa;padding:10px;background:#eee}}figure img{{display:block;width:100%;height:auto}}figcaption{{margin-top:6px;color:#555}}.jump{{display:inline-block;padding:10px 14px;background:#1769e0;color:white;text-decoration:none;border-radius:7px;font-weight:700}}figure[id]{{position:relative}}.review-anchor{{position:absolute;left:0;scroll-margin-top:12px}}.review-image-wrap{{position:relative}}.copy-layer{{position:absolute;inset:0;pointer-events:none}}.copy-row{{position:absolute;left:0;width:36%;transform:translateY(-50%);text-align:right;white-space:nowrap;font:28px Arial,sans-serif;color:transparent;user-select:text;pointer-events:auto;cursor:text}}
 </style></head><body><h1>Grundformskandidater</h1>
 <p>{len(items)} träffar; {len(unique)} unika grundformer; {uncertain} osäkra kandidater.</p>
 <p>{approved} poster stämmer med tidigare facit. {changed + len(missing)} facitavvikelser.</p>
