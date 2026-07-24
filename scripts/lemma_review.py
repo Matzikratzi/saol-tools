@@ -21,7 +21,10 @@ DEFAULT_FACIT = ROOT / "data" / "lemma_review_facit.json"
 
 
 POS = {"adj", "adv", "interj", "prep", "pron", "s", "v"}
-GRAMMAR_MARKERS = POS | {"best", "el", "eller", "komp", "oböjl", "pl", "superl", "äv"}
+GRAMMAR_MARKERS = POS | {
+    "att", "best", "el", "eller", "komp", "oböjl", "om", "pl",
+    "som", "superl", "äv",
+}
 # "-lt" is Tesseract's recurring reading of a thin separator plus adjective -t.
 NON_LEMMA_SUFFIXES = {
     "-a", "-ad", "-ade", "-an", "-ar", "-are", "-at", "-de", "-dde",
@@ -166,6 +169,43 @@ def repair_mixed_case_duplicate(value: str) -> str:
     if match and match.group(2).casefold() == match.group(3).casefold():
         return match.group(1) + match.group(3) + match.group(4)
     return value
+
+
+def repair_intrusion_before_boundary(value: str, article_head: str) -> str:
+    """Remove an OCR-inserted j immediately before a visible or misread |."""
+    cleaned = value.strip().strip(";,:.()[]{}")
+    head = normalize_lemma(article_head)
+    for marker in ("|", "¦"):
+        if marker not in cleaned:
+            continue
+        base, tail = cleaned.split(marker, 1)
+        normalized_base = normalize_lemma(base)
+        if (
+            normalized_base.endswith("j")
+            and len(normalized_base) >= 5
+            and head.startswith(normalized_base[:-1])
+            and not head.startswith(normalized_base)
+        ):
+            return normalized_base[:-1] + "|" + normalize_lemma(tail)
+        return cleaned
+
+    normalized = normalize_lemma(cleaned)
+    common_length = 0
+    for left, right in zip(normalized, head):
+        if left != right:
+            break
+        common_length += 1
+    if (
+        common_length >= 4
+        and normalized[common_length : common_length + 2] == "jl"
+        and head.startswith(normalized[:common_length])
+    ):
+        return (
+            normalized[:common_length]
+            + "|"
+            + normalized[common_length + 2 :]
+        )
+    return cleaned
 
 
 def suffix_base(value: str) -> str:
@@ -762,6 +802,9 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             key=lambda candidate: candidate["left"],
                         )
                     )
+                intrusion_boundary = repair_intrusion_before_boundary(
+                    cleaned, current_head
+                )
                 era_boundary = infer_era_boundary_from_verb_grammar(
                     cleaned, following_tokens
                 )
@@ -777,7 +820,9 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 repeated_boundary = infer_boundary_from_repeated_suffix(
                     cleaned, following_tokens
                 )
-                if era_boundary:
+                if intrusion_boundary != cleaned:
+                    cleaned = intrusion_boundary
+                elif era_boundary:
                     cleaned = era_boundary
                 elif previous_boundary:
                     cleaned = previous_boundary
@@ -1461,18 +1506,53 @@ def report_html(
         if missing_rows
         else ""
     )
-    image_blocks = "".join(
-        '<figure><img src="%s" loading="lazy"><figcaption>%s</figcaption></figure>'
-        % (html.escape(str(path)), html.escape(path.stem.replace("-", " ")))
-        for path in (images or [])
+    first_review = next(
+        (
+            item
+            for item in items
+            if item.get("review_state", "unread") != "approved"
+        ),
+        None,
     )
+    first_target = (
+        "review-page-%d-column-%d"
+        % (first_review["source_page"], first_review["source_column"])
+        if first_review
+        else ""
+    )
+    jump_button = (
+        '<p><a class="jump" href="#%s">Gå till första nya eller felaktiga '
+        'ordet: %s</a></p>'
+        % (first_target, html.escape(display_lemma(first_review)))
+        if first_review
+        else ""
+    )
+    image_parts = []
+    for path in images or []:
+        match = re.search(r"page-(\\d+)-column-(\\d+)", path.stem)
+        figure_id = ""
+        if match:
+            figure_id = ' id="review-page-%d-column-%d"' % (
+                int(match.group(1)),
+                int(match.group(2)),
+            )
+        image_parts.append(
+            '<figure%s><img src="%s" loading="lazy"><figcaption>%s</figcaption></figure>'
+            % (
+                figure_id,
+                html.escape(str(path)),
+                html.escape(path.stem.replace("-", " ")),
+            )
+        )
+    image_blocks = "".join(image_parts)
     return f"""<!doctype html><html lang="sv"><head><meta charset="utf-8">
 <title>SAOL – grundformskandidater</title><style>
-body{{font:15px system-ui;margin:24px;max-width:1800px}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #ccc;padding:6px;text-align:left;vertical-align:top}}th{{position:sticky;top:0;background:#eee}}tr.uncertain{{background:#fff3cd}}tr.approved{{background:#eee;color:#666}}tr.mismatch{{background:#ffd6d6}}code{{white-space:pre-wrap}}figure{{margin:24px 0;border:1px solid #aaa;padding:10px;background:#eee}}figure img{{display:block;width:100%;height:auto}}figcaption{{margin-top:6px;color:#555}}
+body{{font:15px system-ui;margin:24px;max-width:1800px}}table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #ccc;padding:6px;text-align:left;vertical-align:top}}th{{position:sticky;top:0;background:#eee}}tr.uncertain{{background:#fff3cd}}tr.approved{{background:#eee;color:#666}}tr.mismatch{{background:#ffd6d6}}code{{white-space:pre-wrap}}figure{{margin:24px 0;border:1px solid #aaa;padding:10px;background:#eee}}figure img{{display:block;width:100%;height:auto}}figcaption{{margin-top:6px;color:#555}}.jump{{display:inline-block;padding:10px 14px;background:#1769e0;color:white;text-decoration:none;border-radius:7px;font-weight:700}}figure[id]{{scroll-margin-top:12px}}
 </style></head><body><h1>Grundformskandidater</h1>
 <p>{len(items)} träffar; {len(unique)} unika grundformer; {uncertain} osäkra kandidater.</p>
 <p>{approved} poster stämmer med tidigare facit. {changed + len(missing)} facitavvikelser.</p>
 <p>Grått med ✓ är redan godkänt och oförändrat. Rött med ⚠ är nytt eller ändrat på en godkänd sida. Olästa poster visas som tidigare.</p>
+{jump_button}
 {mismatch_block}
 {image_blocks}
 <h2>Alla kandidater som tabell</h2>
