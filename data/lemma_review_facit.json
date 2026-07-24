@@ -3,11 +3,11 @@
   "pages": {},
   "reviewed_prefix": {
     "through": {
-      "article_number": 43,
-      "lemma": "ah",
+      "article_number": 51,
+      "lemma": "ajabaja",
       "source_page": 24,
       "source_column": 1,
-      "source_top": 2468,
+      "source_top": 3262,
       "source_left": 195
     },
     "candidates": [
@@ -1545,6 +1545,86 @@
         "source_page": 24,
         "source_column": 1,
         "source_top": 2468,
+        "source_left": 195
+      },
+      {
+        "article_number": 43,
+        "lemma": "aha",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2467,
+        "source_left": 358
+      },
+      {
+        "article_number": 43,
+        "lemma": "ahaupplevelse",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2467,
+        "source_left": 610
+      },
+      {
+        "article_number": 44,
+        "lemma": "aids",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2541,
+        "source_left": 196
+      },
+      {
+        "article_number": 45,
+        "lemma": "aikido",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2612,
+        "source_left": 199
+      },
+      {
+        "article_number": 46,
+        "lemma": "aimabel",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2754,
+        "source_left": 199
+      },
+      {
+        "article_number": 47,
+        "lemma": "air",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2829,
+        "source_left": 198
+      },
+      {
+        "article_number": 48,
+        "lemma": "airedaleterrier",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2970,
+        "source_left": 197
+      },
+      {
+        "article_number": 49,
+        "lemma": "aiss",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3046,
+        "source_left": 196
+      },
+      {
+        "article_number": 50,
+        "lemma": "aj",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3187,
+        "source_left": 196
+      },
+      {
+        "article_number": 51,
+        "lemma": "ajabaja",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3262,
         "source_left": 195
       }
     ]
