@@ -488,7 +488,9 @@ def remove_alphabetic_family_outliers(
         by_article.setdefault(item["article_number"], []).append(item)
 
     rejected_ids = set()
-    for article_number, article_items in by_article.items():
+    article_order = list(by_article)
+    for article_index, article_number in enumerate(article_order):
+        article_items = by_article[article_number]
         headword = normalize_lemma(heads[article_number]["headword"])
         previous_anchor = headword
         pending: list[dict] = []
@@ -514,6 +516,19 @@ def remove_alphabetic_family_outliers(
                 previous_anchor = lemma
             else:
                 pending.append(item)
+
+        if pending and article_index + 1 < len(article_order):
+            next_article = article_order[article_index + 1]
+            next_headword = normalize_lemma(
+                heads[next_article]["headword"]
+            )
+            lower = swedish_sort_key(previous_anchor)
+            upper = swedish_sort_key(next_headword)
+            if lower <= upper:
+                for candidate in pending:
+                    candidate_key = swedish_sort_key(candidate["lemma"])
+                    if not lower <= candidate_key <= upper:
+                        rejected_ids.add(id(candidate))
 
     return [item for item in items if id(item) not in rejected_ids]
 
