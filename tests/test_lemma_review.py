@@ -33,7 +33,9 @@ from scripts.lemma_review import (
     render_review_images,
     recover_runeberg_boundary_series,
     repair_initial_i_suffix_from_order,
+    repair_intrusion_before_boundary,
     repair_mixed_case_duplicate,
+    report_html,
     runeberg_short_inflection,
     suffix_base,
     write_review_bundle,
@@ -1988,6 +1990,135 @@ class LemmaReviewTests(unittest.TestCase):
         self.assertEqual(
             [item["lemma"] for item in candidates],
             ["agnat", "agnatisk"],
+        )
+
+
+    def test_repairs_inserted_j_before_agnostiker_boundary(self):
+        self.assertEqual(
+            repair_intrusion_before_boundary(
+                "agnostjliker", "agnosticism"
+            ),
+            "agnost|iker",
+        )
+        self.assertEqual(
+            repair_intrusion_before_boundary(
+                "agnostj|iker", "agnosticism"
+            ),
+            "agnost|iker",
+        )
+        self.assertEqual(
+            repair_intrusion_before_boundary(
+                "affärs|angelägenhet", "affär"
+            ),
+            "affärs|angelägenhet",
+        )
+
+    def test_agnosticism_definition_words_are_not_lemmas(self):
+        articles = {
+            "pages": [24],
+            "articles": [
+                {
+                    "number": 34,
+                    "start_page": 24,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 24,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("agnosticism", 100, 0.40),
+                                token("-en", 350, 0.10),
+                                token("s.", 430, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 24,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("som", 140, 0.50),
+                                token("att", 240, 0.50),
+                                token("om", 340, 0.50),
+                            ],
+                        },
+                        {
+                            "page": 24,
+                            "column": 1,
+                            "top": 180.0,
+                            "bottom": 204.0,
+                            "tokens": [
+                                token("agnostjliker", 140, 0.30),
+                                token("(-gnåst'-)", 400, 0.10),
+                                token("-n", 550, 0.10),
+                                token("-iker", 640, 0.20),
+                                token("s.", 760, 0.10),
+                                token("-isk", 820, 0.45),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 34,
+                    "headword": "agnosticism",
+                    "stem_headword": "agnosticism",
+                    "runeberg_match_score": 0.0,
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["agnosticism", "agnostiker", "agnostisk"],
+        )
+
+    def test_report_links_to_first_unread_column(self):
+        items = [
+            {
+                "article_number": 1,
+                "page": 24,
+                "column": 1,
+                "lemma": "agnosticism",
+                "method": "artikelhuvud",
+                "bold_score": 1.0,
+                "status": "kandidat",
+                "reasons": [],
+                "raw": "agnosticism",
+                "source_page": 24,
+                "source_column": 1,
+                "review_state": "approved",
+            },
+            {
+                "article_number": 1,
+                "page": 24,
+                "column": 1,
+                "lemma": "agnostiker",
+                "method": "halvfet token",
+                "bold_score": 0.3,
+                "status": "osäker",
+                "reasons": ["svag halvfetssignal"],
+                "raw": "agnost|iker",
+                "source_page": 24,
+                "source_column": 1,
+                "review_state": "unread",
+            },
+        ]
+        output = report_html(
+            items,
+            [Path("lemma-review-pages/page-0024-column-1.png")],
+        )
+        self.assertIn(
+            'href="#review-page-24-column-1"', output
+        )
+        self.assertIn(
+            'id="review-page-24-column-1"', output
         )
 
     def test_packages_three_review_json_files(self):
