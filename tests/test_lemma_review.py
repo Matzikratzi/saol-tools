@@ -1616,6 +1616,32 @@ class LemmaReviewTests(unittest.TestCase):
             "Runebergkorrigerad lodstrecksserie",
         )
 
+    def test_runeberg_recovery_tolerates_candidate_already_used_as_anchor(self):
+        head = {
+            "article_number": 1,
+            "headword": "bas",
+            "runeberg_line": "bas xy x|y",
+            "runeberg_match_score": 0.95,
+        }
+        items = [
+            {
+                "article_number": 1,
+                "lemma": "bas",
+                "stem_lemma": "bas",
+                "raw": "bas",
+                "method": "artikelhuvud",
+            },
+            {
+                "article_number": 1,
+                "lemma": "xy",
+                "stem_lemma": "xy",
+                "raw": "xy",
+                "method": "halvfet token",
+            },
+        ]
+        recover_runeberg_boundary_series(items, {1: head})
+        self.assertEqual([item["lemma"] for item in items], ["bas", "xy"])
+
     def test_full_lodstreck_word_is_placed_after_preceding_compound(self):
         head = {
             "article_number": 31,
