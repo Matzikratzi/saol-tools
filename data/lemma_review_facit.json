@@ -1882,12 +1882,12 @@
         "source_left": 238
       },
       "through": {
-        "article_number": 74,
-        "lemma": "ackvisitionskatalog",
+        "article_number": 79,
+        "lemma": "adaptering",
         "source_page": 21,
         "source_column": 1,
-        "source_top": 2875,
-        "source_left": 744
+        "source_top": 3785,
+        "source_left": 531
       },
       "candidates": [
         {
@@ -3849,6 +3849,118 @@
           "source_column": 1,
           "source_top": 2875,
           "source_left": 744
+        },
+        {
+          "article_number": 74,
+          "lemma": "ackvisitör",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 2875,
+          "source_left": 1093
+        },
+        {
+          "article_number": 75,
+          "lemma": "acne",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 3106,
+          "source_left": 238
+        },
+        {
+          "article_number": 76,
+          "lemma": "action",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 3170,
+          "source_left": 238
+        },
+        {
+          "article_number": 76,
+          "lemma": "actionfilm",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 3160,
+          "source_left": 1083
+        },
+        {
+          "article_number": 77,
+          "lemma": "adagio",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 3241,
+          "source_left": 240
+        },
+        {
+          "article_number": 77,
+          "lemma": "adagiosats",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 3303,
+          "source_left": 988
+        },
+        {
+          "article_number": 78,
+          "lemma": "adamsdräkt",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 3377,
+          "source_left": 239
+        },
+        {
+          "article_number": 78,
+          "lemma": "adamskostym",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 3380,
+          "source_left": 642
+        },
+        {
+          "article_number": 78,
+          "lemma": "adamsäpple",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 3374,
+          "source_left": 886
+        },
+        {
+          "article_number": 79,
+          "lemma": "adaptation",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 3524,
+          "source_left": 242
+        },
+        {
+          "article_number": 79,
+          "lemma": "adaption",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 3518,
+          "source_left": 659
+        },
+        {
+          "article_number": 79,
+          "lemma": "adapter",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 3586,
+          "source_left": 675
+        },
+        {
+          "article_number": 79,
+          "lemma": "adaptera",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 3706,
+          "source_left": 886
+        },
+        {
+          "article_number": 79,
+          "lemma": "adaptering",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 3785,
+          "source_left": 531
         }
       ]
     }
