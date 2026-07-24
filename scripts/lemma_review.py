@@ -567,6 +567,21 @@ def recover_runeberg_boundary_series(
                     article_items.append(recovered)
 
             used_ids.add(id(recovered))
+            if recovered is anchor:
+                continue
+            anchor_index = next(
+                (
+                    index for index, item in enumerate(items)
+                    if item is anchor
+                ),
+                None,
+            )
+            if anchor_index is None:
+                anchor = head_item
+                anchor_index = next(
+                    index for index, item in enumerate(items)
+                    if item is head_item
+                )
             existing_index = next(
                 (
                     index for index, item in enumerate(items)
@@ -576,10 +591,8 @@ def recover_runeberg_boundary_series(
             )
             if existing_index is not None:
                 items.pop(existing_index)
-            anchor_index = next(
-                index for index, item in enumerate(items)
-                if item is anchor
-            )
+                if existing_index < anchor_index:
+                    anchor_index -= 1
             items.insert(anchor_index + 1, recovered)
             anchor = recovered
     return items
