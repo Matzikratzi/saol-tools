@@ -501,6 +501,14 @@
       },
       {
         "article_number": 5,
+        "lemma": "affärsvärld",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1727,
+        "source_left": 757
+      },
+      {
+        "article_number": 5,
         "lemma": "affärsvärlden",
         "source_page": 23,
         "source_column": 1,
@@ -1849,18 +1857,6 @@
         "stem_lemma": "aggressionshämmad",
         "raw": "-s|hämmad"
       }
-    },
-    {
-      "before": {
-        "article_number": 28,
-        "lemma": "abortfrågan"
-      },
-      "candidate": {
-        "article_number": 28,
-        "lemma": "abortfråga",
-        "stem_lemma": "abortfråga",
-        "raw": "-fråga(n)"
-      }
     }
   ],
   "reviewed_ranges": [
@@ -2400,7 +2396,7 @@
           "source_page": 19,
           "source_column": 2,
           "source_top": 2670,
-          "source_left": 1503
+          "source_left": 1691
         },
         {
           "article_number": 28,
