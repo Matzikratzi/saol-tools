@@ -1850,5 +1850,115 @@
         "raw": "-s|hämmad"
       }
     }
+  ],
+  "reviewed_ranges": [
+    {
+      "from": {
+        "article_number": 1,
+        "lemma": "a",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 1014,
+        "source_left": 238
+      },
+      "through": {
+        "article_number": 9,
+        "lemma": "abborre",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 2181,
+        "source_left": 257
+      },
+      "candidates": [
+        {
+          "article_number": 1,
+          "lemma": "a",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 1014,
+          "source_left": 238
+        },
+        {
+          "article_number": 2,
+          "lemma": "a",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 1233,
+          "source_left": 309
+        },
+        {
+          "article_number": 3,
+          "lemma": "a",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 1338,
+          "source_left": 235
+        },
+        {
+          "article_number": 4,
+          "lemma": "a-aktie",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 1487,
+          "source_left": 256
+        },
+        {
+          "article_number": 4,
+          "lemma": "a-avdrag",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 1486,
+          "source_left": 719
+        },
+        {
+          "article_number": 5,
+          "lemma": "abakus",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 1562,
+          "source_left": 257
+        },
+        {
+          "article_number": 6,
+          "lemma": "abandon",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 1703,
+          "source_left": 257
+        },
+        {
+          "article_number": 7,
+          "lemma": "a-barn",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 1908,
+          "source_left": 257
+        },
+        {
+          "article_number": 8,
+          "lemma": "abbé",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 1980,
+          "source_left": 257
+        },
+        {
+          "article_number": 8,
+          "lemma": "abbedissa",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 2040,
+          "source_left": 482
+        },
+        {
+          "article_number": 9,
+          "lemma": "abborre",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 2181,
+          "source_left": 257
+        }
+      ]
+    }
   ]
 }
