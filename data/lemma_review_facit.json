@@ -1882,12 +1882,12 @@
         "source_left": 238
       },
       "through": {
-        "article_number": 52,
-        "lemma": "accelerator",
+        "article_number": 53,
+        "lemma": "accentbeteckning",
         "source_page": 20,
         "source_column": 2,
-        "source_top": 505,
-        "source_left": 1809
+        "source_top": 842,
+        "source_left": 1417
       },
       "candidates": [
         {
@@ -1916,19 +1916,19 @@
         },
         {
           "article_number": 4,
-          "lemma": "a-aktie",
-          "source_page": 19,
-          "source_column": 1,
-          "source_top": 1487,
-          "source_left": 256
-        },
-        {
-          "article_number": 4,
           "lemma": "a-avdrag",
           "source_page": 19,
           "source_column": 1,
           "source_top": 1486,
           "source_left": 719
+        },
+        {
+          "article_number": 4,
+          "lemma": "a-aktie",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 1487,
+          "source_left": 256
         },
         {
           "article_number": 5,
@@ -2092,14 +2092,6 @@
         },
         {
           "article_number": 14,
-          "lemma": "abderit",
-          "source_page": 19,
-          "source_column": 1,
-          "source_top": 3149,
-          "source_left": 259
-        },
-        {
-          "article_number": 14,
           "lemma": "abderitisk",
           "source_page": 19,
           "source_column": 1,
@@ -2107,11 +2099,11 @@
           "source_left": 857
         },
         {
-          "article_number": 15,
-          "lemma": "abdikation",
+          "article_number": 14,
+          "lemma": "abderit",
           "source_page": 19,
           "source_column": 1,
-          "source_top": 3289,
+          "source_top": 3149,
           "source_left": 259
         },
         {
@@ -2129,6 +2121,14 @@
           "source_column": 1,
           "source_top": 3282,
           "source_left": 1009
+        },
+        {
+          "article_number": 15,
+          "lemma": "abdikation",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 3289,
+          "source_left": 259
         },
         {
           "article_number": 15,
@@ -2180,19 +2180,19 @@
         },
         {
           "article_number": 19,
-          "lemma": "abessinsk",
-          "source_page": 19,
-          "source_column": 1,
-          "source_top": 4049,
-          "source_left": 458
-        },
-        {
-          "article_number": 19,
           "lemma": "abessinska",
           "source_page": 19,
           "source_column": 1,
           "source_top": 4042,
           "source_left": 746
+        },
+        {
+          "article_number": 19,
+          "lemma": "abessinsk",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 4049,
+          "source_left": 458
         },
         {
           "article_number": 20,
@@ -2284,14 +2284,6 @@
         },
         {
           "article_number": 26,
-          "lemma": "abonnemang",
-          "source_page": 19,
-          "source_column": 2,
-          "source_top": 1923,
-          "source_left": 1476
-        },
-        {
-          "article_number": 26,
           "lemma": "abonnemangsbiljett",
           "source_page": 19,
           "source_column": 2,
@@ -2300,11 +2292,11 @@
         },
         {
           "article_number": 26,
-          "lemma": "abonnemangsföreställning",
+          "lemma": "abonnemang",
           "source_page": 19,
           "source_column": 2,
-          "source_top": 1981,
-          "source_left": 1517
+          "source_top": 1923,
+          "source_left": 1476
         },
         {
           "article_number": 26,
@@ -2324,11 +2316,11 @@
         },
         {
           "article_number": 26,
-          "lemma": "abonnemangssystem",
+          "lemma": "abonnemangsföreställning",
           "source_page": 19,
           "source_column": 2,
-          "source_top": 2046,
-          "source_left": 1516
+          "source_top": 1981,
+          "source_left": 1517
         },
         {
           "article_number": 26,
@@ -2340,6 +2332,14 @@
         },
         {
           "article_number": 26,
+          "lemma": "abonnemangssystem",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2046,
+          "source_left": 1516
+        },
+        {
+          "article_number": 26,
           "lemma": "abonnent",
           "source_page": 19,
           "source_column": 2,
@@ -2348,11 +2348,11 @@
         },
         {
           "article_number": 26,
-          "lemma": "abonnera",
+          "lemma": "abonnentpris",
           "source_page": 19,
           "source_column": 2,
-          "source_top": 2175,
-          "source_left": 1905
+          "source_top": 2117,
+          "source_left": 2379
         },
         {
           "article_number": 26,
@@ -2372,11 +2372,11 @@
         },
         {
           "article_number": 26,
-          "lemma": "abonnentpris",
+          "lemma": "abonnera",
           "source_page": 19,
           "source_column": 2,
-          "source_top": 2117,
-          "source_left": 2379
+          "source_top": 2175,
+          "source_left": 1905
         },
         {
           "article_number": 26,
@@ -2436,6 +2436,22 @@
         },
         {
           "article_number": 28,
+          "lemma": "abortsökande",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2736,
+          "source_left": 2280
+        },
+        {
+          "article_number": 28,
+          "lemma": "abortlagstiftning",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2737,
+          "source_left": 1932
+        },
+        {
+          "article_number": 28,
           "lemma": "abortklinik",
           "source_page": 19,
           "source_column": 2,
@@ -2449,22 +2465,6 @@
           "source_column": 2,
           "source_top": 2739,
           "source_left": 1699
-        },
-        {
-          "article_number": 28,
-          "lemma": "abortlagstiftning",
-          "source_page": 19,
-          "source_column": 2,
-          "source_top": 2737,
-          "source_left": 1932
-        },
-        {
-          "article_number": 28,
-          "lemma": "abortsökande",
-          "source_page": 19,
-          "source_column": 2,
-          "source_top": 2736,
-          "source_left": 2280
         },
         {
           "article_number": 28,
@@ -2612,19 +2612,19 @@
         },
         {
           "article_number": 37,
-          "lemma": "absint",
-          "source_page": 20,
-          "source_column": 1,
-          "source_top": 770,
-          "source_left": 163
-        },
-        {
-          "article_number": 37,
           "lemma": "absintflaska",
           "source_page": 20,
           "source_column": 1,
           "source_top": 763,
           "source_left": 1034
+        },
+        {
+          "article_number": 37,
+          "lemma": "absint",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 770,
+          "source_left": 163
         },
         {
           "article_number": 37,
@@ -2732,19 +2732,19 @@
         },
         {
           "article_number": 41,
-          "lemma": "absorbering",
-          "source_page": 20,
-          "source_column": 1,
-          "source_top": 1923,
-          "source_left": 495
-        },
-        {
-          "article_number": 41,
           "lemma": "absorption",
           "source_page": 20,
           "source_column": 1,
           "source_top": 1919,
           "source_left": 725
+        },
+        {
+          "article_number": 41,
+          "lemma": "absorbering",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 1923,
+          "source_left": 495
         },
         {
           "article_number": 41,
@@ -2780,7 +2780,7 @@
         },
         {
           "article_number": 42,
-          "lemma": "abstinenssymtom",
+          "lemma": "abstinenssymptom",
           "source_page": 20,
           "source_column": 1,
           "source_top": 2193,
@@ -2788,7 +2788,7 @@
         },
         {
           "article_number": 42,
-          "lemma": "abstinenssymptom",
+          "lemma": "abstinenssymtom",
           "source_page": 20,
           "source_column": 1,
           "source_top": 2193,
@@ -2884,19 +2884,19 @@
         },
         {
           "article_number": 47,
-          "lemma": "absurdist",
-          "source_page": 20,
-          "source_column": 1,
-          "source_top": 3450,
-          "source_left": 617
-        },
-        {
-          "article_number": 47,
           "lemma": "absurdistisk",
           "source_page": 20,
           "source_column": 1,
           "source_top": 3447,
           "source_left": 1018
+        },
+        {
+          "article_number": 47,
+          "lemma": "absurdist",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 3450,
+          "source_left": 617
         },
         {
           "article_number": 47,
@@ -2964,19 +2964,19 @@
         },
         {
           "article_number": 52,
-          "lemma": "accelerationsförmåga",
-          "source_page": 20,
-          "source_column": 2,
-          "source_top": 437,
-          "source_left": 1714
-        },
-        {
-          "article_number": 52,
           "lemma": "accelerationshastighet",
           "source_page": 20,
           "source_column": 2,
           "source_top": 433,
           "source_left": 2030
+        },
+        {
+          "article_number": 52,
+          "lemma": "accelerationsförmåga",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 437,
+          "source_left": 1714
         },
         {
           "article_number": 52,
@@ -2993,6 +2993,46 @@
           "source_column": 2,
           "source_top": 505,
           "source_left": 1809
+        },
+        {
+          "article_number": 52,
+          "lemma": "acceleratoranläggning",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 559,
+          "source_left": 1861
+        },
+        {
+          "article_number": 52,
+          "lemma": "accelerera",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 559,
+          "source_left": 2209
+        },
+        {
+          "article_number": 52,
+          "lemma": "accelerering",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 632,
+          "source_left": 2353
+        },
+        {
+          "article_number": 53,
+          "lemma": "accent",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 715,
+          "source_left": 1377
+        },
+        {
+          "article_number": 53,
+          "lemma": "accentbeteckning",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 842,
+          "source_left": 1417
         }
       ]
     }
