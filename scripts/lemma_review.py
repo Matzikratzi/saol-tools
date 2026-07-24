@@ -120,6 +120,14 @@ def merged_pos_inflection(
     )
 
 
+def weak_alternative_suffix(previous_raw: str, bold_score: float) -> bool:
+    """Reject an ordinary-text '-suffix' after 'el.' or 'eller'."""
+    return (
+        normalize_lemma(previous_raw) in {"el", "eller"}
+        and bold_score < 0.45
+    )
+
+
 def optional_parenthesis_variants(value: str) -> list[str]:
     """Include SAOL's parenthesized ending without inventing a short variant."""
     match = re.match(r"^(.*)\(([^()]*)\)$", value)
@@ -884,6 +892,15 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     at_line_start = False
                     continue
                 if cleaned.startswith("-"):
+                    previous_raw = (
+                        tokens[token_index - 1].get("text", "")
+                        if token_index > 0
+                        else ""
+                    )
+                    if weak_alternative_suffix(previous_raw, score):
+                        previous_separator = False
+                        at_line_start = False
+                        continue
                     cleaned = repair_initial_i_suffix_from_order(
                         cleaned,
                         current_base,
