@@ -1263,18 +1263,23 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
             return
         source_line = line or {}
         source_token = token or {}
-        key = (
-            (
-                article["number"],
-                lemma,
-                int(source_line.get("page", article["start_page"])),
-                int(source_line.get("column", article["start_column"])),
-                float(source_token.get("top", source_line.get("top", 0.0))),
-                float(source_token.get("left", 0.0)),
+        key = (article["number"], lemma)
+        if allow_duplicate and key in seen:
+            earlier = next(
+                (
+                    item
+                    for item in reversed(result)
+                    if (
+                        int(item["article_number"]) == int(article["number"])
+                        and item["lemma"] == lemma
+                    )
+                ),
+                None,
             )
-            if allow_duplicate
-            else (article["number"], lemma)
-        )
+            if earlier is not None:
+                result.remove(earlier)
+                seen.remove(key)
+                rule_hit("filter.senare_hänvisningspost")
         if key in seen:
             return
         seen.add(key)
