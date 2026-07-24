@@ -103,7 +103,7 @@ def trim_plain_definition_tails_by_order(
         )
         if len(tokens) < 2:
             continue
-         for split in range(1, len(tokens)):
+        for split in range(1, len(tokens)):
             selected = tokens[:split]
             tail = tokens[split]
             if not visibly_lighter_than_head(selected, tail):
