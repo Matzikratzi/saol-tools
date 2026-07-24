@@ -706,11 +706,12 @@ def recover_runeberg_boundary_series(
                 if preceding is not None:
                     anchor = preceding
                     preceding_raw = preceding.get("raw", "")
-                    compound_base = suffix_base(
-                        preceding_raw
-                        if "|" in preceding_raw or "¦" in preceding_raw
-                        else preceding["lemma"]
-                    )
+                    if not preceding_raw.strip().startswith("-"):
+                        compound_base = suffix_base(
+                            preceding_raw
+                            if "|" in preceding_raw or "¦" in preceding_raw
+                            else preceding["lemma"]
+                        )
 
             raw = match.group(0)
             direct_matches = [
@@ -778,10 +779,21 @@ def recover_runeberg_boundary_series(
                 cursor = match.end()
                 rule_hit("runeberg.friliggande_lodstreckslemma")
                 continue
+            raw_lemma = normalize_lemma(raw)
+            article_headword = normalize_lemma(head["headword"])
+            standalone_boundary = (
+                raw.startswith("-")
+                and len(raw_lemma) > len(article_headword)
+                and raw_lemma.startswith(article_headword)
+            )
             lemma = (
-                expand_compound(compound_base, raw)
-                if raw.startswith("-")
-                else normalize_lemma(raw)
+                raw_lemma
+                if standalone_boundary
+                else (
+                    expand_compound(compound_base, raw)
+                    if raw.startswith("-")
+                    else raw_lemma
+                )
             )
             cursor = match.end()
             if lemma == normalize_lemma(head["headword"]):
@@ -827,6 +839,35 @@ def recover_runeberg_boundary_series(
                         recovered.get("raw", "") or recovered["lemma"]
                     )
                     new_base = suffix_base(raw)
+                    if standalone_boundary:
+                        recovered_index = items.index(recovered)
+                        last_rebased_lemma = lemma
+                        for dependent in list(items[recovered_index + 1 :]):
+                            if int(dependent["article_number"]) != int(
+                                article_number
+                            ):
+                                break
+                            if not dependent.get(
+                                "raw", ""
+                            ).strip().startswith("-"):
+                                break
+                            rebuilt = expand_compound(
+                                new_base, dependent["raw"]
+                            )
+                            if inflection_of_previous(
+                                last_rebased_lemma, rebuilt
+                            ):
+                                items.remove(dependent)
+                                if dependent in article_items:
+                                    article_items.remove(dependent)
+                                rule_hit(
+                                    "runeberg.borttagen_följdböjning"
+                                )
+                                continue
+                            dependent["lemma"] = rebuilt
+                            dependent["stem_lemma"] = rebuilt
+                            last_rebased_lemma = rebuilt
+                            rule_hit("runeberg.ombyggd_följdändelse")
                     for dependent in article_items:
                         if (
                             dependent is not recovered
@@ -919,6 +960,32 @@ def recover_runeberg_boundary_series(
                     }
                 )
             items.insert(anchor_index + 1, recovered)
+            if (
+                standalone_boundary
+                and recovered.get("method") == "Runebergs lodstrecksserie"
+            ):
+                new_base = suffix_base(raw)
+                last_rebased_lemma = lemma
+                for dependent in list(items[anchor_index + 2 :]):
+                    if int(dependent["article_number"]) != int(
+                        article_number
+                    ):
+                        break
+                    if not dependent.get(
+                        "raw", ""
+                    ).strip().startswith("-"):
+                        break
+                    rebuilt = expand_compound(new_base, dependent["raw"])
+                    if inflection_of_previous(last_rebased_lemma, rebuilt):
+                        items.remove(dependent)
+                        if dependent in article_items:
+                            article_items.remove(dependent)
+                        rule_hit("runeberg.borttagen_följdböjning")
+                        continue
+                    dependent["lemma"] = rebuilt
+                    dependent["stem_lemma"] = rebuilt
+                    last_rebased_lemma = rebuilt
+                    rule_hit("runeberg.ombyggd_följdändelse")
             anchor = recovered
     return items
 
