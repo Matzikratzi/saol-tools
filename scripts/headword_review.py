@@ -60,6 +60,31 @@ def visibly_lighter_than_head(
     return candidate_density < statistics.median(head_densities) * 0.82
 
 
+def fits_local_alphabetic_window(
+    items: list[dict], index: int, candidate: str, radius: int = 3
+) -> bool:
+    """Use a neighbour majority so one corrupt head cannot decide ordering."""
+    key = swedish_sort_key(candidate)
+    previous = [
+        swedish_sort_key(item["headword"])
+        for item in items[max(0, index - radius) : index]
+    ]
+    following = [
+        swedish_sort_key(item["headword"])
+        for item in items[index + 1 : index + radius + 1]
+    ]
+
+    def majority(values: list[bool]) -> bool:
+        if not values:
+            return True
+        required = max(1, (2 * len(values) + 2) // 3)
+        return sum(values) >= required
+
+    return majority([value <= key for value in previous]) and majority(
+        [key <= value for value in following]
+    )
+
+
 def trim_plain_definition_tails_by_order(
     items: list[dict], articles: list[dict]
 ) -> None:
@@ -78,9 +103,7 @@ def trim_plain_definition_tails_by_order(
         )
         if len(tokens) < 2:
             continue
-        previous_key = swedish_sort_key(items[index - 1]["headword"])
-        following_key = swedish_sort_key(items[index + 1]["headword"])
-        for split in range(1, len(tokens)):
+         for split in range(1, len(tokens)):
             selected = tokens[:split]
             tail = tokens[split]
             if not visibly_lighter_than_head(selected, tail):
@@ -90,13 +113,13 @@ def trim_plain_definition_tails_by_order(
             )
             prefix = normalize_headword(prefix_raw)
             tail_word = normalize_headword(tail.get("text", ""))
-            prefix_key = swedish_sort_key(prefix)
-            tail_key = swedish_sort_key(tail_word)
             if (
                 prefix
                 and item["headword"].startswith(prefix)
-                and previous_key <= prefix_key <= following_key
-                and not previous_key <= tail_key <= following_key
+                and fits_local_alphabetic_window(items, index, prefix)
+                and not fits_local_alphabetic_window(
+                    items, index, tail_word
+                )
             ):
                 item["corrected_from"] = item["headword"]
                 item["correction_method"] = (
