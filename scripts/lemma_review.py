@@ -674,7 +674,7 @@ def repair_false_boundary_from_runeberg(
 ) -> list[dict]:
     """Restore an l misread as | when Runeberg proves the full word and tails."""
     letters = "A-Za-zÅÄÖåäöÀÁÉàáé"
-    suffix_pattern = re.compile(rf"-[{letters}]+\\.?")
+    suffix_pattern = re.compile(rf"-[{letters}]+\.?")
     for article_number, head in heads.items():
         if float(head.get("runeberg_match_score", 0.0)) < 0.80:
             continue
