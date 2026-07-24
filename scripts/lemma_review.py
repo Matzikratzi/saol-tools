@@ -1414,12 +1414,15 @@ def apply_review_facit(
                 }
             )
 
+    reviewed_ranges = list(facit.get("reviewed_ranges", []))
     prefix = facit.get("reviewed_prefix")
     if prefix:
-        boundary = prefix["through"]
-        expected_values = prefix.get("candidates", [])
+        reviewed_ranges.append(prefix)
+    for reviewed_range in reviewed_ranges:
+        boundary = reviewed_range["through"]
+        expected_values = reviewed_range.get("candidates", [])
         start_boundary = (
-            prefix.get("from")
+            reviewed_range.get("from")
             or (expected_values[0] if expected_values else boundary)
         )
         boundary_signature = _facit_match_key(boundary)
