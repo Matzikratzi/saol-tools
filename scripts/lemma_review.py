@@ -461,9 +461,14 @@ def _after_inflection_prefix(tokens: list[dict]) -> list[dict]:
 
 
 def swedish_sort_key(value: str) -> str:
-    """Return a comparison key using Swedish a–z, å, ä, ö order."""
+    """Return a comparison key using Swedish a–z, å, ä, ö order.
+
+    Spaces and hyphens do not occupy alphabetic positions in SAOL.  Ignoring
+    them also lets a following multiword headword bound ordinary prose from
+    the preceding article, e.g. ajabaja < à jour < av.
+    """
     normalized = normalize_lemma(value)
-    return normalized.translate(
+    translated = normalized.translate(
         str.maketrans(
             {
                 "à": "a",
@@ -475,6 +480,7 @@ def swedish_sort_key(value: str) -> str:
             }
         )
     )
+    return re.sub(r"[-\s]+", "", translated)
 
 
 def same_lexical_family(headword: str, candidate: str) -> bool:
