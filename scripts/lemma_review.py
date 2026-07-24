@@ -1247,11 +1247,34 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
     result = []
     seen = set()
 
-    def add(article, lemma, raw, method, score, stem="", line=None, token=None):
+    def add(
+        article,
+        lemma,
+        raw,
+        method,
+        score,
+        stem="",
+        line=None,
+        token=None,
+        allow_duplicate=False,
+    ):
         lemma = normalize_lemma(lemma)
         if not lemma:
             return
-        key = (article["number"], lemma)
+        source_line = line or {}
+        source_token = token or {}
+        key = (
+            (
+                article["number"],
+                lemma,
+                int(source_line.get("page", article["start_page"])),
+                int(source_line.get("column", article["start_column"])),
+                float(source_token.get("top", source_line.get("top", 0.0))),
+                float(source_token.get("left", 0.0)),
+            )
+            if allow_duplicate
+            else (article["number"], lemma)
+        )
         if key in seen:
             return
         seen.add(key)
@@ -1260,8 +1283,6 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
             reasons.append("svag halvfetssignal")
         if len(lemma) == 1 and method != "artikelhuvud":
             reasons.append("ovanligt kort kandidat")
-        source_line = line or {}
-        source_token = token or {}
         source_left = float(source_token.get("left", 0.0))
         source_top = float(
             source_token.get(
@@ -1713,7 +1734,10 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     ):
                         add(
                             article, lemma, cleaned, "halvfet token",
-                            score, line=line, token=token
+                            score,
+                            line=line,
+                            token=token,
+                            allow_duplicate=previous_separator,
                         )
                         rule_hit("extract.friliggande_lemma")
                         same_article_family = lemma.startswith(
