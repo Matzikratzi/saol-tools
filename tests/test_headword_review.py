@@ -8,11 +8,68 @@ from scripts.headword_review import (
     reconcile_homonym_neighbours,
     repair_alphabetic_accents,
     swedish_sort_key,
+    trim_plain_definition_tails_by_order,
+    visibly_lighter_than_head,
 )
 from scripts.runeberg_headwords import align_lines, raw_headword
 
 
 class HeadwordReviewTests(unittest.TestCase):
+    def test_plain_a_kassa_definition_is_trimmed_by_style_and_order(self):
+        article = {
+            "number": 59,
+            "lines": [
+                {
+                    "tokens": [
+                        {
+                            "text": "A-kassa",
+                            "left": 1413,
+                            "ink_density": 0.468,
+                        },
+                        {
+                            "text": "arbetslöshetskassa",
+                            "left": 1673,
+                            "ink_density": 0.358,
+                        },
+                    ]
+                }
+            ],
+        }
+        items = [
+            {
+                "article_number": 58,
+                "headword": "akantus",
+                "corrected_from": "",
+                "correction_method": "",
+            },
+            {
+                "article_number": 59,
+                "headword": "a-kassa arbetslöshetskassa",
+                "raw_headword": "A-kassa arbetslöshetskassa",
+                "stem_headword": "A-kassa arbetslöshetskassa",
+                "corrected_from": "",
+                "correction_method": "",
+            },
+            {
+                "article_number": 60,
+                "headword": "akatalektisk",
+                "corrected_from": "",
+                "correction_method": "",
+            },
+        ]
+        self.assertTrue(
+            visibly_lighter_than_head(
+                article["lines"][0]["tokens"][:1],
+                article["lines"][0]["tokens"][1],
+            )
+        )
+        trim_plain_definition_tails_by_order(items, [article])
+        self.assertEqual(items[1]["headword"], "a-kassa")
+        self.assertEqual(
+            items[1]["correction_method"],
+            "fetstil och alfabetisk ordning",
+        )
+
     def test_swedish_sort_places_a_accent_with_a_and_aa_after_z(self):
         self.assertLess(swedish_sort_key("à la carte"), swedish_sort_key("aladåb"))
         self.assertGreater(swedish_sort_key("å la carte"), swedish_sort_key("aladåb"))
