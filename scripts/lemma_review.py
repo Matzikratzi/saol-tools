@@ -686,6 +686,25 @@ def recover_runeberg_boundary_series(
                     anchor = preceding
 
             raw = match.group(0)
+            standalone_lemma = normalize_lemma(raw)
+            standalone = next(
+                (
+                    item
+                    for item in article_items
+                    if (
+                        raw.startswith("-")
+                        and item["lemma"] == standalone_lemma
+                        and not item.get("raw", "").strip().startswith("-")
+                    )
+                ),
+                None,
+            )
+            if standalone is not None:
+                anchor = standalone
+                used_ids.add(id(standalone))
+                cursor = match.end()
+                rule_hit("runeberg.friliggande_lodstreckslemma")
+                continue
             lemma = (
                 expand_compound(compound_base, raw)
                 if raw.startswith("-")
