@@ -1862,12 +1862,12 @@
         "source_left": 238
       },
       "through": {
-        "article_number": 13,
-        "lemma": "abc-stridsmedel",
+        "article_number": 28,
+        "lemma": "abort",
         "source_page": 19,
-        "source_column": 1,
-        "source_top": 2939,
-        "source_left": 258
+        "source_column": 2,
+        "source_top": 2542,
+        "source_left": 1478
       },
       "candidates": [
         {
@@ -2061,6 +2061,326 @@
           "source_column": 1,
           "source_top": 2939,
           "source_left": 258
+        },
+        {
+          "article_number": 13,
+          "lemma": "abc-vapen",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 3085,
+          "source_left": 298
+        },
+        {
+          "article_number": 14,
+          "lemma": "abderit",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 3149,
+          "source_left": 259
+        },
+        {
+          "article_number": 14,
+          "lemma": "abderitisk",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 3147,
+          "source_left": 857
+        },
+        {
+          "article_number": 15,
+          "lemma": "abdikation",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 3289,
+          "source_left": 259
+        },
+        {
+          "article_number": 15,
+          "lemma": "abdikationsakt",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 3281,
+          "source_left": 841
+        },
+        {
+          "article_number": 15,
+          "lemma": "abdikera",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 3282,
+          "source_left": 1009
+        },
+        {
+          "article_number": 15,
+          "lemma": "abdikering",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 3418,
+          "source_left": 937
+        },
+        {
+          "article_number": 16,
+          "lemma": "abdomen",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 3489,
+          "source_left": 259
+        },
+        {
+          "article_number": 16,
+          "lemma": "abdominal",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 3626,
+          "source_left": 597
+        },
+        {
+          "article_number": 17,
+          "lemma": "aber",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 3704,
+          "source_left": 260
+        },
+        {
+          "article_number": 18,
+          "lemma": "aberration",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 3840,
+          "source_left": 259
+        },
+        {
+          "article_number": 19,
+          "lemma": "abessinier",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 3976,
+          "source_left": 260
+        },
+        {
+          "article_number": 19,
+          "lemma": "abessinsk",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 4049,
+          "source_left": 458
+        },
+        {
+          "article_number": 19,
+          "lemma": "abessinska",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 4042,
+          "source_left": 746
+        },
+        {
+          "article_number": 20,
+          "lemma": "abilitet",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 1018,
+          "source_left": 1476
+        },
+        {
+          "article_number": 21,
+          "lemma": "abiturient",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 1092,
+          "source_left": 1476
+        },
+        {
+          "article_number": 21,
+          "lemma": "abiturientklass",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 1151,
+          "source_left": 2342
+        },
+        {
+          "article_number": 22,
+          "lemma": "ablation",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 1230,
+          "source_left": 1476
+        },
+        {
+          "article_number": 23,
+          "lemma": "ablativ",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 1370,
+          "source_left": 1477
+        },
+        {
+          "article_number": 23,
+          "lemma": "ablativform",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 1431,
+          "source_left": 2408
+        },
+        {
+          "article_number": 24,
+          "lemma": "abnorm",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 1577,
+          "source_left": 1476
+        },
+        {
+          "article_number": 24,
+          "lemma": "abnormpsykologi",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 1639,
+          "source_left": 2119
+        },
+        {
+          "article_number": 24,
+          "lemma": "abnormtillstånd",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 1706,
+          "source_left": 1517
+        },
+        {
+          "article_number": 24,
+          "lemma": "abnormitet",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 1707,
+          "source_left": 1840
+        },
+        {
+          "article_number": 25,
+          "lemma": "abolition",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 1784,
+          "source_left": 1477
+        },
+        {
+          "article_number": 26,
+          "lemma": "abonnemang",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 1923,
+          "source_left": 1476
+        },
+        {
+          "article_number": 26,
+          "lemma": "abonnemangsbiljett",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 1914,
+          "source_left": 2365
+        },
+        {
+          "article_number": 26,
+          "lemma": "abonnemangsföreställning",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 1981,
+          "source_left": 1517
+        },
+        {
+          "article_number": 26,
+          "lemma": "abonnemangskonsert",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 1979,
+          "source_left": 1944
+        },
+        {
+          "article_number": 26,
+          "lemma": "abonnemangspris",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 1979,
+          "source_left": 2236
+        },
+        {
+          "article_number": 26,
+          "lemma": "abonnemangssystem",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2046,
+          "source_left": 1516
+        },
+        {
+          "article_number": 26,
+          "lemma": "abonnemangsvillkor",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2045,
+          "source_left": 1795
+        },
+        {
+          "article_number": 26,
+          "lemma": "abonnent",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2050,
+          "source_left": 2111
+        },
+        {
+          "article_number": 26,
+          "lemma": "abonnera",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2175,
+          "source_left": 1905
+        },
+        {
+          "article_number": 26,
+          "lemma": "abonnentförteckning",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2118,
+          "source_left": 1754
+        },
+        {
+          "article_number": 26,
+          "lemma": "abonnentnummer",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2129,
+          "source_left": 2106
+        },
+        {
+          "article_number": 26,
+          "lemma": "abonnentpris",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2117,
+          "source_left": 2379
+        },
+        {
+          "article_number": 26,
+          "lemma": "abonnentutrustning",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2183,
+          "source_left": 1518
+        },
+        {
+          "article_number": 27,
+          "lemma": "aborigin",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2392,
+          "source_left": 1485
+        },
+        {
+          "article_number": 28,
+          "lemma": "abort",
+          "source_page": 19,
+          "source_column": 2,
+          "source_top": 2542,
+          "source_left": 1478
         }
       ]
     }
