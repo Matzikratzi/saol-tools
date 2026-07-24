@@ -1938,6 +1938,58 @@ class LemmaReviewTests(unittest.TestCase):
             ["agglutination", "agglutinin"],
         )
 
+    def test_corrupt_short_adjective_t_is_not_a_lemma(self):
+        articles = {
+            "pages": [24],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 24,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 24,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("agnat", 100, 0.40),
+                                token("-en", 250, 0.10),
+                                token("s.", 330, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 24,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("-isk", 140, 0.40),
+                                token("-Lt", 260, 0.00),
+                                token("adj.", 340, 0.10),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "agnat",
+                    "stem_headword": "agnat",
+                    "runeberg_match_score": 0.0,
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["agnat", "agnatisk"],
+        )
+
     def test_packages_three_review_json_files(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
