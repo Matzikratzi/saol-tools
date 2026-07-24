@@ -500,6 +500,61 @@ class LemmaReviewTests(unittest.TestCase):
             items[0]["method"], "Runebergkorrigerad slutbokstav"
         )
 
+    def test_explicit_cross_reference_keeps_second_printed_occurrence(self):
+        articles = {
+            "pages": [21],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 21,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 21,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("adaptation", 100, 0.40),
+                                token("el.", 350, 0.10),
+                                token("adaption", 420, 0.40),
+                                token("(-psjo'n)", 650, 0.10),
+                                token("-en", 820, 0.10),
+                                token("-er", 900, 0.10),
+                            ],
+                        },
+                        {
+                            "page": 21,
+                            "column": 1,
+                            "top": 140.0,
+                            "bottom": 164.0,
+                            "tokens": [
+                                token("—", 100, 0.10),
+                                token("adaption", 160, 0.40),
+                                token("se", 400, 0.10),
+                                token("adaptation", 470, 0.10),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 1,
+                    "headword": "adaptation",
+                    "stem_headword": "adaptation",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["adaptation", "adaption", "adaption"],
+        )
+
     def test_stem_suffix_inflection_is_not_a_lemma(self):
         articles = {
             "pages": [23],
