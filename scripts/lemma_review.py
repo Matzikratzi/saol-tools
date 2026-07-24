@@ -444,6 +444,17 @@ def _after_inflection_prefix(tokens: list[dict]) -> list[dict]:
         if plain == "ss":
             plain = "s"
         if plain in POS:
+            for alias_index in range(2, index):
+                previous = normalize_lemma(
+                    tokens[alias_index - 1].get("text", "")
+                )
+                alias = tokens[alias_index].get("text", "").strip()
+                if (
+                    previous in {"el", "eller", "äv"}
+                    and normalize_lemma(alias)
+                    and not alias.startswith("-")
+                ):
+                    return tokens[alias_index:]
             return tokens[index + 1 :]
     return tokens[1:]
 
@@ -1028,6 +1039,21 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                         following_tokens[0].get("text", "")
                     ) in POS
                 )
+                preceded_by_pos = (
+                    token_index > 0
+                    and normalize_lemma(
+                        tokens[token_index - 1].get("text", "")
+                    ) in POS
+                )
+                normalized_cleaned = normalize_lemma(cleaned)
+                normalized_head = normalize_lemma(current_head)
+                first_line_family_word = (
+                    line_index == 0
+                    and preceded_by_pos
+                    and len(normalized_head) >= 2
+                    and len(normalized_cleaned) > len(normalized_head) + 2
+                    and normalized_cleaned.startswith(normalized_head)
+                )
                 followed_by_inflection_grammar = (
                     bool(same_line_following)
                     and same_line_following[0].get(
@@ -1045,6 +1071,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     or has_lemma_grammar
                     or followed_by_pos
                     or followed_by_inflection_grammar
+                    or first_line_family_word
                     or series_first
                 ):
                     lemma = normalize_lemma(cleaned)
@@ -1098,6 +1125,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             or has_lemma_grammar
                             or followed_by_pos
                             or followed_by_inflection_grammar
+                            or first_line_family_word
                             or series_first
                             or (
                                 at_line_start
