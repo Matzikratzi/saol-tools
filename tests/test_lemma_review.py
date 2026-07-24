@@ -2227,6 +2227,99 @@ class LemmaReviewTests(unittest.TestCase):
             ],
         )
 
+    def test_later_inflection_does_not_turn_definition_into_compound_base(self):
+        articles = {
+            "pages": [24],
+            "articles": [
+                {
+                    "number": 56,
+                    "start_page": 24,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 24,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("akademi", 100, 0.50),
+                                token("-en", 300, 0.25),
+                                token("s.", 400, 0.30),
+                            ],
+                        },
+                        {
+                            "page": 24,
+                            "column": 2,
+                            "top": 130.0,
+                            "bottom": 154.0,
+                            "tokens": [
+                                token("läroanstalt", 100, 0.36),
+                                token("m.m.", 390, 0.34),
+                                token("-hemman", 500, 0.41),
+                            ],
+                        },
+                        {
+                            "page": 24,
+                            "column": 2,
+                            "top": 160.0,
+                            "bottom": 184.0,
+                            "tokens": [
+                                token("-ledamot", 100, 0.44),
+                                token("-medlem", 320, 0.43),
+                                token("-räntmästare", 520, 0.46),
+                            ],
+                        },
+                        {
+                            "page": 24,
+                            "column": 2,
+                            "top": 190.0,
+                            "bottom": 214.0,
+                            "tokens": [
+                                token("-sekreterare", 100, 0.44),
+                                token("—", 430, 0.70),
+                                token("akademiker", 500, 0.48),
+                            ],
+                        },
+                        {
+                            "page": 24,
+                            "column": 2,
+                            "top": 220.0,
+                            "bottom": 244.0,
+                            "tokens": [
+                                token("akademisk", 100, 0.46),
+                                token("-t", 400, 0.25),
+                                token("adj.", 470, 0.28),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 56,
+                    "headword": "akademi",
+                    "stem_headword": "akademi",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            [
+                "akademi",
+                "akademihemman",
+                "akademiledamot",
+                "akademimedlem",
+                "akademiräntmästare",
+                "akademisekreterare",
+                "akademiker",
+                "akademisk",
+            ],
+        )
+
     def test_unbold_alternative_suffix_in_definition_is_rejected(self):
         self.assertTrue(weak_alternative_suffix("el.", 0.0))
         self.assertTrue(weak_alternative_suffix("eller", 0.44))
