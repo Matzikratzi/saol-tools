@@ -80,6 +80,63 @@ class LemmaReviewTests(unittest.TestCase):
     def test_normalizes_stem_boundary_for_game_word(self):
         self.assertEqual(normalize_lemma("amp|el"), "ampel")
 
+    def test_boundary_prefix_overlaps_previous_compound(self):
+        self.assertEqual(
+            expand_boundary_compound("adelsman", "-manna|ära"),
+            "adelsmannaära",
+        )
+
+    def test_runeberg_boundary_uses_previous_printed_compound(self):
+        common = {
+            "article_number": 1,
+            "source_page": 21,
+            "source_column": 2,
+            "source_bottom": 150.0,
+        }
+        items = [
+            {
+                **common,
+                "lemma": "adel",
+                "raw": "adel",
+                "method": "artikelhuvud",
+                "source_top": 100.0,
+                "source_left": 100.0,
+            },
+            {
+                **common,
+                "lemma": "adelsman",
+                "raw": "-man",
+                "method": "sammansättningssuffix",
+                "source_top": 120.0,
+                "source_left": 300.0,
+            },
+            {
+                **common,
+                "lemma": "adelsbrevmannaära",
+                "stem_lemma": "adelsbrevmannaära",
+                "raw": "-mannalära",
+                "method": "sammansättningssuffix",
+                "reasons": ["svag halvfetssignal"],
+                "source_top": 120.0,
+                "source_left": 500.0,
+            },
+        ]
+        head = {
+            "article_number": 1,
+            "headword": "adel",
+            "stem_headword": "adel",
+            "runeberg_match_score": 1.0,
+            "runeberg_article_lines": [
+                "adel -n s. adels|brev",
+                "-man -manna|ära",
+            ],
+        }
+        recover_runeberg_boundary_series(items, {1: head})
+        self.assertIn("adelsmannaära", [item["lemma"] for item in items])
+        self.assertNotIn(
+            "adelsbrevmannaära", [item["lemma"] for item in items]
+        )
+
     def test_plural_of_previous_a_noun_is_not_a_lemma(self):
         self.assertTrue(plural_of_previous("afrikanska", "afrikanskor"))
         self.assertFalse(plural_of_previous("afrikansk", "afrikanskor"))
