@@ -1882,12 +1882,12 @@
         "source_left": 238
       },
       "through": {
-        "article_number": 54,
-        "lemma": "accept",
+        "article_number": 59,
+        "lemma": "acetylsalicylsyra",
         "source_page": 20,
         "source_column": 2,
-        "source_top": 1121,
-        "source_left": 1379
+        "source_top": 3001,
+        "source_left": 1955
       },
       "candidates": [
         {
@@ -3089,6 +3089,230 @@
           "source_column": 2,
           "source_top": 1121,
           "source_left": 1379
+        },
+        {
+          "article_number": 54,
+          "lemma": "acceptkredit",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 1246,
+          "source_left": 2032
+        },
+        {
+          "article_number": 54,
+          "lemma": "acceptabel",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 1309,
+          "source_left": 1418
+        },
+        {
+          "article_number": 54,
+          "lemma": "acceptablare",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 1313,
+          "source_left": 2100
+        },
+        {
+          "article_number": 54,
+          "lemma": "acceptans",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 1384,
+          "source_left": 1720
+        },
+        {
+          "article_number": 54,
+          "lemma": "acceptant",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 1450,
+          "source_left": 1419
+        },
+        {
+          "article_number": 54,
+          "lemma": "acceptera",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 1506,
+          "source_left": 1420
+        },
+        {
+          "article_number": 54,
+          "lemma": "acceptering",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 1570,
+          "source_left": 2289
+        },
+        {
+          "article_number": 55,
+          "lemma": "access",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 1661,
+          "source_left": 1380
+        },
+        {
+          "article_number": 55,
+          "lemma": "accession",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 1712,
+          "source_left": 2032
+        },
+        {
+          "article_number": 55,
+          "lemma": "accesstid",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 1715,
+          "source_left": 1656
+        },
+        {
+          "article_number": 55,
+          "lemma": "accessionskatalog",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 1842,
+          "source_left": 1421
+        },
+        {
+          "article_number": 55,
+          "lemma": "accessoarer",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 1856,
+          "source_left": 1774
+        },
+        {
+          "article_number": 55,
+          "lemma": "accessorisk",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 1910,
+          "source_left": 1666
+        },
+        {
+          "article_number": 56,
+          "lemma": "accidens",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 2056,
+          "source_left": 1382
+        },
+        {
+          "article_number": 56,
+          "lemma": "accidenstryck",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 2117,
+          "source_left": 2188
+        },
+        {
+          "article_number": 56,
+          "lemma": "accidentell",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 2248,
+          "source_left": 2050
+        },
+        {
+          "article_number": 56,
+          "lemma": "accidenstryckeri",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 2251,
+          "source_left": 1738
+        },
+        {
+          "article_number": 57,
+          "lemma": "accis",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 2395,
+          "source_left": 1388
+        },
+        {
+          "article_number": 57,
+          "lemma": "accisfri",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 2455,
+          "source_left": 2228
+        },
+        {
+          "article_number": 57,
+          "lemma": "accismedel",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 2455,
+          "source_left": 2323
+        },
+        {
+          "article_number": 57,
+          "lemma": "accispliktig",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 2523,
+          "source_left": 1607
+        },
+        {
+          "article_number": 58,
+          "lemma": "acetaldehyd",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 2598,
+          "source_left": 1388
+        },
+        {
+          "article_number": 59,
+          "lemma": "acetat",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 2741,
+          "source_left": 1385
+        },
+        {
+          "article_number": 59,
+          "lemma": "acetatsilke",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 2800,
+          "source_left": 2203
+        },
+        {
+          "article_number": 59,
+          "lemma": "acetatrayon",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 2814,
+          "source_left": 1754
+        },
+        {
+          "article_number": 59,
+          "lemma": "aceton",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 2875,
+          "source_left": 1712
+        },
+        {
+          "article_number": 59,
+          "lemma": "acetyl",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 2934,
+          "source_left": 1968
+        },
+        {
+          "article_number": 59,
+          "lemma": "acetylsalicylsyra",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 3001,
+          "source_left": 1955
         }
       ]
     }
