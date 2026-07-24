@@ -3,12 +3,12 @@
   "pages": {},
   "reviewed_prefix": {
     "through": {
-      "article_number": 34,
-      "lemma": "agnosticism",
+      "article_number": 43,
+      "lemma": "ah",
       "source_page": 24,
       "source_column": 1,
-      "source_top": 671,
-      "source_left": 198
+      "source_top": 2468,
+      "source_left": 195
     },
     "candidates": [
       {
@@ -1281,7 +1281,7 @@
         "source_page": 23,
         "source_column": 2,
         "source_top": 3523,
-        "source_left": 1450
+        "source_left": 1734
       },
       {
         "article_number": 29,
@@ -1296,7 +1296,7 @@
         "lemma": "agitator",
         "source_page": 23,
         "source_column": 2,
-        "source_top": 3585,
+        "source_top": 3583,
         "source_left": 1490
       },
       {
@@ -1394,6 +1394,158 @@
         "source_column": 1,
         "source_top": 671,
         "source_left": 198
+      },
+      {
+        "article_number": 34,
+        "lemma": "agnostiker",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 863,
+        "source_left": 236
+      },
+      {
+        "article_number": 34,
+        "lemma": "agnostisk",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 875,
+        "source_left": 1190
+      },
+      {
+        "article_number": 35,
+        "lemma": "agoni",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1009,
+        "source_left": 198
+      },
+      {
+        "article_number": 36,
+        "lemma": "agorafobi",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1084,
+        "source_left": 197
+      },
+      {
+        "article_number": 37,
+        "lemma": "agraff",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1159,
+        "source_left": 197
+      },
+      {
+        "article_number": 37,
+        "lemma": "agraffnål",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1227,
+        "source_left": 888
+      },
+      {
+        "article_number": 38,
+        "lemma": "agrar",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1313,
+        "source_left": 198
+      },
+      {
+        "article_number": 38,
+        "lemma": "agrarparti",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1440,
+        "source_left": 869
+      },
+      {
+        "article_number": 38,
+        "lemma": "agrarpolitik",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1440,
+        "source_left": 1034
+      },
+      {
+        "article_number": 39,
+        "lemma": "agreabel",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1503,
+        "source_left": 197
+      },
+      {
+        "article_number": 40,
+        "lemma": "agremang",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1659,
+        "source_left": 196
+      },
+      {
+        "article_number": 41,
+        "lemma": "agrikultur",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1919,
+        "source_left": 195
+      },
+      {
+        "article_number": 41,
+        "lemma": "agrikulturkemi",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1985,
+        "source_left": 233
+      },
+      {
+        "article_number": 41,
+        "lemma": "agrikulturell",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1986,
+        "source_left": 467
+      },
+      {
+        "article_number": 42,
+        "lemma": "agronom",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2072,
+        "source_left": 194
+      },
+      {
+        "article_number": 42,
+        "lemma": "agronomexamen",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2208,
+        "source_left": 664
+      },
+      {
+        "article_number": 42,
+        "lemma": "agronomi",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2198,
+        "source_left": 983
+      },
+      {
+        "article_number": 42,
+        "lemma": "agronomisk",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2392,
+        "source_left": 230
+      },
+      {
+        "article_number": 43,
+        "lemma": "ah",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2468,
+        "source_left": 195
       }
     ]
   },
