@@ -124,6 +124,40 @@ def optional_parenthesis_variants(value: str) -> list[str]:
     return [match.group(1) + match.group(2)]
 
 
+def repair_initial_i_suffix_from_order(
+    value: str,
+    current_base: str,
+    previous_lemma: str,
+    following_tokens: list[dict],
+) -> str:
+    """Repair OCR -I... to -l... when both alphabetical neighbours prove it."""
+    cleaned = value.strip().strip(";,:.()[]{}")
+    if not cleaned.startswith("-I"):
+        return value
+    next_suffix = next(
+        (
+            token.get("text", "").strip().strip(";,:.()[]{}")
+            for token in following_tokens
+            if token.get("text", "").strip().strip(";,:.()[]{}").startswith("-")
+        ),
+        "",
+    )
+    if not next_suffix:
+        return value
+    previous = normalize_lemma(previous_lemma)
+    wrong = expand_compound(current_base, cleaned)
+    repaired = "-l" + cleaned[2:]
+    corrected = expand_compound(current_base, repaired)
+    following = expand_compound(current_base, next_suffix)
+    if (
+        previous
+        and previous < corrected < following
+        and not previous < wrong < following
+    ):
+        return repaired
+    return value
+
+
 def repair_mixed_case_duplicate(value: str) -> str:
     """Collapse an OCR duplicate such as -mMässighet to -Mässighet."""
     match = re.match(r"^(-?)([a-zåäö])([A-ZÅÄÖ])(.*)$", value)
@@ -583,6 +617,12 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     at_line_start = False
                     continue
                 if cleaned.startswith("-"):
+                    cleaned = repair_initial_i_suffix_from_order(
+                        cleaned,
+                        current_base,
+                        last_lookup_lemma,
+                        same_line_following,
+                    )
                     following_series_prefix = next(
                         (
                             candidate["text"]
