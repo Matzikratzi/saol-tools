@@ -1535,8 +1535,15 @@ def report_html(
             path_target = (int(match.group(1)), int(match.group(2)))
             figure_id = ' id="review-page-%d-column-%d"' % path_target
             if path_target == first_target:
-                with Image.open(path) as review_image:
-                    image_height = max(1, review_image.height)
+                if path.exists():
+                    with Image.open(path) as review_image:
+                        image_height = max(1, review_image.height)
+                else:
+                    image_height = max(
+                        1.0,
+                        float(first_review.get("source_bottom", 0.0)),
+                        float(first_review.get("source_top", 0.0)) + 1.0,
+                    )
                 anchor_top = max(
                     0.0,
                     min(
