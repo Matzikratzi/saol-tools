@@ -9,6 +9,7 @@ import json
 import re
 import statistics
 import zipfile
+from collections import Counter
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -18,6 +19,17 @@ from scripts.article_start_ml import DEFAULT_CACHE, extract_page
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_FACIT = ROOT / "data" / "lemma_review_facit.json"
+RULE_HITS: Counter[str] = Counter()
+
+
+def rule_hit(name: str, count: int = 1) -> None:
+    """Record that one generic parsing or correction rule affected output."""
+    RULE_HITS[name] += count
+
+
+def rule_stats() -> dict[str, int]:
+    """Return stable, non-zero rule counters for reports and comparisons."""
+    return dict(sorted(RULE_HITS.items()))
 
 
 POS = {"adj", "adv", "interj", "prep", "pron", "s", "v"}
@@ -557,6 +569,7 @@ def remove_alphabetic_family_outliers(
                             or not lower <= candidate_key <= upper
                         ):
                             rejected_ids.add(id(candidate))
+                            rule_hit("filter.alfabetisk_ordning")
                 pending.clear()
                 previous_anchor = lemma
             else:
@@ -574,6 +587,7 @@ def remove_alphabetic_family_outliers(
                     candidate_key = swedish_sort_key(candidate["lemma"])
                     if not lower <= candidate_key <= upper:
                         rejected_ids.add(id(candidate))
+                        rule_hit("filter.alfabetisk_ordning")
 
     return [item for item in items if id(item) not in rejected_ids]
 
@@ -693,6 +707,7 @@ def recover_runeberg_boundary_series(
                         for reason in recovered.get("reasons", [])
                         if reason != "svag halvfetssignal"
                     ]
+                    rule_hit("runeberg.korrigerad_lodstrecksserie")
                 else:
                     recovered = head_item.copy()
                     recovered.update(
@@ -709,6 +724,7 @@ def recover_runeberg_boundary_series(
                         }
                     )
                     article_items.append(recovered)
+                    rule_hit("runeberg.återställd_lodstrecksserie")
 
             used_ids.add(id(recovered))
             if recovered is anchor:
@@ -765,6 +781,7 @@ def recover_runeberg_boundary_series(
 
 
 def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict]:
+    RULE_HITS.clear()
     heads = {item["article_number"]: item for item in heads_payload["headwords"]}
     ordinary, bold = _references(articles_payload)
     result = []
@@ -927,18 +944,25 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 )
                 if intrusion_boundary != cleaned:
                     cleaned = intrusion_boundary
+                    rule_hit("repair.intrång_före_lodstreck")
                 elif multiword_boundary != cleaned:
                     cleaned = multiword_boundary
+                    rule_hit("repair.sammanskrivet_flerordsuttryck")
                 elif era_boundary:
                     cleaned = era_boundary
+                    rule_hit("infer.verb_era_lodstreck")
                 elif previous_boundary:
                     cleaned = previous_boundary
+                    rule_hit("infer.föregående_lemma_lodstreck")
                 elif divergence_boundary:
                     cleaned = divergence_boundary
+                    rule_hit("infer.artikelavvikelse_lodstreck")
                 elif family_boundary:
                     cleaned = family_boundary
+                    rule_hit("infer.artikelfamilj_lodstreck")
                 elif repeated_boundary:
                     cleaned = repeated_boundary
+                    rule_hit("infer.upprepad_suffix_lodstreck")
                 series_position = line_index == 0 and at_line_start
                 inferred = ""
                 if series_position:
@@ -955,6 +979,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     )
                     if inferred:
                         cleaned = inferred
+                        rule_hit("infer.sammansättningsserie_lodstreck")
                 series_first = bool(inferred)
                 lexical = bool(re.search(r"[A-Za-zÅÄÖåäöÀÁÉàáé]", cleaned))
                 if not lexical:
@@ -968,15 +993,19 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                         else ""
                     )
                     if weak_alternative_suffix(previous_raw, score):
+                        rule_hit("filter.svag_eller_suffix")
                         previous_separator = False
                         at_line_start = False
                         continue
+                    before_initial_repair = cleaned
                     cleaned = repair_initial_i_suffix_from_order(
                         cleaned,
                         current_base,
                         last_lookup_lemma,
                         same_line_following,
                     )
+                    if cleaned != before_initial_repair:
+                        rule_hit("repair.initial_i_via_ordning")
                     following_series_prefix = next(
                         (
                             candidate["text"]
@@ -1008,16 +1037,20 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     )
                     if inferred_suffix_boundary:
                         cleaned = inferred_suffix_boundary
+                        rule_hit("infer.suffixserie_lodstreck")
                     runeberg_inflection = (
                         line_index == 0
                         and score < 0.25
                         and runeberg_short_inflection(raw, head)
                     )
                     if runeberg_inflection:
+                        rule_hit("filter.runeberg_kort_böjning")
                         previous_separator = False
                         at_line_start = False
                         continue
                     repaired_suffix = repair_mixed_case_duplicate(cleaned)
+                    if repaired_suffix != cleaned:
+                        rule_hit("repair.dubblerad_blandad_versal")
                     for marker in ("|", "¦"):
                         if marker in repaired_suffix:
                             suffix_series_prefix = repaired_suffix.split(
@@ -1068,6 +1101,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                                 token=token,
                             )
                             last_lookup_lemma = lemma
+                            rule_hit("extract.sammansättningssuffix")
                     previous_separator = False
                     at_line_start = False
                     continue
@@ -1160,6 +1194,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             article, lemma, cleaned, "halvfet token",
                             score, line=line, token=token
                         )
+                        rule_hit("extract.friliggande_lemma")
                         same_article_family = lemma.startswith(
                             article_family
                         )
@@ -1238,6 +1273,7 @@ def apply_manual_insertions(items: list[dict], facit: dict) -> list[dict]:
         inserted.setdefault("stem_lemma", inserted["lemma"])
         inserted.setdefault("raw", inserted["lemma"])
         items.insert(anchor_index + 1, inserted)
+        rule_hit("special.manuell_lemma_infogning")
     return items
 
 
@@ -1830,6 +1866,7 @@ def main() -> None:
         ),
         "facit_new_count": facit_new_count,
         "facit_missing": missing,
+        "rule_stats": rule_stats(),
         "candidates": items,
     }
     args.json.write_text(
@@ -1860,6 +1897,9 @@ def main() -> None:
         + (output["approved_through"] or "—")
     )
     print(f"Facitavvikelser: {facit_new_count + len(missing)}")
+    print("Regelträffar:")
+    for name, count in output["rule_stats"].items():
+        print(f"  {name}: {count}")
     for value in missing:
         print(
             "  SAKNAS sida=%d artikel=%d lemma=%s"
