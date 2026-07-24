@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 
 from scripts.headword_review import (
+    extract_head,
     fits_local_alphabetic_window,
     infer_homonym_runs,
     infer_stem_boundary_from_ocr,
