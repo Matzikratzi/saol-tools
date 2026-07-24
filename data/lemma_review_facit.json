@@ -1862,12 +1862,12 @@
         "source_left": 238
       },
       "through": {
-        "article_number": 9,
-        "lemma": "abborre",
+        "article_number": 11,
+        "lemma": "abbreviation",
         "source_page": 19,
         "source_column": 1,
-        "source_top": 2181,
-        "source_left": 257
+        "source_top": 2462,
+        "source_left": 258
       },
       "candidates": [
         {
@@ -1957,6 +1957,62 @@
           "source_column": 1,
           "source_top": 2181,
           "source_left": 257
+        },
+        {
+          "article_number": 9,
+          "lemma": "abborrfiske",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 2185,
+          "source_left": 767
+        },
+        {
+          "article_number": 9,
+          "lemma": "abborrgrund",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 2186,
+          "source_left": 932
+        },
+        {
+          "article_number": 9,
+          "lemma": "abborrpinne",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 2186,
+          "source_left": 1132
+        },
+        {
+          "article_number": 10,
+          "lemma": "abbot",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 2328,
+          "source_left": 258
+        },
+        {
+          "article_number": 10,
+          "lemma": "abbotsdöme",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 2328,
+          "source_left": 444
+        },
+        {
+          "article_number": 10,
+          "lemma": "abbotsstift",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 2386,
+          "source_left": 963
+        },
+        {
+          "article_number": 11,
+          "lemma": "abbreviation",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 2462,
+          "source_left": 258
         }
       ]
     }
