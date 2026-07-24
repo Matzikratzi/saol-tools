@@ -1234,21 +1234,31 @@ def apply_manual_insertions(items: list[dict], facit: dict) -> list[dict]:
     for insertion in facit.get("manual_insertions", []):
         anchor_signature = _signature_tuple(insertion["after"])
         candidate = insertion["candidate"]
-        candidate_signature = _signature_tuple(candidate)
-        if any(_signature_tuple(item) == candidate_signature for item in items):
-            continue
         anchors = [
             index
             for index, item in enumerate(items)
             if _signature_tuple(item) == anchor_signature
         ]
+        if not anchors:
+            anchors = [
+                index
+                for index, item in enumerate(items)
+                if item["lemma"] == insertion["after"]["lemma"]
+            ]
         if len(anchors) != 1:
             continue
         anchor_index = anchors[0]
         anchor = items[anchor_index]
+        if any(
+            int(item["article_number"]) == int(anchor["article_number"])
+            and item["lemma"] == candidate["lemma"]
+            for item in items
+        ):
+            continue
         source_left = float(anchor.get("source_right", anchor.get("source_left", 0.0))) + 12.0
         inserted = anchor.copy()
         inserted.update(candidate)
+        inserted["article_number"] = anchor["article_number"]
         inserted.update(
             {
                 "homonym": anchor.get("homonym"),
@@ -1281,23 +1291,29 @@ def _signature_tuple(item: dict) -> tuple[int, str]:
     return int(item["article_number"]), item["lemma"]
 
 
-def _at_or_before_boundary(item: dict, boundary: dict) -> bool:
-    """Compare an item with a stored physical boundary if its signature changed."""
-    article = int(item["article_number"])
-    boundary_article = int(boundary["article_number"])
-    if article != boundary_article:
-        return article < boundary_article
+def _physical_tuple(item: dict) -> tuple[int, int, float, float]:
     return (
         int(item.get("source_page", 0)),
         int(item.get("source_column", 0)),
         float(item.get("source_top", 0.0)),
         float(item.get("source_left", 0.0)),
-    ) <= (
-        int(boundary.get("source_page", 0)),
-        int(boundary.get("source_column", 0)),
-        float(boundary.get("source_top", 0.0)),
-        float(boundary.get("source_left", 0.0)),
     )
+
+
+def _facit_match_key(item: dict) -> tuple:
+    """Match reviewed words independently of run-local article numbering."""
+    if int(item.get("source_page", 0)):
+        return (*_physical_tuple(item), item["lemma"])
+    return ("legacy", *_signature_tuple(item))
+
+
+def _at_or_before_boundary(item: dict, boundary: dict) -> bool:
+    """Compare an item with a stored physical boundary if its signature changed."""
+    return _physical_tuple(item) <= _physical_tuple(boundary)
+
+
+def _at_or_after_boundary(item: dict, boundary: dict) -> bool:
+    return _physical_tuple(item) >= _physical_tuple(boundary)
 
 
 def apply_review_facit(
@@ -1336,39 +1352,56 @@ def apply_review_facit(
     prefix = facit.get("reviewed_prefix")
     if prefix:
         boundary = prefix["through"]
-        boundary_signature = _signature_tuple(boundary)
+        expected_values = prefix.get("candidates", [])
+        start_boundary = (
+            prefix.get("from")
+            or (expected_values[0] if expected_values else boundary)
+        )
+        boundary_signature = _facit_match_key(boundary)
+        start_signature = _facit_match_key(start_boundary)
         boundary_indexes = [
             index
             for index, item in enumerate(items)
-            if _signature_tuple(item) == boundary_signature
+            if _facit_match_key(item) == boundary_signature
         ]
-        if len(boundary_indexes) == 1:
-            current_items = items[: boundary_indexes[0] + 1]
+        start_indexes = [
+            index
+            for index, item in enumerate(items)
+            if _facit_match_key(item) == start_signature
+        ]
+        if (
+            len(start_indexes) == 1
+            and len(boundary_indexes) == 1
+            and start_indexes[0] <= boundary_indexes[0]
+        ):
+            current_items = items[
+                start_indexes[0] : boundary_indexes[0] + 1
+            ]
         else:
             current_items = [
                 item
                 for item in items
+                if _at_or_after_boundary(item, start_boundary)
                 if _at_or_before_boundary(item, boundary)
             ]
-        expected_values = prefix.get("candidates", [])
-        expected = {_signature_tuple(value) for value in expected_values}
-        current = {_signature_tuple(item) for item in current_items}
+        expected = {_facit_match_key(value) for value in expected_values}
+        current = {_facit_match_key(item) for item in current_items}
         for item in current_items:
             item["review_state"] = (
                 "approved"
-                if _signature_tuple(item) in expected
+                if _facit_match_key(item) in expected
                 else "facit_new"
             )
         stored_by_signature = {
-            _signature_tuple(value): value for value in expected_values
+            _facit_match_key(value): value for value in expected_values
         }
         for signature in sorted(expected - current):
             stored = stored_by_signature[signature]
             missing.append(
                 {
                     "page": int(stored.get("source_page", 0)),
-                    "article_number": signature[0],
-                    "lemma": signature[1],
+                    "article_number": int(stored["article_number"]),
+                    "lemma": stored["lemma"],
                 }
             )
 
@@ -1397,9 +1430,25 @@ def approve_through(facit: dict, items: list[dict], lemma: str) -> dict:
             f"grundformen är inte entydig: {requested} (artiklar {articles})"
         )
     boundary_index = matches[0]
-    boundary_item = items[boundary_index]
+    existing = facit.get("reviewed_prefix", {})
+    existing_values = existing.get("candidates", [])
+    start_boundary = (
+        existing.get("from")
+        or (existing_values[0] if existing_values else None)
+    )
+    start_index = 0
+    if start_boundary is not None:
+        start_matches = [
+            index
+            for index, item in enumerate(items)
+            if _facit_match_key(item) == _facit_match_key(start_boundary)
+        ]
+        if len(start_matches) == 1:
+            start_index = start_matches[0]
+    if start_index > boundary_index:
+        raise ValueError("slutordet ligger före facitets startord")
     candidates = []
-    for item in items[: boundary_index + 1]:
+    for item in items[start_index : boundary_index + 1]:
         value = facit_signature(item)
         value.update(
             {
@@ -1412,6 +1461,7 @@ def approve_through(facit: dict, items: list[dict], lemma: str) -> dict:
         candidates.append(value)
     facit["version"] = max(2, int(facit.get("version", 1)))
     facit["reviewed_prefix"] = {
+        "from": candidates[0].copy(),
         "through": candidates[-1].copy(),
         "candidates": candidates,
     }
