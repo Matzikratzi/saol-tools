@@ -36,6 +36,7 @@ from scripts.lemma_review import (
     repair_mixed_case_duplicate,
     runeberg_short_inflection,
     suffix_base,
+    write_review_bundle,
 )
 
 
@@ -1936,6 +1937,31 @@ class LemmaReviewTests(unittest.TestCase):
             [item["lemma"] for item in candidates],
             ["agglutination", "agglutinin"],
         )
+
+    def test_packages_three_review_json_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            paths = []
+            for name in (
+                "article-text-review.json",
+                "headword-review.json",
+                "lemma-review.json",
+            ):
+                path = root / name
+                path.write_text('{"ok": true}', encoding="utf-8")
+                paths.append(path)
+            bundle = write_review_bundle(root / "reviews.zip", paths)
+            self.assertTrue(bundle.exists())
+            import zipfile
+            with zipfile.ZipFile(bundle) as archive:
+                self.assertEqual(
+                    archive.namelist(),
+                    [path.name for path in paths],
+                )
+                self.assertEqual(
+                    archive.read("lemma-review.json"),
+                    b'{"ok": true}',
+                )
 
     def test_renders_two_column_review_images(self):
         with tempfile.TemporaryDirectory() as directory:
