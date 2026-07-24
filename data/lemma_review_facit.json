@@ -1882,12 +1882,12 @@
         "source_left": 238
       },
       "through": {
-        "article_number": 79,
-        "lemma": "adaptering",
+        "article_number": 93,
+        "lemma": "adjungera",
         "source_page": 21,
-        "source_column": 1,
-        "source_top": 3785,
-        "source_left": 531
+        "source_column": 2,
+        "source_top": 2899.0,
+        "source_left": 1812.0
       },
       "candidates": [
         {
@@ -3953,6 +3953,446 @@
           "source_column": 1,
           "source_top": 3785,
           "source_left": 531
+        },
+        {
+          "article_number": 79,
+          "lemma": "adaption",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 3778.0,
+          "source_left": 761.0
+        },
+        {
+          "article_number": 79,
+          "lemma": "adaptiv",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 3851.0,
+          "source_left": 289.0
+        },
+        {
+          "article_number": 80,
+          "lemma": "adb",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 219.0,
+          "source_left": 1420.0
+        },
+        {
+          "article_number": 80,
+          "lemma": "adb-användning",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 271.0,
+          "source_left": 1898.0
+        },
+        {
+          "article_number": 80,
+          "lemma": "adb-baserad",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 352.0,
+          "source_left": 1459.0
+        },
+        {
+          "article_number": 80,
+          "lemma": "adb-kostnad",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 348.0,
+          "source_left": 1711.0
+        },
+        {
+          "article_number": 80,
+          "lemma": "adb-område",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 342.0,
+          "source_left": 1969.0
+        },
+        {
+          "article_number": 80,
+          "lemma": "adb-register",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 341.0,
+          "source_left": 2215.0
+        },
+        {
+          "article_number": 80,
+          "lemma": "adb-system",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 424.0,
+          "source_left": 1460.0
+        },
+        {
+          "article_number": 80,
+          "lemma": "adb-teknik",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 415.0,
+          "source_left": 1694.0
+        },
+        {
+          "article_number": 80,
+          "lemma": "adb-utrustning",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 410.0,
+          "source_left": 1899.0
+        },
+        {
+          "article_number": 80,
+          "lemma": "adb-verksamhet",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 483.0,
+          "source_left": 1461.0
+        },
+        {
+          "article_number": 81,
+          "lemma": "addend",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 562.0,
+          "source_left": 1420.0
+        },
+        {
+          "article_number": 81,
+          "lemma": "addera",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 620.0,
+          "source_left": 1593.0
+        },
+        {
+          "article_number": 81,
+          "lemma": "addering",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 696.0,
+          "source_left": 1464.0
+        },
+        {
+          "article_number": 81,
+          "lemma": "additament",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 690.0,
+          "source_left": 1692.0
+        },
+        {
+          "article_number": 81,
+          "lemma": "addition",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 756.0,
+          "source_left": 1650.0
+        },
+        {
+          "article_number": 81,
+          "lemma": "additionsexempel",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 821.0,
+          "source_left": 1467.0
+        },
+        {
+          "article_number": 81,
+          "lemma": "additionstecken",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 815.0,
+          "source_left": 1778.0
+        },
+        {
+          "article_number": 81,
+          "lemma": "additionell",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 810.0,
+          "source_left": 2097.0
+        },
+        {
+          "article_number": 81,
+          "lemma": "additiv",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 884.0,
+          "source_left": 1847.0
+        },
+        {
+          "article_number": 82,
+          "lemma": "adekvans",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1099.0,
+          "source_left": 1441.0
+        },
+        {
+          "article_number": 82,
+          "lemma": "adekvat",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1161.0,
+          "source_left": 1709.0
+        },
+        {
+          "article_number": 83,
+          "lemma": "adel",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1307.0,
+          "source_left": 1445.0
+        },
+        {
+          "article_number": 83,
+          "lemma": "adelsbrev",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1296.0,
+          "source_left": 1706.0
+        },
+        {
+          "article_number": 83,
+          "lemma": "adelsmannaära",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1354.0,
+          "source_left": 2165.0
+        },
+        {
+          "article_number": 83,
+          "lemma": "adelsfamilj",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1297.0,
+          "source_left": 2003.0
+        },
+        {
+          "article_number": 83,
+          "lemma": "adelsfröken",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1295.0,
+          "source_left": 2189.0
+        },
+        {
+          "article_number": 83,
+          "lemma": "adelsgods",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1292.0,
+          "source_left": 2399.0
+        },
+        {
+          "article_number": 83,
+          "lemma": "adelshögfärd",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1370.0,
+          "source_left": 1485.0
+        },
+        {
+          "article_number": 83,
+          "lemma": "adelskalender",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1367.0,
+          "source_left": 1736.0
+        },
+        {
+          "article_number": 83,
+          "lemma": "adelsman",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1375.0,
+          "source_left": 2009.0
+        },
+        {
+          "article_number": 83,
+          "lemma": "adelsmärke",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1437.0,
+          "source_left": 1486.0
+        },
+        {
+          "article_number": 83,
+          "lemma": "adelsmöte",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1435.0,
+          "source_left": 1696.0
+        },
+        {
+          "article_number": 83,
+          "lemma": "adelsprivilegium",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1430.0,
+          "source_left": 1877.0
+        },
+        {
+          "article_number": 83,
+          "lemma": "adelssläkt",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1426.0,
+          "source_left": 2221.0
+        },
+        {
+          "article_number": 83,
+          "lemma": "adelsstånd",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1421.0,
+          "source_left": 2386.0
+        },
+        {
+          "article_number": 83,
+          "lemma": "adelstitel",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1503.0,
+          "source_left": 1486.0
+        },
+        {
+          "article_number": 83,
+          "lemma": "adelsvälde",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1501.0,
+          "source_left": 1632.0
+        },
+        {
+          "article_number": 84,
+          "lemma": "adelskap",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1576.0,
+          "source_left": 1448.0
+        },
+        {
+          "article_number": 85,
+          "lemma": "adenin",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1650.0,
+          "source_left": 1448.0
+        },
+        {
+          "article_number": 86,
+          "lemma": "adenit",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1790.0,
+          "source_left": 1451.0
+        },
+        {
+          "article_number": 86,
+          "lemma": "adenoid",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 1855.0,
+          "source_left": 1492.0
+        },
+        {
+          "article_number": 87,
+          "lemma": "adenom",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 2061.0,
+          "source_left": 1458.0
+        },
+        {
+          "article_number": 88,
+          "lemma": "adept",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 2201.0,
+          "source_left": 1460.0
+        },
+        {
+          "article_number": 89,
+          "lemma": "aderton",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 2277.0,
+          "source_left": 1462.0
+        },
+        {
+          "article_number": 90,
+          "lemma": "adhesion",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 2353.0,
+          "source_left": 1462.0
+        },
+        {
+          "article_number": 90,
+          "lemma": "adhesionskraft",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 2338.0,
+          "source_left": 2321.0
+        },
+        {
+          "article_number": 90,
+          "lemma": "adhesiv",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 2418.0,
+          "source_left": 1503.0
+        },
+        {
+          "article_number": 91,
+          "lemma": "adiafora",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 2491.0,
+          "source_left": 1464.0
+        },
+        {
+          "article_number": 92,
+          "lemma": "adjektiv",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 2566.0,
+          "source_left": 1466.0
+        },
+        {
+          "article_number": 92,
+          "lemma": "adjektivattribut",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 2764.0,
+          "source_left": 1510.0
+        },
+        {
+          "article_number": 92,
+          "lemma": "adjektivböjning",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 2761.0,
+          "source_left": 1750.0
+        },
+        {
+          "article_number": 92,
+          "lemma": "adjektivisk",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 2756.0,
+          "source_left": 2051.0
+        },
+        {
+          "article_number": 93,
+          "lemma": "adjungera",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 2899.0,
+          "source_left": 1812.0
         }
       ]
     }
