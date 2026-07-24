@@ -3,12 +3,12 @@
   "pages": {},
   "reviewed_prefix": {
     "through": {
-      "article_number": 26,
-      "lemma": "aggressionsdrift",
+      "article_number": 29,
+      "lemma": "agitation",
       "source_page": 23,
       "source_column": 2,
-      "source_top": 2966,
-      "source_left": 1754
+      "source_top": 3523,
+      "source_left": 1450
     },
     "candidates": [
       {
@@ -1210,6 +1210,70 @@
         "source_column": 2,
         "source_top": 2966,
         "source_left": 1754
+      },
+      {
+        "article_number": 26,
+        "lemma": "aggressionshämmad",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 2966,
+        "source_left": 1943
+      },
+      {
+        "article_number": 26,
+        "lemma": "aggressionshämning",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3032,
+        "source_left": 1485
+      },
+      {
+        "article_number": 26,
+        "lemma": "aggressionspolitik",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3031,
+        "source_left": 1810
+      },
+      {
+        "article_number": 26,
+        "lemma": "aggressiv",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3034,
+        "source_left": 2127
+      },
+      {
+        "article_number": 26,
+        "lemma": "aggressivitet",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3166,
+        "source_left": 1915
+      },
+      {
+        "article_number": 27,
+        "lemma": "aggressor",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3254,
+        "source_left": 1447
+      },
+      {
+        "article_number": 28,
+        "lemma": "agio",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3318,
+        "source_left": 1448
+      },
+      {
+        "article_number": 29,
+        "lemma": "agitation",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3523,
+        "source_left": 1450
       }
     ]
   },
