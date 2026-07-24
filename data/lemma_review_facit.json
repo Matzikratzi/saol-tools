@@ -3,12 +3,12 @@
   "pages": {},
   "reviewed_prefix": {
     "through": {
-      "article_number": 56,
-      "lemma": "akademi",
+      "article_number": 59,
+      "lemma": "a-kassa",
       "source_page": 24,
-      "source_column": 1,
-      "source_top": 3956,
-      "source_left": 187
+      "source_column": 2,
+      "source_top": 1078,
+      "source_left": 1413
     },
     "candidates": [
       {
@@ -1714,8 +1714,128 @@
         "source_column": 1,
         "source_top": 3956,
         "source_left": 187
+      },
+      {
+        "article_number": 56,
+        "lemma": "akademihemman",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 255,
+        "source_left": 2076
+      },
+      {
+        "article_number": 56,
+        "lemma": "akademiledamot",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 325,
+        "source_left": 1458
+      },
+      {
+        "article_number": 56,
+        "lemma": "akademimedlem",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 323,
+        "source_left": 1722
+      },
+      {
+        "article_number": 56,
+        "lemma": "akademiräntmästare",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 324,
+        "source_left": 1985
+      },
+      {
+        "article_number": 56,
+        "lemma": "akademisekreterare",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 394,
+        "source_left": 1457
+      },
+      {
+        "article_number": 56,
+        "lemma": "akademiker",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 392,
+        "source_left": 1869
+      },
+      {
+        "article_number": 56,
+        "lemma": "akademikeryrke",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 532,
+        "source_left": 2297
+      },
+      {
+        "article_number": 56,
+        "lemma": "akademisk",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 594,
+        "source_left": 1457
+      },
+      {
+        "article_number": 56,
+        "lemma": "akademist",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 724,
+        "source_left": 1708
+      },
+      {
+        "article_number": 57,
+        "lemma": "akajer",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 863,
+        "source_left": 1416
+      },
+      {
+        "article_number": 58,
+        "lemma": "akantus",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 936,
+        "source_left": 1415
+      },
+      {
+        "article_number": 58,
+        "lemma": "akantusblad",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 1005,
+        "source_left": 1887
+      },
+      {
+        "article_number": 58,
+        "lemma": "akantusväxt",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 1007,
+        "source_left": 2044
+      },
+      {
+        "article_number": 59,
+        "lemma": "a-kassa",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 1078,
+        "source_left": 1413
       }
-    ]
+    ],
+    "from": {
+      "article_number": 1,
+      "lemma": "affirmativ",
+      "source_page": 23,
+      "source_column": 1,
+      "source_top": 249,
+      "source_left": 200
+    }
   },
   "manual_insertions": [
     {
