@@ -15,6 +15,7 @@ from scripts.lemma_review import (
     _items_in_reading_order,
     display_lemma,
     expand_compound,
+    GRAMMAR_MARKERS,
     infer_boundary_at_article_divergence,
     infer_boundary_from_article_family,
     infer_era_boundary_from_verb_grammar,
@@ -32,12 +33,14 @@ from scripts.lemma_review import (
     pronunciation_then_inflection,
     render_review_images,
     recover_runeberg_boundary_series,
+    remove_alphabetic_family_outliers,
     repair_initial_i_suffix_from_order,
     repair_intrusion_before_boundary,
     repair_mixed_case_duplicate,
     report_html,
     runeberg_short_inflection,
     suffix_base,
+    swedish_sort_key,
     write_review_bundle,
 )
 
@@ -2011,6 +2014,53 @@ class LemmaReviewTests(unittest.TestCase):
                 "affärs|angelägenhet", "affär"
             ),
             "affärs|angelägenhet",
+        )
+
+    def test_definition_words_are_rejected_by_alphabetic_interval(self):
+        self.assertNotIn("som", GRAMMAR_MARKERS)
+        self.assertNotIn("att", GRAMMAR_MARKERS)
+        self.assertNotIn("om", GRAMMAR_MARKERS)
+        self.assertLess(
+            swedish_sort_key("agnosticism"),
+            swedish_sort_key("agnostiker"),
+        )
+        items = [
+            {
+                "article_number": 34,
+                "lemma": "agnosticism",
+                "raw": "agnosticism",
+                "method": "artikelhuvud",
+            },
+            {
+                "article_number": 34,
+                "lemma": "som",
+                "raw": "som",
+                "method": "halvfet token",
+            },
+            {
+                "article_number": 34,
+                "lemma": "att",
+                "raw": "att",
+                "method": "halvfet token",
+            },
+            {
+                "article_number": 34,
+                "lemma": "om",
+                "raw": "om",
+                "method": "halvfet token",
+            },
+            {
+                "article_number": 34,
+                "lemma": "agnostiker",
+                "raw": "agnost|iker",
+                "method": "halvfet token",
+            },
+        ]
+        heads = {34: {"headword": "agnosticism"}}
+        filtered = remove_alphabetic_family_outliers(items, heads)
+        self.assertEqual(
+            [item["lemma"] for item in filtered],
+            ["agnosticism", "agnostiker"],
         )
 
     def test_agnosticism_definition_words_are_not_lemmas(self):
