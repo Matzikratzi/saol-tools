@@ -7,6 +7,7 @@ from scripts.headword_review import (
     infer_homonym_runs,
     infer_stem_boundary_from_ocr,
     reconcile_homonym_neighbours,
+    recover_short_homonym_run,
     repair_alphabetic_accents,
     swedish_sort_key,
     trim_plain_definition_tails_by_order,
@@ -16,6 +17,39 @@ from scripts.runeberg_headwords import align_lines, raw_headword
 
 
 class HeadwordReviewTests(unittest.TestCase):
+    def test_definition_preposition_ends_hyphenated_head(self):
+        article = {
+            "lines": [{"tokens": [
+                {"text": "A-aktie", "left": 100},
+                {"text": "av", "left": 250},
+                {"text": "serie", "left": 310},
+            ]}]
+        }
+        self.assertEqual(extract_head(article)["headword"], "a-aktie")
+
+    def test_three_short_entries_restore_lost_homonym_digits(self):
+        items = []
+        for headword, runeberg, marker in [
+            ("a a-t a-et", "a a-t", True),
+            ("à", "à", False),
+            ("a", "a", False),
+        ]:
+            items.append({
+                "headword": headword, "raw_headword": headword,
+                "stem_headword": headword,
+                "runeberg_headword": runeberg,
+                "homonym": None, "homonym_inferred": False,
+                "homonym_marker_detected": marker,
+                "reasons": ["homonymtecknet"] if marker else [],
+                "status": "osäker" if marker else "preliminär",
+                "corrected_from": "", "correction_method": "",
+            })
+        recover_short_homonym_run(items)
+        self.assertEqual(
+            [(item["homonym"], item["headword"]) for item in items],
+            [(1, "a"), (2, "a"), (3, "a")],
+        )
+
     def test_plain_a_kassa_definition_is_trimmed_by_style_and_order(self):
         article = {
             "number": 59,
