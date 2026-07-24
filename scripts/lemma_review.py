@@ -1328,7 +1328,8 @@ def facit_signature(item: dict) -> dict:
 def apply_manual_insertions(items: list[dict], facit: dict) -> list[dict]:
     """Insert printed lemmas that OCR omitted, at a facit-anchored position."""
     for insertion in facit.get("manual_insertions", []):
-        anchor_signature = _signature_tuple(insertion["after"])
+        position = "before" if "before" in insertion else "after"
+        anchor_signature = _signature_tuple(insertion[position])
         candidate = insertion["candidate"]
         anchors = [
             index
@@ -1339,7 +1340,7 @@ def apply_manual_insertions(items: list[dict], facit: dict) -> list[dict]:
             anchors = [
                 index
                 for index, item in enumerate(items)
-                if item["lemma"] == insertion["after"]["lemma"]
+                if item["lemma"] == insertion[position]["lemma"]
             ]
         if len(anchors) != 1:
             continue
@@ -1351,7 +1352,18 @@ def apply_manual_insertions(items: list[dict], facit: dict) -> list[dict]:
             for item in items
         ):
             continue
-        source_left = float(anchor.get("source_right", anchor.get("source_left", 0.0))) + 12.0
+        if position == "before":
+            source_right = float(anchor.get("source_left", 0.0)) - 12.0
+            source_left = source_right - max(
+                60.0, len(candidate["lemma"]) * 16.0
+            )
+        else:
+            source_left = float(
+                anchor.get("source_right", anchor.get("source_left", 0.0))
+            ) + 12.0
+            source_right = source_left + max(
+                60.0, len(candidate["lemma"]) * 16.0
+            )
         inserted = anchor.copy()
         inserted.update(candidate)
         inserted["article_number"] = anchor["article_number"]
@@ -1372,13 +1384,15 @@ def apply_manual_insertions(items: list[dict], facit: dict) -> list[dict]:
                 "source_top": float(anchor.get("source_top", 0.0)),
                 "source_bottom": float(anchor.get("source_bottom", 0.0)),
                 "source_left": source_left,
-                "source_right": source_left
-                + max(60.0, len(candidate["lemma"]) * 16.0),
+                "source_right": source_right,
             }
         )
         inserted.setdefault("stem_lemma", inserted["lemma"])
         inserted.setdefault("raw", inserted["lemma"])
-        items.insert(anchor_index + 1, inserted)
+        items.insert(
+            anchor_index if position == "before" else anchor_index + 1,
+            inserted,
+        )
         rule_hit("special.manuell_lemma_infogning")
     return items
 
