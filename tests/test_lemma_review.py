@@ -500,7 +500,7 @@ class LemmaReviewTests(unittest.TestCase):
             items[0]["method"], "Runebergkorrigerad slutbokstav"
         )
 
-    def test_explicit_cross_reference_keeps_second_printed_occurrence(self):
+    def test_explicit_cross_reference_replaces_inline_occurrence(self):
         articles = {
             "pages": [21],
             "articles": [
@@ -552,8 +552,9 @@ class LemmaReviewTests(unittest.TestCase):
         candidates = extract_candidates(articles, heads)
         self.assertEqual(
             [item["lemma"] for item in candidates],
-            ["adaptation", "adaption", "adaption"],
+            ["adaptation", "adaption"],
         )
+        self.assertEqual(candidates[1]["source_left"], 160.0)
 
     def test_stem_suffix_inflection_is_not_a_lemma(self):
         articles = {
