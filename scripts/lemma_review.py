@@ -282,7 +282,17 @@ def infer_boundary_from_repeated_suffix(
             continue
         base = normalized[:index]
         tail = normalized[index + 1 :]
-        if len(base) >= 3 and tail in suffixes:
+        exact_repeat = tail in suffixes
+        pronounced_derivative = (
+            len(tail) >= 3
+            and bool(following_tokens)
+            and following_tokens[0].get("text", "").strip().startswith("(")
+            and any(
+                suffix.startswith(tail) and len(suffix) > len(tail)
+                for suffix in suffixes
+            )
+        )
+        if len(base) >= 3 and (exact_repeat or pronounced_derivative):
             return base + "|" + tail
     return ""
 
