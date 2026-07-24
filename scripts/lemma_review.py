@@ -34,7 +34,7 @@ def rule_stats() -> dict[str, int]:
 
 POS = {"adj", "adv", "interj", "prep", "pron", "s", "v"}
 GRAMMAR_MARKERS = POS | {
-    "best", "el", "eller", "komp", "oböjl", "pl", "superl", "äv",
+    "best", "el", "eller", "komp", "oböjl", "pl", "ss", "superl", "äv",
 }
 # "-lt" is Tesseract's recurring reading of a thin separator plus adjective -t.
 NON_LEMMA_SUFFIXES = {
@@ -149,6 +149,23 @@ def optional_parenthesis_variants(value: str) -> list[str]:
     if not match or not match.group(1) or not match.group(2):
         return [value]
     return [match.group(1), match.group(1) + match.group(2)]
+
+def optional_bracket_variants(value: str) -> list[str]:
+    """Return both spellings denoted by SAOL's optional bracketed letters."""
+    match = re.match(r"^(.*)\\[([^][]+)\\](.*)$", value)
+    if match:
+        prefix, optional, suffix = match.groups()
+        return [prefix + suffix, prefix + optional + suffix]
+    # Tesseract often reads the thin closing bracket as an l.
+    match = re.match(
+        r"^(.*)\\[([A-Za-zÅÄÖåäöÀÁÉàáé])l(.*)$",
+        value,
+    )
+    if match:
+        prefix, optional, suffix = match.groups()
+        return [prefix + suffix, prefix + optional + suffix]
+    return [value]
+
 
 
 def repair_initial_i_suffix_from_order(
@@ -684,8 +701,60 @@ def recover_runeberg_boundary_series(
                 )
                 if preceding is not None:
                     anchor = preceding
+                    preceding_raw = preceding.get("raw", "")
+                    compound_base = suffix_base(
+                        preceding_raw
+                        if "|" in preceding_raw or "¦" in preceding_raw
+                        else preceding["lemma"]
+                    )
 
             raw = match.group(0)
+            direct_matches = [
+                item
+                for item in article_items
+                if (
+                    id(item) not in used_ids
+                    and item.get("method") != "artikelhuvud"
+                    and item.get("raw", "").strip() == raw
+                )
+            ]
+            if len(direct_matches) == 1:
+                direct = direct_matches[0]
+                direct_index = items.index(direct)
+                preceding_bases = [
+                    item
+                    for item in items[:direct_index]
+                    if (
+                        int(item["article_number"]) == int(article_number)
+                        and item.get("method")
+                        in {"artikelhuvud", "halvfet token"}
+                    )
+                ]
+                if preceding_bases:
+                    preceding_base = preceding_bases[-1]
+                    if preceding_base.get("method") == "artikelhuvud":
+                        base_value = (
+                            head.get("runeberg_stem_headword")
+                            or head.get("stem_headword")
+                            or preceding_base["lemma"]
+                        )
+                    else:
+                        preceding_raw = preceding_base.get("raw", "")
+                        base_value = (
+                            preceding_raw
+                            if "|" in preceding_raw or "¦" in preceding_raw
+                            else preceding_base["lemma"]
+                        )
+                    expected_lemma = expand_compound(
+                        suffix_base(base_value), raw
+                    )
+                    if direct["lemma"] == expected_lemma:
+                        anchor = direct
+                        compound_base = suffix_base(direct["lemma"])
+                        used_ids.add(id(direct))
+                        cursor = match.end()
+                        rule_hit("runeberg.befintlig_lodstrecksform")
+                        continue
             standalone_lemma = normalize_lemma(raw)
             standalone = next(
                 (
@@ -1048,11 +1117,6 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     at_line_start = False
                     continue
                 if cleaned.startswith("-"):
-                    if "[" in raw or "]" in raw:
-                        rule_hit("filter.hakparentesböjning")
-                        previous_separator = False
-                        at_line_start = False
-                        continue
                     previous_raw = (
                         tokens[token_index - 1].get("text", "")
                         if token_index > 0
@@ -1128,9 +1192,13 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                                 marker, 1
                             )[0].lstrip("-")
                             break
-                    suffix_variants = optional_parenthesis_variants(
-                        repaired_suffix
-                    )
+                    suffix_variants = [
+                        bracket_variant
+                        for parenthesis_variant
+                        in optional_parenthesis_variants(repaired_suffix)
+                        for bracket_variant
+                        in optional_bracket_variants(parenthesis_variant)
+                    ]
                     for suffix_variant in suffix_variants:
                         normalized_suffix = (
                             "-" + normalize_lemma(suffix_variant[1:])
