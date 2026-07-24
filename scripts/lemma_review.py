@@ -726,6 +726,39 @@ def remove_alphabetic_family_outliers(
     return [item for item in items if id(item) not in rejected_ids]
 
 
+def remove_displaced_inline_alternatives(
+    items: list[dict], heads: dict[int, dict]
+) -> list[dict]:
+    """Defer ``X el. Y`` when another known lemma sorts between X and Y."""
+    known_lemmas = {
+        normalize_lemma(item["lemma"])
+        for item in items
+        if normalize_lemma(item["lemma"])
+    }
+    known_lemmas.update(
+        normalize_lemma(head.get("headword", ""))
+        for head in heads.values()
+        if normalize_lemma(head.get("headword", ""))
+    )
+    rejected_ids = set()
+    for item in items:
+        alternative_of = normalize_lemma(item.get("alternative_of", ""))
+        alternative = normalize_lemma(item["lemma"])
+        if not alternative_of or alternative == alternative_of:
+            continue
+        lower, upper = sorted(
+            (swedish_sort_key(alternative_of), swedish_sort_key(alternative))
+        )
+        if any(
+            lower < swedish_sort_key(lemma) < upper
+            for lemma in known_lemmas
+            if lemma not in {alternative_of, alternative}
+        ):
+            rejected_ids.add(id(item))
+            rule_hit("filter.framflyttat_el_alternativ")
+    return [item for item in items if id(item) not in rejected_ids]
+
+
 def repair_false_boundary_from_runeberg(
     items: list[dict], heads: dict[int, dict]
 ) -> list[dict]:
@@ -1257,6 +1290,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
         line=None,
         token=None,
         allow_duplicate=False,
+        alternative_of="",
     ):
         lemma = normalize_lemma(lemma)
         if not lemma:
@@ -1328,6 +1362,11 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 ),
                 "source_bottom": float(
                     source_token.get("bottom", source_top + source_height)
+                ),
+                **(
+                    {"alternative_of": normalize_lemma(alternative_of)}
+                    if alternative_of
+                    else {}
                 ),
             }
         )
@@ -1643,6 +1682,12 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                         tokens[token_index - 1].get("text", "")
                     ) in POS
                 )
+                preceded_by_alternative_marker = (
+                    token_index > 0
+                    and normalize_lemma(
+                        tokens[token_index - 1].get("text", "")
+                    ) in {"el", "eller"}
+                )
                 normalized_cleaned = normalize_lemma(cleaned)
                 normalized_head = normalize_lemma(current_head)
                 capitalized_hyphenated_head = (
@@ -1743,6 +1788,11 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             line=line,
                             token=token,
                             allow_duplicate=previous_separator,
+                            alternative_of=(
+                                last_lookup_lemma
+                                if preceded_by_alternative_marker
+                                else ""
+                            ),
                         )
                         rule_hit("extract.friliggande_lemma")
                         same_article_family = lemma.startswith(
@@ -1771,6 +1821,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
     repair_final_letter_from_runeberg(result, heads)
     repair_false_boundary_from_runeberg(result, heads)
     recover_runeberg_boundary_series(result, heads)
+    result = remove_displaced_inline_alternatives(result, heads)
     return remove_alphabetic_family_outliers(result, heads)
 
 
