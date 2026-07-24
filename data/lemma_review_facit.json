@@ -1862,11 +1862,11 @@
         "source_left": 238
       },
       "through": {
-        "article_number": 11,
-        "lemma": "abbreviation",
+        "article_number": 13,
+        "lemma": "abc-stridsmedel",
         "source_page": 19,
         "source_column": 1,
-        "source_top": 2462,
+        "source_top": 2939,
         "source_left": 258
       },
       "candidates": [
@@ -2012,6 +2012,54 @@
           "source_page": 19,
           "source_column": 1,
           "source_top": 2462,
+          "source_left": 258
+        },
+        {
+          "article_number": 11,
+          "lemma": "abbreviatur",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 2472,
+          "source_left": 966
+        },
+        {
+          "article_number": 11,
+          "lemma": "abbreviera",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 2527,
+          "source_left": 1061
+        },
+        {
+          "article_number": 11,
+          "lemma": "abbreviering",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 2600,
+          "source_left": 855
+        },
+        {
+          "article_number": 12,
+          "lemma": "abc",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 2677,
+          "source_left": 256
+        },
+        {
+          "article_number": 12,
+          "lemma": "abc-bok",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 2803,
+          "source_left": 932
+        },
+        {
+          "article_number": 13,
+          "lemma": "abc-stridsmedel",
+          "source_page": 19,
+          "source_column": 1,
+          "source_top": 2939,
           "source_left": 258
         }
       ]
