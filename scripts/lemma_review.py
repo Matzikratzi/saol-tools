@@ -1125,6 +1125,15 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 )
                 normalized_cleaned = normalize_lemma(cleaned)
                 normalized_head = normalize_lemma(current_head)
+                capitalized_hyphenated_head = (
+                    line_index == 0
+                    and bool(
+                        re.fullmatch(
+                            r"[A-ZÅÄÖ]-[A-Za-zÅÄÖåäö]+",
+                            cleaned,
+                        )
+                    )
+                )
                 first_line_family_word = (
                     line_index == 0
                     and preceded_by_pos
@@ -1150,6 +1159,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     or followed_by_pos
                     or followed_by_inflection_grammar
                     or first_line_family_word
+                    or capitalized_hyphenated_head
                     or series_first
                 ):
                     lemma = normalize_lemma(cleaned)
@@ -1157,6 +1167,19 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                         followed_by_pos
                         and f"-{lemma}" in NON_LEMMA_SUFFIXES
                         and score < 0.25
+                    )
+                    embedded_head_inflection = (
+                        followed_by_pos
+                        and normalized_cleaned.startswith(
+                            normalized_head + "-"
+                        )
+                        and (
+                            "-"
+                            + normalized_cleaned[
+                                len(normalized_head) + 1 :
+                            ]
+                        )
+                        in NON_LEMMA_SUFFIXES
                     )
                     # Only suppress a full token when the preceding lemma's
                     # morphology makes the reading unambiguous.  The broader
@@ -1187,6 +1210,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                         and lemma not in GRAMMAR_MARKERS
                         and len(lemma) > 1
                         and not bare_inflection_before_pos
+                        and not embedded_head_inflection
                         and not full_word_inflection
                         and not unsupported_definition_before_inflection
                     ):
@@ -1205,6 +1229,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             or followed_by_pos
                             or followed_by_inflection_grammar
                             or first_line_family_word
+                            or capitalized_hyphenated_head
                             or series_first
                             or (
                                 at_line_start
