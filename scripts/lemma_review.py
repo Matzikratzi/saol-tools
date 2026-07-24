@@ -630,8 +630,11 @@ def recover_runeberg_boundary_series(
     for article_number, head in heads.items():
         if float(head.get("runeberg_match_score", 0.0)) < 0.80:
             continue
-        runeberg_line = head.get("runeberg_line", "")
-        matches = list(boundary_pattern.finditer(runeberg_line))
+        runeberg_text = " ".join(
+            head.get("runeberg_article_lines")
+            or [head.get("runeberg_line", "")]
+        )
+        matches = list(boundary_pattern.finditer(runeberg_text))
         if not matches:
             continue
         article_items = [
@@ -658,7 +661,7 @@ def recover_runeberg_boundary_series(
         used_ids = set()
         for match in matches:
             for token_value in token_pattern.findall(
-                runeberg_line[cursor : match.start()]
+                runeberg_text[cursor : match.start()]
             ):
                 possible = (
                     expand_compound(compound_base, token_value)
