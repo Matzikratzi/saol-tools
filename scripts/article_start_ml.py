@@ -354,7 +354,7 @@ def _rows_from_lines(
 
 
 def _ocr_band_ranges(
-    height: int, core_height: int = 480, padding: int = 100
+    height: int, core_height: int = 180, padding: int = 60
 ) -> list[tuple[int, int, int, int]]:
     """Return (crop_top, crop_bottom, core_top, core_bottom) OCR bands."""
     return [
@@ -371,7 +371,12 @@ def _ocr_band_ranges(
 def _extract_column_observations_by_bands(
     module, image: Image.Image, left: int, right: int
 ) -> list:
-    """OCR a tall column in padded bands without duplicating overlap tokens."""
+    """OCR a tall column in short padded bands without duplicating tokens.
+
+    Dense SAOL rows can disappear when Tesseract sees too much neighbouring
+    text. Short cores retain enough vertical context through their padding
+    while keeping both adjacent bold suffixes visible.
+    """
     observations = []
     height = image.height
     for crop_top, crop_bottom, core_top, core_bottom in _ocr_band_ranges(
@@ -398,7 +403,7 @@ def _extract_column_observations_by_bands(
 
 
 def extract_page(page: int, cache_dir: Path, refresh: bool = False) -> list[dict]:
-    cache_file = cache_dir / f"page-{page:04d}-columns-v14.json"
+    cache_file = cache_dir / f"page-{page:04d}-columns-v15.json"
     image_file = cache_dir / f"page-{page:04d}-deskewed.png"
     if cache_file.exists() and image_file.exists() and not refresh:
         return json.loads(cache_file.read_text(encoding="utf-8"))
