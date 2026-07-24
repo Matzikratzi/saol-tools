@@ -282,6 +282,32 @@ def infer_era_boundary_from_verb_grammar(
         return normalized[:-2] + "|a"
     return ""
 
+
+def infer_a_boundary_from_noun_grammar(
+    value: str, following_tokens: list[dict]
+) -> str:
+    """Recover a final |a read as la before -an/-or noun grammar."""
+    if not pronunciation_then_inflection(following_tokens):
+        return ""
+    suffixes = {
+        token.get("text", "").strip().strip(";,:.()[]{}")
+        for token in following_tokens
+        if token.get("text", "").strip().startswith("-")
+    }
+    has_singular = "-an" in suffixes
+    has_plural = any(suffix.startswith("-or") for suffix in suffixes)
+    cleaned = value.strip().strip(";,:.()[]{}")
+    normalized = normalize_lemma(cleaned)
+    if (
+        has_singular
+        and has_plural
+        and len(normalized) >= 5
+        and normalized.endswith("la")
+    ):
+        return normalized[:-2] + "|a"
+    return ""
+
+
 def infer_boundary_from_previous(value: str, previous: str) -> str:
     """Recover previous|ending when OCR renders the boundary as l."""
     normalized = normalize_lemma(value)
@@ -930,6 +956,9 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 era_boundary = infer_era_boundary_from_verb_grammar(
                     cleaned, following_tokens
                 )
+                noun_a_boundary = infer_a_boundary_from_noun_grammar(
+                    cleaned, following_tokens
+                )
                 previous_boundary = infer_boundary_from_previous(
                     cleaned, last_lookup_lemma
                 )
@@ -951,6 +980,9 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                 elif era_boundary:
                     cleaned = era_boundary
                     rule_hit("infer.verb_era_lodstreck")
+                elif noun_a_boundary:
+                    cleaned = noun_a_boundary
+                    rule_hit("infer.substantiv_a_lodstreck")
                 elif previous_boundary:
                     cleaned = previous_boundary
                     rule_hit("infer.föregående_lemma_lodstreck")
@@ -987,6 +1019,11 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     at_line_start = False
                     continue
                 if cleaned.startswith("-"):
+                    if "[" in raw or "]" in raw:
+                        rule_hit("filter.hakparentesböjning")
+                        previous_separator = False
+                        at_line_start = False
+                        continue
                     previous_raw = (
                         tokens[token_index - 1].get("text", "")
                         if token_index > 0
