@@ -1882,12 +1882,12 @@
         "source_left": 238
       },
       "through": {
-        "article_number": 68,
-        "lemma": "ackordion",
+        "article_number": 70,
+        "lemma": "ackumulera",
         "source_page": 21,
         "source_column": 1,
-        "source_top": 1305,
-        "source_left": 1042
+        "source_top": 1987,
+        "source_left": 256
       },
       "candidates": [
         {
@@ -3681,6 +3681,62 @@
           "source_column": 1,
           "source_top": 1315,
           "source_left": 815
+        },
+        {
+          "article_number": 69,
+          "lemma": "ackreditera",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 1519,
+          "source_left": 208
+        },
+        {
+          "article_number": 69,
+          "lemma": "ackreditering",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 1647,
+          "source_left": 1087
+        },
+        {
+          "article_number": 70,
+          "lemma": "ackumulation",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 1723,
+          "source_left": 211
+        },
+        {
+          "article_number": 70,
+          "lemma": "ackumulativ",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 1798,
+          "source_left": 252
+        },
+        {
+          "article_number": 70,
+          "lemma": "ackumulator",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 1861,
+          "source_left": 253
+        },
+        {
+          "article_number": 70,
+          "lemma": "ackumulatorbatteri",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 1918,
+          "source_left": 997
+        },
+        {
+          "article_number": 70,
+          "lemma": "ackumulera",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 1987,
+          "source_left": 256
         }
       ]
     }
