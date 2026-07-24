@@ -3,12 +3,12 @@
   "pages": {},
   "reviewed_prefix": {
     "through": {
-      "article_number": 32,
-      "lemma": "agnatisk",
+      "article_number": 34,
+      "lemma": "agnosticism",
       "source_page": 24,
       "source_column": 1,
-      "source_top": 526,
-      "source_left": 637
+      "source_top": 671,
+      "source_left": 198
     },
     "candidates": [
       {
@@ -1378,6 +1378,22 @@
         "source_column": 1,
         "source_top": 526,
         "source_left": 637
+      },
+      {
+        "article_number": 33,
+        "lemma": "agning",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 599,
+        "source_left": 197
+      },
+      {
+        "article_number": 34,
+        "lemma": "agnosticism",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 671,
+        "source_left": 198
       }
     ]
   },
