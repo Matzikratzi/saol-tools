@@ -1882,12 +1882,12 @@
         "source_left": 238
       },
       "through": {
-        "article_number": 59,
-        "lemma": "acetylsalicylsyra",
-        "source_page": 20,
-        "source_column": 2,
-        "source_top": 3001,
-        "source_left": 1955
+        "article_number": 67,
+        "lemma": "ackordlön",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 785,
+        "source_left": 710
       },
       "candidates": [
         {
@@ -3313,6 +3313,230 @@
           "source_column": 2,
           "source_top": 3001,
           "source_left": 1955
+        },
+        {
+          "article_number": 59,
+          "lemma": "acetylen",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 3067,
+          "source_left": 1952
+        },
+        {
+          "article_number": 59,
+          "lemma": "acetylensvetsning",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 3133,
+          "source_left": 2066
+        },
+        {
+          "article_number": 59,
+          "lemma": "acetylenlampa",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 3135,
+          "source_left": 1857
+        },
+        {
+          "article_number": 59,
+          "lemma": "acetylengas",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 3146,
+          "source_left": 1725
+        },
+        {
+          "article_number": 60,
+          "lemma": "aciditet",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 3209,
+          "source_left": 1385
+        },
+        {
+          "article_number": 61,
+          "lemma": "ack",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 3283,
+          "source_left": 1385
+        },
+        {
+          "article_number": 62,
+          "lemma": "ackja",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 3351,
+          "source_left": 1386
+        },
+        {
+          "article_number": 62,
+          "lemma": "ackjefärd",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 3416,
+          "source_left": 1425
+        },
+        {
+          "article_number": 63,
+          "lemma": "acklamation",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 3495,
+          "source_left": 1386
+        },
+        {
+          "article_number": 63,
+          "lemma": "acklamationsval",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 3552,
+          "source_left": 2003
+        },
+        {
+          "article_number": 64,
+          "lemma": "acklimatisera",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 3629,
+          "source_left": 1387
+        },
+        {
+          "article_number": 64,
+          "lemma": "acklimatiseringssvårighet",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 3762,
+          "source_left": 1597
+        },
+        {
+          "article_number": 64,
+          "lemma": "acklimatisering",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 3769,
+          "source_left": 1427
+        },
+        {
+          "article_number": 65,
+          "lemma": "ackommodationsförmåga",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 3833,
+          "source_left": 2147
+        },
+        {
+          "article_number": 65,
+          "lemma": "ackommodation",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 3841,
+          "source_left": 1388
+        },
+        {
+          "article_number": 65,
+          "lemma": "ackommodera",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 3899,
+          "source_left": 1996
+        },
+        {
+          "article_number": 65,
+          "lemma": "ackommodationsväxel",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 3902,
+          "source_left": 1428
+        },
+        {
+          "article_number": 65,
+          "lemma": "ackommodering",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 3971,
+          "source_left": 2042
+        },
+        {
+          "article_number": 66,
+          "lemma": "ackompanjatör",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 236,
+          "source_left": 1140
+        },
+        {
+          "article_number": 66,
+          "lemma": "ackompanjatris",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 239,
+          "source_left": 193
+        },
+        {
+          "article_number": 66,
+          "lemma": "ackompanjemang",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 306,
+          "source_left": 747
+        },
+        {
+          "article_number": 66,
+          "lemma": "ackompanjemangsinstrument",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 370,
+          "source_left": 718
+        },
+        {
+          "article_number": 66,
+          "lemma": "ackompanjera",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 438,
+          "source_left": 236
+        },
+        {
+          "article_number": 66,
+          "lemma": "ackompanjering",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 507,
+          "source_left": 827
+        },
+        {
+          "article_number": 67,
+          "lemma": "ackord",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 592,
+          "source_left": 206
+        },
+        {
+          "article_number": 67,
+          "lemma": "ackordlön",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 785,
+          "source_left": 710
+        },
+        {
+          "article_number": 67,
+          "lemma": "ackordlära",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 790,
+          "source_left": 404
+        },
+        {
+          "article_number": 67,
+          "lemma": "ackordföljd",
+          "source_page": 21,
+          "source_column": 1,
+          "source_top": 791,
+          "source_left": 245
         }
       ]
     }
