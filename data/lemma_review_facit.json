@@ -1870,12 +1870,12 @@
         "source_left": 238
       },
       "through": {
-        "article_number": 43,
-        "lemma": "abstrahering",
+        "article_number": 47,
+        "lemma": "absurdism",
         "source_page": 20,
         "source_column": 1,
-        "source_top": 2324,
-        "source_left": 209
+        "source_top": 3380,
+        "source_left": 203
       },
       "candidates": [
         {
@@ -2797,6 +2797,78 @@
           "source_column": 1,
           "source_top": 2324,
           "source_left": 209
+        },
+        {
+          "article_number": 44,
+          "lemma": "abstrakt",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 2382,
+          "source_left": 154
+        },
+        {
+          "article_number": 45,
+          "lemma": "abstrakt",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 2708,
+          "source_left": 144
+        },
+        {
+          "article_number": 45,
+          "lemma": "abstraktion",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 2914,
+          "source_left": 362
+        },
+        {
+          "article_number": 45,
+          "lemma": "abstraktionsförmåga",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 3042,
+          "source_left": 603
+        },
+        {
+          "article_number": 45,
+          "lemma": "abstraktionsnivå",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 3042,
+          "source_left": 913
+        },
+        {
+          "article_number": 46,
+          "lemma": "abstrus",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 3122,
+          "source_left": 165
+        },
+        {
+          "article_number": 47,
+          "lemma": "absurd",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 3256,
+          "source_left": 164
+        },
+        {
+          "article_number": 47,
+          "lemma": "absurdhet",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 3318,
+          "source_left": 823
+        },
+        {
+          "article_number": 47,
+          "lemma": "absurdism",
+          "source_page": 20,
+          "source_column": 1,
+          "source_top": 3380,
+          "source_left": 203
         }
       ]
     }
