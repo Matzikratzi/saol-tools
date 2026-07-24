@@ -31,6 +31,7 @@ from scripts.lemma_review import (
     plural_of_previous,
     pronunciation_then_inflection,
     render_review_images,
+    recover_runeberg_boundary_series,
     repair_initial_i_suffix_from_order,
     repair_mixed_case_duplicate,
     runeberg_short_inflection,
@@ -1540,6 +1541,62 @@ class LemmaReviewTests(unittest.TestCase):
         self.assertEqual(
             [item["lemma"] for item in candidates],
             ["affisch", "affischera", "affischering"],
+        )
+
+    def test_runeberg_lodstreck_series_recovers_missing_and_corrupt_words(self):
+        head = {
+            "article_number": 29,
+            "headword": "agitation",
+            "runeberg_line": "agitation ( g ) -en -ers. -s|möte -s|tal",
+            "runeberg_match_score": 0.86,
+        }
+        items = [
+            {
+                "article_number": 29,
+                "lemma": "agitation",
+                "stem_lemma": "agitation",
+                "raw": "agitation",
+                "method": "artikelhuvud",
+                "source_page": 23,
+                "source_column": 2,
+                "source_top": 100.0,
+                "source_bottom": 124.0,
+                "source_left": 100.0,
+                "source_right": 300.0,
+            },
+            {
+                "article_number": 29,
+                "lemma": "agitationsltal",
+                "stem_lemma": "agitationsltal",
+                "raw": "-sl|tal",
+                "method": "sammansättningssuffix",
+                "status": "osäker",
+                "reasons": ["svag halvfetssignal"],
+            },
+            {
+                "article_number": 29,
+                "lemma": "agitatorisk",
+                "stem_lemma": "agitatorisk",
+                "raw": "-torisk",
+                "method": "sammansättningssuffix",
+                "status": "kandidat",
+                "reasons": [],
+            },
+        ]
+        recover_runeberg_boundary_series(items, {29: head})
+        self.assertEqual(
+            [item["lemma"] for item in items],
+            [
+                "agitation",
+                "agitationsmöte",
+                "agitationstal",
+                "agitatorisk",
+            ],
+        )
+        self.assertEqual(items[1]["method"], "Runebergs lodstrecksserie")
+        self.assertEqual(
+            items[2]["method"],
+            "Runebergkorrigerad lodstrecksserie",
         )
 
     def test_manual_facit_insertion_recovers_ocr_omission(self):
