@@ -140,7 +140,7 @@ def merged_alternative_inflection(
 ) -> bool:
     """Recognize e.g. OCR '-etel.' as inflection '-et' plus 'el.'."""
     compact = raw.strip().casefold()
-    match = re.fullmatch(r"-([a-zåäöàáé]+)el\\.", compact)
+    match = re.fullmatch(r"-([a-zåäöàáé]+)el\.", compact)
     return bool(
         match
         and f"-{match.group(1)}" in NON_LEMMA_SUFFIXES
