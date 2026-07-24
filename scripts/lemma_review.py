@@ -923,7 +923,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     cleaned, current_head
                 )
                 repeated_boundary = infer_boundary_from_repeated_suffix(
-                    cleaned, following_tokens
+                    cleaned, same_line_following
                 )
                 if intrusion_boundary != cleaned:
                     cleaned = intrusion_boundary
