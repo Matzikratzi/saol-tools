@@ -28,7 +28,7 @@ def raw_headword(value: str, preserve_boundaries: bool = False) -> str:
             text = text.lstrip("^'\"“”„`´•123456789")
         plain = re.sub(r"[^a-zåäöàáé]+", "", text.casefold())
         if selected and (
-            text.startswith(("(", "[", "-", "—", "–"))
+            text.startswith(("(", "[", "-", "—", "–", "~"))
             or plain in STOP_WORDS
             or text[0].isdigit()
         ):
