@@ -669,6 +669,97 @@ def remove_alphabetic_family_outliers(
     return [item for item in items if id(item) not in rejected_ids]
 
 
+def repair_false_boundary_from_runeberg(
+    items: list[dict], heads: dict[int, dict]
+) -> list[dict]:
+    """Restore an l misread as | when Runeberg proves the full word and tails."""
+    letters = "A-Za-zÅÄÖåäöÀÁÉàáé"
+    suffix_pattern = re.compile(rf"-[{letters}]+\\.?")
+    for article_number, head in heads.items():
+        if float(head.get("runeberg_match_score", 0.0)) < 0.80:
+            continue
+        runeberg_text = " ".join(
+            head.get("runeberg_article_lines")
+            or [head.get("runeberg_line", "")]
+        )
+        runeberg_words = {
+            normalize_lemma(value)
+            for value in re.findall(rf"[{letters}]+", runeberg_text)
+        }
+        article_items = [
+            item
+            for item in items
+            if int(item["article_number"]) == int(article_number)
+        ]
+        for item in article_items:
+            raw = item.get("raw", "")
+            if "|" not in raw and "¦" not in raw:
+                continue
+            restored_raw = raw.replace("|", "l").replace("¦", "l")
+            restored_lemma = normalize_lemma(restored_raw)
+            if restored_lemma not in runeberg_words:
+                continue
+
+            article_index = article_items.index(item)
+            item["lemma"] = restored_lemma
+            item["stem_lemma"] = restored_lemma
+            item["raw"] = restored_raw
+            item["method"] = "Runebergkorrigerat falskt lodstreck"
+            item["reasons"] = [
+                reason
+                for reason in item.get("reasons", [])
+                if reason != "svag halvfetssignal"
+            ]
+            rule_hit("runeberg.falskt_lodstreck")
+
+            word_match = re.search(
+                rf"(?<![{letters}]){re.escape(restored_lemma)}"
+                rf"(?![{letters}])",
+                runeberg_text,
+                re.IGNORECASE,
+            )
+            suffixes = []
+            if word_match:
+                for suffix in suffix_pattern.findall(
+                    runeberg_text[word_match.end() :]
+                ):
+                    normalized = "-" + normalize_lemma(suffix[1:])
+                    if (
+                        normalized not in NON_LEMMA_SUFFIXES
+                        and not merged_pos_inflection(
+                            suffix, normalized, 0.0
+                        )
+                    ):
+                        suffixes.append(suffix)
+
+            suffix_cursor = 0
+            for dependent in article_items[article_index + 1 :]:
+                dependent_raw = dependent.get("raw", "").strip()
+                if not dependent_raw.startswith("-"):
+                    break
+                corrected_suffix = dependent_raw
+                normalized_dependent = normalize_lemma(dependent_raw)
+                for suffix_index in range(suffix_cursor, len(suffixes)):
+                    runeberg_suffix = suffixes[suffix_index]
+                    similarity = difflib.SequenceMatcher(
+                        None,
+                        normalized_dependent,
+                        normalize_lemma(runeberg_suffix),
+                    ).ratio()
+                    if similarity >= 0.72:
+                        corrected_suffix = runeberg_suffix
+                        suffix_cursor = suffix_index + 1
+                        break
+                rebuilt = expand_compound(
+                    restored_lemma, corrected_suffix
+                )
+                dependent["lemma"] = rebuilt
+                dependent["stem_lemma"] = rebuilt
+                dependent["raw"] = corrected_suffix
+                rule_hit("runeberg.ombyggd_följdändelse")
+    return items
+
+
 def recover_runeberg_boundary_series(
     items: list[dict], heads: dict[int, dict]
 ) -> list[dict]:
@@ -1493,6 +1584,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             current_base = suffix_base(cleaned)
                 previous_separator = False
                 at_line_start = False
+    repair_false_boundary_from_runeberg(result, heads)
     recover_runeberg_boundary_series(result, heads)
     return remove_alphabetic_family_outliers(result, heads)
 
