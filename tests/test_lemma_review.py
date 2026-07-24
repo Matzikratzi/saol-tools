@@ -2018,6 +2018,48 @@ class LemmaReviewTests(unittest.TestCase):
             "affärs|angelägenhet",
         )
 
+    def test_first_line_alias_and_family_word_are_preserved(self):
+        articles = {
+            "pages": [24],
+            "articles": [
+                {
+                    "number": 43,
+                    "start_page": 24,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 24,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("ah", 100, 0.54),
+                                token("äv.", 190, 0.32),
+                                token("aha", 260, 0.47),
+                                token("interj.", 360, 0.27),
+                                token("ahaupplevelse", 470, 0.38),
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 43,
+                    "headword": "ah",
+                    "stem_headword": "ah",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["ah", "aha", "ahaupplevelse"],
+        )
+
     def test_trailing_definition_word_is_bounded_by_next_article(self):
         items = [
             {
