@@ -554,7 +554,7 @@ class LemmaReviewTests(unittest.TestCase):
     def test_expands_optional_parenthesized_ending(self):
         self.assertEqual(
             optional_parenthesis_variants("-värld(en)"),
-            ["-världen"],
+            ["-värld", "-världen"],
         )
 
     def test_full_word_followed_by_same_suffix_is_not_duplicated(self):
