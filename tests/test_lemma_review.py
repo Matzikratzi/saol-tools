@@ -624,6 +624,12 @@ class LemmaReviewTests(unittest.TestCase):
             ],
         )
 
+    def test_suffix_series_repairs_j_read_for_vertical_boundary(self):
+        self.assertEqual(
+            infer_suffix_boundary_from_series("-sjanbud", "s"),
+            "-s|anbud",
+        )
+
     def test_expands_optional_parenthesized_ending(self):
         self.assertEqual(
             optional_parenthesis_variants("-värld(en)"),
