@@ -19,7 +19,7 @@ from pathlib import Path
 from scripts.article_start_ml import DEFAULT_CACHE, extract_page
 
 
-DEFAULT_PAGES = list(range(23, 31))
+DEFAULT_PAGES = list(range(19, 31))
 
 
 def reading_order(rows: list[dict]) -> list[dict]:
