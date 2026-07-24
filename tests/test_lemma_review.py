@@ -38,6 +38,7 @@ from scripts.lemma_review import (
     repair_final_letter_from_runeberg,
     render_review_images,
     recover_runeberg_boundary_series,
+    remove_displaced_inline_alternatives,
     remove_alphabetic_family_outliers,
     repair_initial_i_suffix_from_order,
     repair_compacted_multiword_boundary,
@@ -555,6 +556,39 @@ class LemmaReviewTests(unittest.TestCase):
             ["adaptation", "adaption"],
         )
         self.assertEqual(candidates[1]["source_left"], 160.0)
+
+    def test_inline_alternative_waits_for_its_alphabetic_place(self):
+        items = [
+            {"article_number": 1, "lemma": "adaptation"},
+            {
+                "article_number": 1,
+                "lemma": "adaption",
+                "alternative_of": "adaptation",
+            },
+            {"article_number": 1, "lemma": "adapter"},
+        ]
+        filtered = remove_displaced_inline_alternatives(items, {})
+        self.assertEqual(
+            [item["lemma"] for item in filtered],
+            ["adaptation", "adapter"],
+        )
+
+        items = [
+            {"article_number": 1, "lemma": "aga"},
+            {
+                "article_number": 1,
+                "lemma": "åga",
+                "alternative_of": "aga",
+            },
+        ]
+        filtered = remove_displaced_inline_alternatives(
+            items,
+            {2: {"headword": "agat"}},
+        )
+        self.assertEqual(
+            [item["lemma"] for item in filtered],
+            ["aga"],
+        )
 
     def test_stem_suffix_inflection_is_not_a_lemma(self):
         articles = {
