@@ -822,6 +822,53 @@ def facit_signature(item: dict) -> dict:
     }
 
 
+def apply_manual_insertions(items: list[dict], facit: dict) -> list[dict]:
+    """Insert printed lemmas that OCR omitted, at a facit-anchored position."""
+    for insertion in facit.get("manual_insertions", []):
+        anchor_signature = _signature_tuple(insertion["after"])
+        candidate = insertion["candidate"]
+        candidate_signature = _signature_tuple(candidate)
+        if any(_signature_tuple(item) == candidate_signature for item in items):
+            continue
+        anchors = [
+            index
+            for index, item in enumerate(items)
+            if _signature_tuple(item) == anchor_signature
+        ]
+        if len(anchors) != 1:
+            continue
+        anchor_index = anchors[0]
+        anchor = items[anchor_index]
+        source_left = float(anchor.get("source_right", anchor.get("source_left", 0.0))) + 12.0
+        inserted = anchor.copy()
+        inserted.update(candidate)
+        inserted.update(
+            {
+                "homonym": anchor.get("homonym"),
+                "homonym_marker_detected": anchor.get(
+                    "homonym_marker_detected", False
+                ),
+                "page": anchor.get("page", anchor.get("source_page")),
+                "column": anchor.get("column", anchor.get("source_column")),
+                "method": "facitinsättning",
+                "bold_score": 1.0,
+                "status": "kandidat",
+                "reasons": ["saknades i OCR; tillagd från korrekturfacit"],
+                "source_page": int(anchor.get("source_page", 0)),
+                "source_column": int(anchor.get("source_column", 0)),
+                "source_top": float(anchor.get("source_top", 0.0)),
+                "source_bottom": float(anchor.get("source_bottom", 0.0)),
+                "source_left": source_left,
+                "source_right": source_left
+                + max(60.0, len(candidate["lemma"]) * 16.0),
+            }
+        )
+        inserted.setdefault("stem_lemma", inserted["lemma"])
+        inserted.setdefault("raw", inserted["lemma"])
+        items.insert(anchor_index + 1, inserted)
+    return items
+
+
 def _signature_tuple(item: dict) -> tuple[int, str]:
     return int(item["article_number"]), item["lemma"]
 
@@ -1285,6 +1332,7 @@ def main() -> None:
         facit = json.loads(args.facit.read_text(encoding="utf-8"))
     else:
         facit = {"version": 1, "pages": {}}
+    apply_manual_insertions(items, facit)
     available_pages = {int(page) for page in articles.get("pages", [])}
     unknown_pages = set(args.approve_page) - available_pages
     if unknown_pages:
