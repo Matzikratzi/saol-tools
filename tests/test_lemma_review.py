@@ -658,6 +658,23 @@ class LemmaReviewTests(unittest.TestCase):
             "aforist|iker",
         )
 
+    def test_pronounced_lemma_and_later_derivative_prove_boundary(self):
+        following = [
+            token("(-ta'-)", 100, 0.10),
+            token("-n", 200, 0.10),
+            token("-er", 260, 0.10),
+            token("s.", 320, 0.10),
+            token("-torisk", 380, 0.40),
+        ]
+        boundary = infer_boundary_from_repeated_suffix(
+            "agitaltor", following
+        )
+        self.assertEqual(boundary, "agita|tor")
+        self.assertEqual(
+            expand_compound(suffix_base(boundary), "-torisk"),
+            "agitatorisk",
+        )
+
     def test_aforism_family_ignores_definition_and_changes_base(self):
         articles = {
             "pages": [23],
