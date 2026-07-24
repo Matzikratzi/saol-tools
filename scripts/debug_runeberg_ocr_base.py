@@ -20,6 +20,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_REF = "origin/agent/complete-saol-tool"
 CACHE_ROOT = REPOSITORY_ROOT / ".debug-runeberg-ocr-runtime"
 BASE_PATH = CACHE_ROOT / "scripts" / "debug_runeberg_ocr_base.py"
+RUNEBERG_PATH = CACHE_ROOT / "app" / "runeberg.py"
 MARKER_PREFIXES = set("123456789Iil|oO°.'`,:")
 
 
@@ -60,6 +61,18 @@ def _materialize_runtime() -> None:
     CACHE_ROOT.mkdir(parents=True, exist_ok=True)
     with tarfile.open(fileobj=io.BytesIO(archive), mode="r:") as tar:
         tar.extractall(CACHE_ROOT)
+
+
+def _patch_runtime_tsv_parser() -> None:
+    """Do not let OCR quote characters turn Tesseract TSV into multiline CSV."""
+    source = RUNEBERG_PATH.read_text(encoding="utf-8")
+    old = 'csv.DictReader(io.StringIO(tsv), delimiter="\\t")'
+    new = 'csv.DictReader(io.StringIO(tsv), delimiter="\\t", quoting=csv.QUOTE_NONE)'
+    if new in source:
+        return
+    if old not in source:
+        raise RuntimeError("Kunde inte säkra Tesseracts TSV-parser")
+    RUNEBERG_PATH.write_text(source.replace(old, new, 1), encoding="utf-8")
 
 
 def _body_top_y(observations: list, image_height: int, median_height: float) -> float:
@@ -151,6 +164,7 @@ def _install_robust_prefix_geometry() -> None:
 
 
 _materialize_runtime()
+_patch_runtime_tsv_parser()
 
 if str(CACHE_ROOT) not in sys.path:
     sys.path.insert(0, str(CACHE_ROOT))
