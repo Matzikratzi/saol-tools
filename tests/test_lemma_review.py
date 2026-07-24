@@ -2091,6 +2091,37 @@ class LemmaReviewTests(unittest.TestCase):
             ["agremang", "agrikultur"],
         )
 
+    def test_multiword_next_head_bounds_trailing_definition_word(self):
+        items = [
+            {
+                "article_number": 51,
+                "lemma": "ajabaja",
+                "raw": "ajabaja",
+                "method": "artikelhuvud",
+            },
+            {
+                "article_number": 51,
+                "lemma": "av",
+                "raw": "av",
+                "method": "halvfet token",
+            },
+            {
+                "article_number": 52,
+                "lemma": "à jour",
+                "raw": "å jour",
+                "method": "artikelhuvud",
+            },
+        ]
+        heads = {
+            51: {"headword": "ajabaja"},
+            52: {"headword": "à jour"},
+        }
+        filtered = remove_alphabetic_family_outliers(items, heads)
+        self.assertEqual(
+            [item["lemma"] for item in filtered],
+            ["ajabaja", "à jour"],
+        )
+
     def test_unbold_alternative_suffix_in_definition_is_rejected(self):
         self.assertTrue(weak_alternative_suffix("el.", 0.0))
         self.assertTrue(weak_alternative_suffix("eller", 0.44))
