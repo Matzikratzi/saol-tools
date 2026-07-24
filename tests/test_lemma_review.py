@@ -1880,6 +1880,41 @@ class LemmaReviewTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "finns inte"):
             approve_through({"version": 1, "pages": {}}, items, "saknas")
 
+    def test_reviewed_interval_survives_prepended_pages_and_renumbering(self):
+        reviewed = [
+            {
+                "article_number": 1, "lemma": "affirmativ",
+                "source_page": 23, "source_column": 1,
+                "source_top": 100.0, "source_left": 100.0,
+            },
+            {
+                "article_number": 59, "lemma": "a-kassa",
+                "source_page": 24, "source_column": 2,
+                "source_top": 1078.0, "source_left": 1413.0,
+            },
+        ]
+        facit = {"version": 1, "pages": {}}
+        approve_through(facit, reviewed, "a-kassa")
+        rerun = [
+            {
+                "article_number": 1, "lemma": "förord",
+                "source_page": 19, "source_column": 1,
+                "source_top": 100.0, "source_left": 100.0,
+            },
+            {**reviewed[0], "article_number": 101},
+            {**reviewed[1], "article_number": 159},
+            {
+                "article_number": 160, "lemma": "akatalektisk",
+                "source_page": 24, "source_column": 2,
+                "source_top": 1150.0, "source_left": 1413.0,
+            },
+        ]
+        self.assertEqual(apply_review_facit(rerun, facit), [])
+        self.assertEqual(
+            [item["review_state"] for item in rerun],
+            ["unread", "approved", "approved", "unread"],
+        )
+
     def test_review_facit_marks_matches_and_detects_changes(self):
         items = [
             {
