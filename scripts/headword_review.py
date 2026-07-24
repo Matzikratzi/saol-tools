@@ -277,12 +277,24 @@ def reconcile_homonym_neighbours(items: list[dict]) -> None:
         ):
             continue
         first_head, second_head = first["headword"], second["headword"]
-        if not first_head or not second_head or first_head == second_head:
+        first_raw = normalize_headword(first.get("raw_headword", ""))
+        second_raw = normalize_headword(second.get("raw_headword", ""))
+        raw_consensus = first_raw if first_raw == second_raw else ""
+        if (
+            not first_head
+            or not second_head
+            or (
+                first_head == second_head
+                and (not raw_consensus or raw_consensus == first_head)
+            )
+        ):
             continue
         first_runeberg = first.get("runeberg_headword", "")
         second_runeberg = second.get("runeberg_headword", "")
         canonical = ""
-        if first_head == second_runeberg:
+        if raw_consensus:
+            canonical = raw_consensus
+        elif first_head == second_runeberg:
             canonical = first_head
         elif second_head == first_runeberg:
             canonical = second_head
