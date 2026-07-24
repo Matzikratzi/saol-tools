@@ -9,6 +9,7 @@ from PIL import Image
 from scripts.lemma_review import (
     approve_pages,
     approve_through,
+    apply_manual_insertions,
     apply_review_facit,
     _items_by_printed_row,
     _items_in_reading_order,
@@ -1540,6 +1541,59 @@ class LemmaReviewTests(unittest.TestCase):
             [item["lemma"] for item in candidates],
             ["affisch", "affischera", "affischering"],
         )
+
+    def test_manual_facit_insertion_recovers_ocr_omission(self):
+        items = [
+            {
+                "article_number": 26,
+                "lemma": "aggressionsdrift",
+                "source_page": 23,
+                "source_column": 2,
+                "source_top": 100.0,
+                "source_bottom": 124.0,
+                "source_left": 200.0,
+                "source_right": 400.0,
+            },
+            {
+                "article_number": 26,
+                "lemma": "aggressionshämning",
+                "source_page": 23,
+                "source_column": 2,
+                "source_top": 140.0,
+                "source_bottom": 164.0,
+                "source_left": 200.0,
+                "source_right": 430.0,
+            },
+        ]
+        facit = {
+            "manual_insertions": [
+                {
+                    "after": {
+                        "article_number": 26,
+                        "lemma": "aggressionsdrift",
+                    },
+                    "candidate": {
+                        "article_number": 26,
+                        "lemma": "aggressionshämmad",
+                        "stem_lemma": "aggressionshämmad",
+                        "raw": "-s|hämmad",
+                    },
+                }
+            ]
+        }
+        apply_manual_insertions(items, facit)
+        self.assertEqual(
+            [item["lemma"] for item in items],
+            [
+                "aggressionsdrift",
+                "aggressionshämmad",
+                "aggressionshämning",
+            ],
+        )
+        self.assertEqual(items[1]["method"], "facitinsättning")
+        self.assertIn("saknades i OCR", items[1]["reasons"][0])
+        apply_manual_insertions(items, facit)
+        self.assertEqual(len(items), 3)
 
     def test_word_limited_facit_tracks_exact_approved_prefix(self):
         items = [
