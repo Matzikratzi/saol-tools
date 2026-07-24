@@ -1656,6 +1656,12 @@ class LemmaReviewTests(unittest.TestCase):
                 "stem_lemma": "agn",
                 "raw": "agn",
                 "method": "artikelhuvud",
+                "source_page": 24,
+                "source_column": 1,
+                "source_top": 100.0,
+                "source_bottom": 124.0,
+                "source_left": 100.0,
+                "source_right": 200.0,
             },
             {
                 "article_number": 31,
@@ -1663,6 +1669,12 @@ class LemmaReviewTests(unittest.TestCase):
                 "stem_lemma": "agnfisk",
                 "raw": "-fisk",
                 "method": "sammansättningssuffix",
+                "source_page": 24,
+                "source_column": 1,
+                "source_top": 100.0,
+                "source_bottom": 124.0,
+                "source_left": 400.0,
+                "source_right": 500.0,
             },
         ]
         recover_runeberg_boundary_series(items, {31: head})
@@ -1672,6 +1684,11 @@ class LemmaReviewTests(unittest.TestCase):
         )
         self.assertEqual(items[2]["raw"], "agn|a")
         self.assertEqual(items[2]["method"], "Runebergs lodstrecksserie")
+        self.assertGreater(items[2]["source_left"], items[1]["source_right"])
+        self.assertEqual(
+            [item["lemma"] for item in _items_in_reading_order(items)],
+            ["agn", "agnfisk", "agna"],
+        )
 
     def test_manual_facit_insertion_recovers_ocr_omission(self):
         items = [
