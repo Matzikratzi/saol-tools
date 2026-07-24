@@ -8,6 +8,7 @@ import html
 import json
 import re
 import statistics
+import zipfile
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -1478,6 +1479,17 @@ body{{font:15px system-ui;margin:24px;max-width:1800px}}table{{border-collapse:c
 </body></html>"""
 
 
+def write_review_bundle(bundle: Path, paths: list[Path]) -> Path:
+    """Package the three review JSON files for convenient sharing."""
+    bundle.parent.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(
+        bundle, "w", compression=zipfile.ZIP_DEFLATED
+    ) as archive:
+        for path in paths:
+            archive.write(path, arcname=path.name)
+    return bundle
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -1491,6 +1503,12 @@ def main() -> None:
         default=Path("headword-review.json"),
     )
     parser.add_argument("--json", type=Path, default=Path("lemma-review.json"))
+    parser.add_argument(
+        "--bundle",
+        type=Path,
+        default=Path("saol-review-json.zip"),
+        help="ZIP med artikel-, huvudords- och lemma-JSON",
+    )
     parser.add_argument(
         "--report", type=Path, default=Path("lemma-review.html")
     )
@@ -1586,6 +1604,10 @@ def main() -> None:
         report_html(items, images, missing),
         encoding="utf-8",
     )
+    write_review_bundle(
+        args.bundle,
+        [args.articles, args.headwords, args.json],
+    )
     print(f"Kandidater: {output['candidate_count']}")
     print(f"Unika grundformer: {output['unique_lemma_count']}")
     print(f"Osäkra: {output['uncertain_count']}")
@@ -1614,6 +1636,7 @@ def main() -> None:
     print(f"Data: {args.json.resolve()}")
     print(f"Rapport: {args.report.resolve()}")
     print(f"Bildsidor: {args.image_dir.resolve()}")
+    print(f"ZIP för uppladdning: {args.bundle.resolve()}")
 
 
 if __name__ == "__main__":
