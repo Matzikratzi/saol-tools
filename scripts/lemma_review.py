@@ -179,7 +179,7 @@ def infer_boundary_at_article_divergence(
     if (
         common_length >= 4
         and common_length < len(normalized) - 1
-        and normalized[common_length] in "li1"
+        and normalized[common_length] == "l"
     ):
         return (
             normalized[:common_length]
