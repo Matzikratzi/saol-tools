@@ -35,6 +35,7 @@ from scripts.lemma_review import (
     recover_runeberg_boundary_series,
     remove_alphabetic_family_outliers,
     repair_initial_i_suffix_from_order,
+    repair_compacted_multiword_boundary,
     repair_intrusion_before_boundary,
     repair_mixed_case_duplicate,
     report_html,
@@ -2120,6 +2121,73 @@ class LemmaReviewTests(unittest.TestCase):
         self.assertEqual(
             [item["lemma"] for item in filtered],
             ["ajabaja", "à jour"],
+        )
+
+    def test_compacted_multiword_head_starts_compound_series(self):
+        self.assertEqual(
+            repair_compacted_multiword_boundary(
+                "åjourl|föra,", "à jour"
+            ),
+            "ajour|föra",
+        )
+        articles = {
+            "pages": [24],
+            "articles": [
+                {
+                    "number": 52,
+                    "start_page": 24,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 24,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("å", 100, 0.54),
+                                token("jour", 160, 0.47),
+                                token("oböjl.", 280, 0.28),
+                                token("adj.;", 390, 0.27),
+                            ],
+                        },
+                        {
+                            "page": 24,
+                            "column": 1,
+                            "top": 130.0,
+                            "bottom": 154.0,
+                            "tokens": [
+                                token("åjourl|föra,", 100, 0.30),
+                                token("-föring", 350, 0.35),
+                                token("s.,", 500, 0.28),
+                                token("-hålla,", 580, 0.35),
+                                token("-hållning;", 730, 0.32),
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+        heads = {
+            "headwords": [
+                {
+                    "article_number": 52,
+                    "headword": "à jour",
+                    "raw_headword": "å jour",
+                    "stem_headword": "å jour",
+                }
+            ]
+        }
+        candidates = extract_candidates(articles, heads)
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            [
+                "à jour",
+                "ajourföra",
+                "ajourföring",
+                "ajourhålla",
+                "ajourhållning",
+            ],
         )
 
     def test_unbold_alternative_suffix_in_definition_is_rejected(self):
