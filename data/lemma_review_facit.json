@@ -1882,12 +1882,12 @@
         "source_left": 238
       },
       "through": {
-        "article_number": 53,
-        "lemma": "accentbeteckning",
+        "article_number": 54,
+        "lemma": "accept",
         "source_page": 20,
         "source_column": 2,
-        "source_top": 842,
-        "source_left": 1417
+        "source_top": 1121,
+        "source_left": 1379
       },
       "candidates": [
         {
@@ -3028,11 +3028,67 @@
         },
         {
           "article_number": 53,
+          "lemma": "accenttecken",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 836,
+          "source_left": 2242
+        },
+        {
+          "article_number": 53,
+          "lemma": "accentlös",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 838,
+          "source_left": 2127
+        },
+        {
+          "article_number": 53,
+          "lemma": "accentförskjutning",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 839,
+          "source_left": 1756
+        },
+        {
+          "article_number": 53,
           "lemma": "accentbeteckning",
           "source_page": 20,
           "source_column": 2,
           "source_top": 842,
           "source_left": 1417
+        },
+        {
+          "article_number": 53,
+          "lemma": "accentuation",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 902,
+          "source_left": 1417
+        },
+        {
+          "article_number": 53,
+          "lemma": "accentuera",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 915,
+          "source_left": 2110
+        },
+        {
+          "article_number": 53,
+          "lemma": "accentuering",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 1042,
+          "source_left": 1418
+        },
+        {
+          "article_number": 54,
+          "lemma": "accept",
+          "source_page": 20,
+          "source_column": 2,
+          "source_top": 1121,
+          "source_left": 1379
         }
       ]
     }
