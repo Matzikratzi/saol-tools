@@ -593,6 +593,28 @@ def recover_runeberg_boundary_series(
                 items.pop(existing_index)
                 if existing_index < anchor_index:
                     anchor_index -= 1
+            if recovered.get("method") == "Runebergs lodstrecksserie":
+                source_left = float(
+                    anchor.get(
+                        "source_right",
+                        anchor.get("source_left", 0.0),
+                    )
+                ) + 12.0
+                recovered.update(
+                    {
+                        "source_page": int(anchor.get("source_page", 0)),
+                        "source_column": int(
+                            anchor.get("source_column", 0)
+                        ),
+                        "source_top": float(anchor.get("source_top", 0.0)),
+                        "source_bottom": float(
+                            anchor.get("source_bottom", 0.0)
+                        ),
+                        "source_left": source_left,
+                        "source_right": source_left
+                        + max(60.0, len(recovered["lemma"]) * 16.0),
+                    }
+                )
             items.insert(anchor_index + 1, recovered)
             anchor = recovered
     return items
