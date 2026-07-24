@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 
 from scripts.headword_review import (
+    fits_local_alphabetic_window,
     infer_homonym_runs,
     infer_stem_boundary_from_ocr,
     reconcile_homonym_neighbours,
@@ -68,6 +69,25 @@ class HeadwordReviewTests(unittest.TestCase):
         self.assertEqual(
             items[1]["correction_method"],
             "fetstil och alfabetisk ordning",
+        )
+
+    def test_three_neighbours_tolerate_one_bad_immediate_head(self):
+        items = [
+            {"headword": "akademi"},
+            {"headword": "akajer"},
+            {"headword": "zz-fel"},
+            {"headword": "a-kassa arbetslöshetskassa"},
+            {"headword": "aa-fel"},
+            {"headword": "akatalektisk"},
+            {"headword": "akleja"},
+        ]
+        self.assertTrue(
+            fits_local_alphabetic_window(items, 3, "a-kassa")
+        )
+        self.assertFalse(
+            fits_local_alphabetic_window(
+                items, 3, "arbetslöshetskassa"
+            )
         )
 
     def test_swedish_sort_places_a_accent_with_a_and_aa_after_z(self):
