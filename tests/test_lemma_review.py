@@ -30,6 +30,7 @@ from scripts.lemma_review import (
     pronunciation_then_inflection,
     render_review_images,
     repair_mixed_case_duplicate,
+    runeberg_short_inflection,
     suffix_base,
 )
 
@@ -1347,6 +1348,49 @@ class LemmaReviewTests(unittest.TestCase):
         )
         self.assertEqual(candidates[1]["source_page"], 23)
         self.assertEqual(candidates[1]["source_column"], 1)
+
+    def test_corrupt_short_inflection_uses_aligned_runeberg_grammar(self):
+        head = {
+            "article_number": 1,
+            "headword": "aga",
+            "stem_headword": "ag|a",
+            "runeberg_line": "^ag|a -an -ors. ä. turkisk titel",
+            "runeberg_match_score": 0.96,
+        }
+        self.assertTrue(runeberg_short_inflection("-OFr", head))
+
+        articles = {
+            "pages": [23],
+            "articles": [
+                {
+                    "number": 1,
+                    "start_page": 23,
+                    "start_column": 1,
+                    "start_y": 100.0,
+                    "lines": [
+                        {
+                            "page": 23,
+                            "column": 1,
+                            "top": 100.0,
+                            "bottom": 124.0,
+                            "tokens": [
+                                token("'agla", 100, 0.40),
+                                token("-aN", 250, 0.10),
+                                token("-OFr", 340, 0.10),
+                                token("ä.", 450, 0.10),
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
+        candidates = extract_candidates(
+            articles, {"headwords": [head]}
+        )
+        self.assertEqual(
+            [item["lemma"] for item in candidates],
+            ["aga"],
+        )
 
     def test_present_form_in_definition_is_not_a_new_lemma(self):
         self.assertTrue(inflection_of_previous("affischera", "affischer"))
