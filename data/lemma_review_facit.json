@@ -3,12 +3,12 @@
   "pages": {},
   "reviewed_prefix": {
     "through": {
-      "article_number": 59,
-      "lemma": "a-kassa",
+      "article_number": 185,
+      "lemma": "akatalektisk",
       "source_page": 24,
       "source_column": 2,
-      "source_top": 1078,
-      "source_left": 1413
+      "source_top": 1152,
+      "source_left": 1416
     },
     "candidates": [
       {
@@ -1834,6 +1834,14 @@
         "source_column": 2,
         "source_top": 1078,
         "source_left": 1413
+      },
+      {
+        "article_number": 185,
+        "lemma": "akatalektisk",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 1152,
+        "source_left": 1416
       }
     ],
     "from": {
