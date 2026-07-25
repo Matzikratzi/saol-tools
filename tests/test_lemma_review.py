@@ -137,6 +137,80 @@ class LemmaReviewTests(unittest.TestCase):
             ["administrator", "administratör", "admittering"],
         )
 
+    def test_boundary_prefix_recovers_aerosol_compound_past_definition(self):
+        common = {
+            "article_number": 1,
+            "source_page": 20,
+            "source_column": 1,
+            "source_bottom": 150.0,
+        }
+        items = [
+            {
+                **common,
+                "lemma": "aero",
+                "raw": "aero-",
+                "method": "artikelhuvud",
+                "source_top": 100.0,
+                "source_left": 100.0,
+            },
+            {
+                **common,
+                "lemma": "aerosol",
+                "raw": "-sol",
+                "method": "sammansättningssuffix",
+                "source_top": 110.0,
+                "source_left": 200.0,
+            },
+            {
+                **common,
+                "lemma": "av",
+                "raw": "av",
+                "method": "halvfet token",
+                "source_top": 120.0,
+                "source_left": 300.0,
+            },
+            {
+                **common,
+                "lemma": "avsolförpackning",
+                "stem_lemma": "avsolförpackning",
+                "raw": "-sol|förpackning",
+                "method": "sammansättningssuffix",
+                "reasons": [],
+                "source_top": 130.0,
+                "source_left": 400.0,
+            },
+        ]
+        recover_runeberg_boundary_series(
+            items,
+            {
+                1: {
+                    "headword": "aero",
+                    "stem_headword": "aero-",
+                    "runeberg_match_score": 1.0,
+                    "runeberg_article_lines": [
+                        "aero- -sol s. gas av vätska",
+                        "-sol|förpackning",
+                    ],
+                }
+            },
+        )
+        self.assertEqual(items[-1]["lemma"], "aerosolförpackning")
+
+    def test_runeberg_short_inflection_uses_continuation_lines(self):
+        self.assertTrue(
+            runeberg_short_inflection(
+                "-eNns.",
+                {
+                    "runeberg_match_score": 1.0,
+                    "runeberg_line": "adsorber|a -ade v.",
+                    "runeberg_article_lines": [
+                        "adsorber|a -ade v. adsorption",
+                        "-en s.",
+                    ],
+                },
+            )
+        )
+
     def test_runeberg_boundary_uses_previous_printed_compound(self):
         common = {
             "article_number": 1,
