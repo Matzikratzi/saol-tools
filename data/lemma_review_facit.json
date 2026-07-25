@@ -1,32 +1,7 @@
 {
   "version": 2,
   "pages": {},
-  "manual_insertions": [
-    {
-      "after": {
-        "article_number": 26,
-        "lemma": "aggressionsdrift"
-      },
-      "candidate": {
-        "article_number": 26,
-        "lemma": "aggressionshämmad",
-        "stem_lemma": "aggressionshämmad",
-        "raw": "-s|hämmad"
-      }
-    },
-    {
-      "before": {
-        "article_number": 52,
-        "lemma": "accelerera"
-      },
-      "candidate": {
-        "article_number": 52,
-        "lemma": "acceleratoranläggning",
-        "stem_lemma": "acceleratoranläggning",
-        "raw": "-anläggning"
-      }
-    }
-  ],
+  "manual_insertions": [],
   "reviewed_prefix": {
     "from": {
       "article_number": 1,
@@ -1154,8 +1129,8 @@
         "lemma": "acceleratoranläggning",
         "source_page": 20,
         "source_column": 2,
-        "source_top": 559.0,
-        "source_left": 1861.0
+        "source_top": 505.0,
+        "source_left": 2128.0
       },
       {
         "article_number": 52,
