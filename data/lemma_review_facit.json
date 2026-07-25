@@ -1882,12 +1882,12 @@
         "source_left": 238
       },
       "through": {
-        "article_number": 93,
-        "lemma": "adjungera",
-        "source_page": 21,
-        "source_column": 2,
-        "source_top": 2899.0,
-        "source_left": 1812.0
+        "article_number": 103,
+        "lemma": "adoptionsbyrå",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1599.0,
+        "source_left": 782.0
       },
       "candidates": [
         {
@@ -4393,6 +4393,302 @@
           "source_column": 2,
           "source_top": 2899.0,
           "source_left": 1812.0
+        },
+        {
+          "article_number": 93,
+          "lemma": "adjungerad",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 3039.0,
+          "source_left": 1514.0
+        },
+        {
+          "article_number": 93,
+          "lemma": "adjungering",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 3033.0,
+          "source_left": 2116.0
+        },
+        {
+          "article_number": 94,
+          "lemma": "adjunkt",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 3114.0,
+          "source_left": 1476.0
+        },
+        {
+          "article_number": 94,
+          "lemma": "adjunktstjänst",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 3237.0,
+          "source_left": 1647.0
+        },
+        {
+          "article_number": 94,
+          "lemma": "adjunktur",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 3239.0,
+          "source_left": 1944.0
+        },
+        {
+          "article_number": 95,
+          "lemma": "adjutant",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 3387.0,
+          "source_left": 1479.0
+        },
+        {
+          "article_number": 95,
+          "lemma": "adjutantfågel",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 3440.0,
+          "source_left": 2438.0
+        },
+        {
+          "article_number": 95,
+          "lemma": "adjutanttjänstgöring",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 3511.0,
+          "source_left": 1521.0
+        },
+        {
+          "article_number": 95,
+          "lemma": "adjutantstjänstgöring",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 3511.0,
+          "source_left": 1521.0
+        },
+        {
+          "article_number": 96,
+          "lemma": "adjö",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 3593.0,
+          "source_left": 1487.0
+        },
+        {
+          "article_number": 96,
+          "lemma": "adjöss",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 3660.0,
+          "source_left": 1525.0
+        },
+        {
+          "article_number": 97,
+          "lemma": "adla",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 3790.0,
+          "source_left": 1486.0
+        },
+        {
+          "article_number": 97,
+          "lemma": "adlig",
+          "source_page": 21,
+          "source_column": 2,
+          "source_top": 3860.0,
+          "source_left": 1629.0
+        },
+        {
+          "article_number": 98,
+          "lemma": "administration",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 229.0,
+          "source_left": 208.0
+        },
+        {
+          "article_number": 98,
+          "lemma": "administrationsapparat",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 237.0,
+          "source_left": 917.0
+        },
+        {
+          "article_number": 98,
+          "lemma": "administrationsavgift",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 288.0,
+          "source_left": 247.0
+        },
+        {
+          "article_number": 98,
+          "lemma": "administrationskostnad",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 293.0,
+          "source_left": 486.0
+        },
+        {
+          "article_number": 98,
+          "lemma": "administrationslokal",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 299.0,
+          "source_left": 789.0
+        },
+        {
+          "article_number": 98,
+          "lemma": "administrationsproblem",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 303.0,
+          "source_left": 1002.0
+        },
+        {
+          "article_number": 98,
+          "lemma": "administrativ",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 303.0,
+          "source_left": 1302.0
+        },
+        {
+          "article_number": 98,
+          "lemma": "administrator",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 434.0,
+          "source_left": 513.0
+        },
+        {
+          "article_number": 98,
+          "lemma": "administratör",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 442.0,
+          "source_left": 1088.0
+        },
+        {
+          "article_number": 98,
+          "lemma": "administrera",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 499.0,
+          "source_left": 754.0
+        },
+        {
+          "article_number": 98,
+          "lemma": "administrering",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 571.0,
+          "source_left": 1016.0
+        },
+        {
+          "article_number": 99,
+          "lemma": "admittans",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 633.0,
+          "source_left": 202.0
+        },
+        {
+          "article_number": 99,
+          "lemma": "admittera",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 786.0,
+          "source_left": 616.0
+        },
+        {
+          "article_number": 99,
+          "lemma": "admittering",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 907.0,
+          "source_left": 559.0
+        },
+        {
+          "article_number": 100,
+          "lemma": "admonition",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 976.0,
+          "source_left": 197.0
+        },
+        {
+          "article_number": 101,
+          "lemma": "adolescens",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 1115.0,
+          "source_left": 195.0
+        },
+        {
+          "article_number": 102,
+          "lemma": "adonis",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 1255.0,
+          "source_left": 193.0
+        },
+        {
+          "article_number": 102,
+          "lemma": "adonisansikte",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 1323.0,
+          "source_left": 337.0
+        },
+        {
+          "article_number": 103,
+          "lemma": "adoptant",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 1396.0,
+          "source_left": 191.0
+        },
+        {
+          "article_number": 103,
+          "lemma": "adoptera",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 1405.0,
+          "source_left": 967.0
+        },
+        {
+          "article_number": 103,
+          "lemma": "adoptering",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 1535.0,
+          "source_left": 579.0
+        },
+        {
+          "article_number": 103,
+          "lemma": "adoption",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 1539.0,
+          "source_left": 812.0
+        },
+        {
+          "article_number": 103,
+          "lemma": "adoptionsansökan",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 1594.0,
+          "source_left": 469.0
+        },
+        {
+          "article_number": 103,
+          "lemma": "adoptionsbyrå",
+          "source_page": 22,
+          "source_column": 1,
+          "source_top": 1599.0,
+          "source_left": 782.0
         }
       ]
     }
