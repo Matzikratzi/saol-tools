@@ -37,6 +37,7 @@ from scripts.lemma_review import (
     pronunciation_then_inflection,
     repair_false_boundary_from_runeberg,
     repair_final_letter_from_runeberg,
+    repair_runeberg_letter_confusions,
     render_review_images,
     recover_runeberg_boundary_series,
     rebase_suffixes_from_runeberg_stems,
@@ -82,6 +83,12 @@ class LemmaReviewTests(unittest.TestCase):
 
     def test_normalizes_stem_boundary_for_game_word(self):
         self.assertEqual(normalize_lemma("amp|el"), "ampel")
+
+    def test_repairs_runeberg_i_as_l_before_ing(self):
+        self.assertEqual(
+            repair_runeberg_letter_confusions("-s|förmediing"),
+            "-s|förmedling",
+        )
 
     def test_boundary_prefix_overlaps_previous_compound(self):
         self.assertEqual(
