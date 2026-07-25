@@ -1844,6 +1844,7 @@ def remove_generated_inflections(items: list[dict]) -> list[dict]:
                 and raw.startswith("-")
                 and current_lemma
                 == normalized_previous[:-1] + "ade"
+                and item.get("method") != "adjektivisk grundform"
             ):
                 rejected_ids.add(id(item))
                 rule_hit("filter.sent_skapad_böjning")
@@ -2222,8 +2223,29 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             and len(normalized_suffix) > 2
                             and not repeated_full_word
                         ):
+                            suffix_base_lemma = current_base
+                            if adjective_lemma:
+                                preceding_verbs = [
+                                    item
+                                    for item in result
+                                    if (
+                                        int(item["article_number"])
+                                        == int(article["number"])
+                                        and normalize_lemma(
+                                            item.get("lemma", "")
+                                        ).endswith("era")
+                                    )
+                                ]
+                                if preceding_verbs:
+                                    suffix_base_lemma = preceding_verbs[
+                                        -1
+                                    ]["lemma"]
+                                    if suffix_base_lemma.endswith("era"):
+                                        suffix_base_lemma = (
+                                            suffix_base_lemma[:-1]
+                                        )
                             lemma = expand_compound(
-                                current_base, suffix_variant
+                                suffix_base_lemma, suffix_variant
                             )
                             if (
                                 plural_of_previous(
@@ -2238,7 +2260,11 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                                 article,
                                 lemma,
                                 cleaned,
-                                "sammansättningssuffix",
+                                (
+                                    "adjektivisk grundform"
+                                    if adjective_lemma
+                                    else "sammansättningssuffix"
+                                ),
                                 score,
                                 line=line,
                                 token=token,
