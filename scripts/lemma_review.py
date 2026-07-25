@@ -197,6 +197,29 @@ def alternative_inflection_before_marker(
     return alternative in NON_LEMMA_SUFFIXES
 
 
+def adjectival_lemma_suffix(
+    normalized_suffix: str, following_tokens: list[dict]
+) -> bool:
+    """Recognize ``-ad -at adj.`` where the first form is an adjective lemma."""
+    return (
+        normalized_suffix == "-ad"
+        and len(following_tokens) >= 2
+        and (
+            "-"
+            + normalize_lemma(
+                normalize_leading_dash(
+                    following_tokens[0].get("text", "")
+                ).lstrip("-")
+            )
+        )
+        == "-at"
+        and normalize_lemma(
+            following_tokens[1].get("text", "")
+        )
+        == "adj"
+    )
+
+
 def optional_parenthesis_variants(value: str) -> list[str]:
     """Return both lemmas denoted by SAOL's optional parenthesized ending."""
     match = re.match(r"^(.*)\(([^()]*)\)?$", value)
@@ -991,6 +1014,9 @@ def recover_runeberg_boundary_series(
             ]
             if len(direct_matches) == 1:
                 direct = direct_matches[0]
+                boundary_prefix = normalize_lemma(
+                    re.split(r"[|¦]", raw.lstrip("-"), maxsplit=1)[0]
+                )
                 reading_order = (
                     _items_in_reading_order(article_items)
                     if all(
@@ -1012,7 +1038,9 @@ def recover_runeberg_boundary_series(
                 ]
                 if preceding_bases:
                     preceding_base = preceding_bases[-1]
-                    if preceding_base.get("method") == "artikelhuvud":
+                    if len(boundary_prefix) < 2:
+                        base_value = compound_base
+                    elif preceding_base.get("method") == "artikelhuvud":
                         base_value = (
                             head.get("runeberg_stem_headword")
                             or head.get("stem_headword")
@@ -1049,7 +1077,8 @@ def recover_runeberg_boundary_series(
                             ]
                             rule_hit("runeberg.korrigerad_lodstrecksbas")
                         anchor = direct
-                        compound_base = suffix_base(direct["lemma"])
+                        if len(boundary_prefix) >= 2:
+                            compound_base = suffix_base(direct["lemma"])
                         used_ids.add(id(direct))
                         cursor = match.end()
                         rule_hit("runeberg.befintlig_lodstrecksform")
@@ -1076,7 +1105,10 @@ def recover_runeberg_boundary_series(
             raw_lemma = normalize_lemma(raw)
             article_headword = normalize_lemma(head["headword"])
             local_compound_base = compound_base
-            if raw.startswith("-"):
+            boundary_prefix = normalize_lemma(
+                re.split(r"[|¦]", raw.lstrip("-"), maxsplit=1)[0]
+            )
+            if raw.startswith("-") and len(boundary_prefix) >= 2:
                 similar_position = max(
                     (
                         item
@@ -1203,10 +1235,36 @@ def recover_runeberg_boundary_series(
                 )
                 if similar is not None and similarity >= 0.82:
                     recovered = similar
+                    corrected_raw = raw
+                    observed_raw = recovered.get("raw", "").strip()
+                    if (
+                        raw.startswith("-")
+                        and re.search(r"[|¦/]", observed_raw)
+                    ):
+                        expected_prefix = normalize_lemma(
+                            re.split(
+                                r"[|¦]",
+                                raw.lstrip("-"),
+                                maxsplit=1,
+                            )[0]
+                        )
+                        observed_parts = re.split(
+                            r"[|¦/]", observed_raw.lstrip("-"), maxsplit=1
+                        )
+                        if len(observed_parts) == 2:
+                            corrected_raw = (
+                                "-"
+                                + expected_prefix
+                                + "|"
+                                + observed_parts[1]
+                            )
+                            lemma = expand_boundary_compound(
+                                local_compound_base, corrected_raw
+                            )
                     old_base = suffix_base(
                         recovered.get("raw", "") or recovered["lemma"]
                     )
-                    new_base = suffix_base(raw)
+                    new_base = suffix_base(corrected_raw)
                     if standalone_boundary:
                         recovered_index = items.index(recovered)
                         last_rebased_lemma = lemma
@@ -1250,7 +1308,7 @@ def recover_runeberg_boundary_series(
                             rule_hit("runeberg.ombyggd_följdändelse")
                     recovered["lemma"] = lemma
                     recovered["stem_lemma"] = lemma
-                    recovered["raw"] = raw
+                    recovered["raw"] = corrected_raw
                     recovered["method"] = (
                         "Runebergkorrigerad lodstrecksserie"
                     )
@@ -1355,6 +1413,105 @@ def recover_runeberg_boundary_series(
                     last_rebased_lemma = rebuilt
                     rule_hit("runeberg.ombyggd_följdändelse")
             anchor = recovered
+    return items
+
+
+def rebase_suffixes_from_runeberg_stems(
+    items: list[dict], heads: dict[int, dict]
+) -> list[dict]:
+    """Attach suffixes to the nearest explicit full Runeberg stem."""
+    letters = "A-Za-zÅÄÖåäöÀÁÉàáé"
+    full_boundary = re.compile(
+        rf"(?<![-{letters}])[{letters}]+[|¦][{letters}]+"
+    )
+    suffix_pattern = re.compile(rf"-[{letters}]+")
+    for article_number, head in heads.items():
+        if float(head.get("runeberg_match_score", 0.0)) < 0.80:
+            continue
+        runeberg_text = " ".join(
+            head.get("runeberg_article_lines")
+            or [head.get("runeberg_line", "")]
+        )
+        boundaries = list(full_boundary.finditer(runeberg_text))
+        if not boundaries:
+            continue
+        article_items = [
+            item
+            for item in items
+            if int(item["article_number"]) == int(article_number)
+        ]
+        used_ids = set()
+        for index, boundary in enumerate(boundaries):
+            boundary_lemma = normalize_lemma(boundary.group(0))
+            base = suffix_base(boundary.group(0))
+            segment_end = (
+                boundaries[index + 1].start()
+                if index + 1 < len(boundaries)
+                else len(runeberg_text)
+            )
+            for item in article_items:
+                item_raw = item.get("raw", "").strip()
+                item_lemma = normalize_lemma(item.get("lemma", ""))
+                if (
+                    not item_lemma
+                    or item_raw.startswith("-")
+                    or "|" in item_raw
+                    or "¦" in item_raw
+                    or not same_lexical_family(
+                        boundary_lemma, item_lemma
+                    )
+                ):
+                    continue
+                match = re.search(
+                    rf"(?<![{letters}]){re.escape(item_lemma)}"
+                    rf"(?![{letters}])",
+                    runeberg_text[boundary.end() : segment_end],
+                    re.IGNORECASE,
+                )
+                if match:
+                    segment_end = min(
+                        segment_end,
+                        boundary.end() + match.start(),
+                    )
+            for suffix in suffix_pattern.findall(
+                runeberg_text[boundary.end() : segment_end]
+            ):
+                normalized_suffix = "-" + normalize_lemma(suffix[1:])
+                if (
+                    normalized_suffix in NON_LEMMA_SUFFIXES
+                    or merged_pos_inflection(
+                        suffix, normalized_suffix, 0.0
+                    )
+                ):
+                    continue
+                matching = next(
+                    (
+                        item
+                        for item in article_items
+                        if (
+                            id(item) not in used_ids
+                            and item.get("raw", "").strip().startswith("-")
+                            and (
+                                "-"
+                                + normalize_lemma(
+                                    item.get("raw", "")
+                                    .strip()
+                                    .strip(";,:.()[]{}")
+                                    .lstrip("-")
+                                )
+                            )
+                            == normalized_suffix
+                        )
+                    ),
+                    None,
+                )
+                if matching is None:
+                    continue
+                rebuilt = expand_compound(base, suffix)
+                matching["lemma"] = rebuilt
+                matching["stem_lemma"] = rebuilt
+                used_ids.add(id(matching))
+                rule_hit("runeberg.ombyggd_stamsuffix")
     return items
 
 
@@ -1712,8 +1869,14 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                                 suffix_word
                             )
                         )
+                        adjective_lemma = adjectival_lemma_suffix(
+                            normalized_suffix, same_line_following
+                        )
                         if (
-                            normalized_suffix not in NON_LEMMA_SUFFIXES
+                            (
+                                normalized_suffix not in NON_LEMMA_SUFFIXES
+                                or adjective_lemma
+                            )
                             and not merged_pos_inflection(
                                 raw, normalized_suffix, score
                             )
@@ -1746,6 +1909,8 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             )
                             last_lookup_lemma = lemma
                             rule_hit("extract.sammansättningssuffix")
+                            if adjective_lemma:
+                                rule_hit("extract.adjektivisk_grundform")
                     previous_separator = False
                     at_line_start = False
                     continue
@@ -1906,6 +2071,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
     repair_final_letter_from_runeberg(result, heads)
     repair_false_boundary_from_runeberg(result, heads)
     recover_runeberg_boundary_series(result, heads)
+    rebase_suffixes_from_runeberg_stems(result, heads)
     result = remove_displaced_inline_alternatives(result, heads)
     return remove_alphabetic_family_outliers(result, heads)
 
