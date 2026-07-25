@@ -50,6 +50,11 @@ def normalize_lemma(value: str) -> str:
     return re.sub(r"\s+", " ", value).strip(" -")
 
 
+def repair_runeberg_letter_confusions(value: str) -> str:
+    """Repair narrow letter confusions in a Runeberg-only lemma candidate."""
+    return re.sub(r"iing\b", "ling", value, flags=re.IGNORECASE)
+
+
 def expand_compound(base: str, suffix: str) -> str:
     trailing_hyphen = base.rstrip().endswith("-")
     base = normalize_lemma(base)
@@ -1158,6 +1163,10 @@ def recover_runeberg_boundary_series(
                         )
 
             raw = match.group(0)
+            repaired_raw = repair_runeberg_letter_confusions(raw)
+            if repaired_raw != raw:
+                raw = repaired_raw
+                rule_hit("repair.runeberg_i_som_l")
             standalone_boundary_candidate = (
                 max(
                     (
