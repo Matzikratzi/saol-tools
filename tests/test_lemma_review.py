@@ -3173,6 +3173,62 @@ class LemmaReviewTests(unittest.TestCase):
             self.assertEqual(len(images), 2)
             self.assertTrue(all(path.exists() for path in images))
 
+    def test_printed_word_repairs_false_boundary_and_sets_suffix_base(self):
+        items = [
+            {
+                "article_number": 1,
+                "lemma": "adverb",
+                "stem_lemma": "adverb",
+                "raw": "adverb",
+                "method": "artikelhuvud",
+                "source_page": 22,
+                "source_column": 1,
+                "source_top": 100.0,
+                "source_bottom": 124.0,
+                "source_left": 100.0,
+            },
+            {
+                "article_number": 1,
+                "lemma": "adverbal",
+                "stem_lemma": "adverbal",
+                "raw": "adverb|al",
+                "method": "halvfet token",
+                "source_page": 22,
+                "source_column": 1,
+                "source_top": 140.0,
+                "source_bottom": 164.0,
+                "source_left": 100.0,
+            },
+            {
+                "article_number": 1,
+                "lemma": "adverbsats",
+                "stem_lemma": "adverbsats",
+                "raw": "-sats",
+                "method": "sammansättningssuffix",
+                "source_page": 22,
+                "source_column": 2,
+                "source_top": 100.0,
+                "source_bottom": 124.0,
+                "source_left": 100.0,
+            },
+        ]
+        head = {
+            "headword": "adverb",
+            "stem_headword": "adverb",
+            "runeberg_stem_headword": "adverb",
+            "runeberg_match_score": 1.0,
+            "runeberg_article_lines": [
+                "adverb s. ordklass",
+                "som fungerar som adverbial adverbial",
+                "-et s. satsdel -sats",
+            ],
+        }
+        repair_false_boundary_from_runeberg(items, {1: head})
+        self.assertEqual(
+            [item["lemma"] for item in items],
+            ["adverb", "adverbial", "adverbialsats"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
