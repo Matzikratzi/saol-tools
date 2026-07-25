@@ -297,11 +297,28 @@ class LemmaReviewTests(unittest.TestCase):
                 "lemma": "afrikanska",
                 "raw": "-anska",
             },
+            {
+                "article_number": 3,
+                "lemma": "affektera",
+                "raw": "affekter|a",
+            },
+            {
+                "article_number": 3,
+                "lemma": "affekterad",
+                "raw": "-ad",
+                "method": "adjektivisk grundform",
+            },
         ]
         filtered = remove_generated_inflections(items)
         self.assertEqual(
             [item["lemma"] for item in filtered],
-            ["accentuera", "afrikansk", "afrikanska"],
+            [
+                "accentuera",
+                "afrikansk",
+                "afrikanska",
+                "affektera",
+                "affekterad",
+            ],
         )
 
     def test_runeberg_boundary_uses_previous_printed_compound(self):
