@@ -117,7 +117,10 @@ def runeberg_short_inflection(raw: str, head: dict) -> bool:
         normalize_lemma(value)
         for value in re.findall(
             r"-[A-Za-zÅÄÖåäöÀÁÉàáé]+\.?",
-            head.get("runeberg_line", ""),
+            " ".join(
+                head.get("runeberg_article_lines")
+                or [head.get("runeberg_line", "")]
+            ),
         )
     ]
     return any(
@@ -804,6 +807,11 @@ def repair_false_boundary_from_runeberg(
             head.get("runeberg_article_lines")
             or [head.get("runeberg_line", "")]
         )
+        # A thin boundary occasionally acquires whitespace in Runeberg OCR,
+        # e.g. ``advokat| orisk``.
+        runeberg_text = re.sub(
+            rf"([|¦])\s+(?=[{letters}])", r"\1", runeberg_text
+        )
         runeberg_words = {
             normalize_lemma(value)
             for value in re.findall(rf"[{letters}]+", runeberg_text)
@@ -951,6 +959,11 @@ def recover_runeberg_boundary_series(
             head.get("runeberg_article_lines")
             or [head.get("runeberg_line", "")]
         )
+        # A thin boundary occasionally acquires whitespace in Runeberg OCR,
+        # e.g. ``advokat| orisk``.
+        runeberg_text = re.sub(
+            rf"([|¦])\s+(?=[{letters}])", r"\1", runeberg_text
+        )
         matches = list(boundary_pattern.finditer(runeberg_text))
         if not matches:
             continue
@@ -1038,8 +1051,35 @@ def recover_runeberg_boundary_series(
                 ]
                 if preceding_bases:
                     preceding_base = preceding_bases[-1]
-                    if len(boundary_prefix) < 2:
-                        base_value = compound_base
+                    matching_base = next(
+                        (
+                            item
+                            for item in reversed(preceding_bases)
+                            if normalize_lemma(
+                                item.get("lemma", "")
+                            ).endswith(boundary_prefix)
+                        ),
+                        None,
+                    )
+                    if matching_base is not None:
+                        base_value = matching_base["lemma"]
+                    elif boundary_prefix in {"a", "s"}:
+                        preceding_full = next(
+                            (
+                                item
+                                for item in reversed(preceding_bases)
+                                if not item.get("raw", "")
+                                .strip()
+                                .startswith("-")
+                            ),
+                            head_item,
+                        )
+                        preceding_raw = preceding_full.get("raw", "")
+                        base_value = (
+                            preceding_raw
+                            if "|" in preceding_raw or "¦" in preceding_raw
+                            else preceding_full["lemma"]
+                        )
                     elif preceding_base.get("method") == "artikelhuvud":
                         base_value = (
                             head.get("runeberg_stem_headword")
@@ -1105,10 +1145,82 @@ def recover_runeberg_boundary_series(
             raw_lemma = normalize_lemma(raw)
             article_headword = normalize_lemma(head["headword"])
             local_compound_base = compound_base
+            matched_boundary_base = False
             boundary_prefix = normalize_lemma(
                 re.split(r"[|¦]", raw.lstrip("-"), maxsplit=1)[0]
             )
-            if raw.startswith("-") and len(boundary_prefix) >= 2:
+            if (
+                raw.startswith("-")
+                and boundary_prefix
+                and normalize_lemma(anchor.get("lemma", "")).endswith(
+                    boundary_prefix
+                )
+            ):
+                local_compound_base = anchor["lemma"]
+                matched_boundary_base = True
+            elif raw.startswith("-") and boundary_prefix:
+                matching_bases = [
+                    item
+                    for item in (
+                        _items_in_reading_order(article_items)
+                        if all(
+                            "source_top" in item
+                            and "source_bottom" in item
+                            and "source_left" in item
+                            for item in article_items
+                        )
+                        else article_items
+                    )
+                    if normalize_lemma(
+                        item.get("lemma", "")
+                    ).endswith(boundary_prefix)
+                ]
+                if matching_bases:
+                    local_compound_base = matching_bases[-1]["lemma"]
+                    matched_boundary_base = True
+            if (
+                raw.startswith("-")
+                and boundary_prefix in {"a", "s"}
+                and all(
+                    "source_top" in item
+                    and "source_bottom" in item
+                    and "source_left" in item
+                    for item in article_items
+                )
+            ):
+                reading_order = _items_in_reading_order(article_items)
+                candidates_before = [
+                    item
+                    for item in reading_order
+                    if (
+                        item.get("method") != "artikelhuvud"
+                        and not item.get("raw", "").strip().startswith("-")
+                        and (
+                            float(item["source_top"]),
+                            float(item["source_left"]),
+                        )
+                        < (
+                            float(anchor.get("source_top", 0.0)),
+                            float(anchor.get("source_left", 0.0)),
+                        )
+                    )
+                ]
+                preceding_full = (
+                    candidates_before[-1]
+                    if candidates_before
+                    else head_item
+                )
+                preceding_raw = preceding_full.get("raw", "")
+                local_compound_base = suffix_base(
+                    preceding_raw
+                    if "|" in preceding_raw or "¦" in preceding_raw
+                    else preceding_full["lemma"]
+                )
+            if (
+                raw.startswith("-")
+                and len(boundary_prefix) >= 2
+                and not matched_boundary_base
+            ):
                 similar_position = max(
                     (
                         item
@@ -1204,6 +1316,19 @@ def recover_runeberg_boundary_series(
             )
             if recovered is None and equivalent is not None:
                 anchor = equivalent
+                if not raw.startswith("-"):
+                    raw_tail = normalize_lemma(
+                        re.split(r"[|¦]", raw, maxsplit=1)[1]
+                    )
+                    equivalent_lemma = normalize_lemma(
+                        equivalent["lemma"]
+                    )
+                    compound_base = (
+                        equivalent_lemma[: -len(raw_tail)]
+                        if raw_tail
+                        and equivalent_lemma.endswith(raw_tail)
+                        else suffix_base(raw)
+                    )
                 used_ids.add(id(equivalent))
                 rule_hit("runeberg.befintlig_lodstrecksform")
                 continue
@@ -1444,6 +1569,36 @@ def rebase_suffixes_from_runeberg_stems(
         for index, boundary in enumerate(boundaries):
             boundary_lemma = normalize_lemma(boundary.group(0))
             base = suffix_base(boundary.group(0))
+            folded_boundary = boundary_lemma.translate(
+                str.maketrans({"à": "a", "á": "a", "é": "e"})
+            )
+            observed_boundary = next(
+                (
+                    item
+                    for item in article_items
+                    if (
+                        not item.get("raw", "").strip().startswith("-")
+                        and normalize_lemma(item.get("raw", "")).translate(
+                            str.maketrans(
+                                {"à": "a", "á": "a", "é": "e"}
+                            )
+                        )
+                        == folded_boundary
+                    )
+                ),
+                None,
+            )
+            if observed_boundary is not None:
+                tail = normalize_lemma(
+                    re.split(
+                        r"[|¦]", boundary.group(0), maxsplit=1
+                    )[1]
+                )
+                observed_lemma = normalize_lemma(
+                    observed_boundary["lemma"]
+                )
+                if tail and observed_lemma.endswith(tail):
+                    base = observed_lemma[: -len(tail)]
             segment_end = (
                 boundaries[index + 1].start()
                 if index + 1 < len(boundaries)
@@ -1824,8 +1979,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                         cleaned = inferred_suffix_boundary
                         rule_hit("infer.suffixserie_lodstreck")
                     runeberg_inflection = (
-                        line_index == 0
-                        and score < 0.25
+                        score < 0.25
                         and runeberg_short_inflection(raw, head)
                     )
                     if runeberg_inflection:
