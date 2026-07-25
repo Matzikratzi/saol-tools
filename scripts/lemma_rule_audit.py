@@ -15,7 +15,6 @@ ROOT = Path(__file__).resolve().parents[1]
 NEUTRAL_RULES = {
     "repair_initial_i_suffix_from_order": lambda value, *args: value,
     "repair_mixed_case_duplicate": lambda value: value,
-    "repair_intrusion_before_boundary": lambda value, *args: value,
     "repair_compacted_multiword_boundary": lambda value, *args: value,
     "infer_era_boundary_from_verb_grammar": lambda *args: "",
     "infer_boundary_from_previous": lambda *args: "",
