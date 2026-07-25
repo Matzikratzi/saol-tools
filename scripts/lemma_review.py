@@ -990,9 +990,16 @@ def recover_runeberg_boundary_series(
         cursor = 0
         used_ids = set()
         for match in matches:
-            for token_value in token_pattern.findall(
-                runeberg_text[cursor : match.start()]
-            ):
+            preceding_segment = runeberg_text[cursor : match.start()]
+            for token_match in token_pattern.finditer(preceding_segment):
+                token_value = token_match.group(0)
+                text_before_token = preceding_segment[
+                    : token_match.start()
+                ].rstrip()
+                follows_base_dash = (
+                    token_value.startswith("-")
+                    or text_before_token.endswith(("-", "—", "–"))
+                )
                 possible = (
                     expand_boundary_compound(compound_base, token_value)
                     if token_value.startswith("-")
@@ -1005,10 +1012,107 @@ def recover_runeberg_boundary_series(
                     ),
                     None,
                 )
+                if preceding is None and follows_base_dash:
+                    standalone_possible = normalize_lemma(
+                        token_value.lstrip("-")
+                    )
+                    preceding = next(
+                        (
+                            item
+                            for item in article_items
+                            if (
+                                item["lemma"] == standalone_possible
+                                and not item.get("raw", "")
+                                .strip()
+                                .startswith("-")
+                            )
+                        ),
+                        None,
+                    )
+                    if preceding is None:
+                        standalone_candidates = [
+                            item
+                            for item in article_items
+                            if not item.get("raw", "")
+                            .strip()
+                            .startswith("-")
+                        ]
+                        preceding = max(
+                            standalone_candidates,
+                            key=lambda item: difflib.SequenceMatcher(
+                                None,
+                                standalone_possible,
+                                normalize_lemma(item.get("lemma", "")),
+                            ).ratio(),
+                            default=None,
+                        )
+                        if (
+                            preceding is not None
+                            and difflib.SequenceMatcher(
+                                None,
+                                standalone_possible,
+                                normalize_lemma(
+                                    preceding.get("lemma", "")
+                                ),
+                            ).ratio()
+                            < 0.82
+                        ):
+                            preceding = None
+                    if preceding is not None:
+                        rule_hit("runeberg.långt_streck_ny_bas")
                 if preceding is not None:
+                    current_reading_order = (
+                        _items_in_reading_order(article_items)
+                        if all(
+                            "source_top" in item
+                            and "source_bottom" in item
+                            and "source_left" in item
+                            for item in article_items
+                        )
+                        else article_items
+                    )
+                    preceding_position = next(
+                        index
+                        for index, item in enumerate(current_reading_order)
+                        if item is preceding
+                    )
+                    anchor_position = next(
+                        (
+                            index
+                            for index, item in enumerate(
+                                current_reading_order
+                            )
+                            if item is anchor
+                        ),
+                        -1,
+                    )
+                    if preceding_position < anchor_position:
+                        continue
                     anchor = preceding
                     preceding_raw = preceding.get("raw", "")
-                    if not preceding_raw.strip().startswith("-"):
+                    if (
+                        not preceding_raw.strip().startswith("-")
+                        and (
+                            follows_base_dash
+                            or same_lexical_family(
+                                head["headword"],
+                                preceding.get("lemma", ""),
+                            )
+                            or (
+                                len(normalize_lemma(head["headword"])) >= 5
+                                and len(
+                                    normalize_lemma(
+                                        preceding.get("lemma", "")
+                                    )
+                                )
+                                >= 5
+                                and normalize_lemma(head["headword"])[:3]
+                                == normalize_lemma(
+                                    preceding.get("lemma", "")
+                                )[:3]
+                            )
+                        )
+                    ):
                         compound_base = suffix_base(
                             preceding_raw
                             if "|" in preceding_raw or "¦" in preceding_raw
@@ -1016,6 +1120,48 @@ def recover_runeberg_boundary_series(
                         )
 
             raw = match.group(0)
+            standalone_boundary_candidate = (
+                max(
+                    (
+                        item
+                        for item in article_items
+                        if (
+                            item.get("method") != "artikelhuvud"
+                            and not item.get("raw", "")
+                            .strip()
+                            .startswith("-")
+                        )
+                    ),
+                    key=lambda item: difflib.SequenceMatcher(
+                        None,
+                        normalize_lemma(raw.lstrip("-")),
+                        normalize_lemma(item.get("lemma", "")),
+                    ).ratio(),
+                    default=None,
+                )
+                if raw.startswith("-")
+                else None
+            )
+            standalone_boundary_similarity = (
+                difflib.SequenceMatcher(
+                    None,
+                    normalize_lemma(raw.lstrip("-")),
+                    normalize_lemma(
+                        standalone_boundary_candidate.get("lemma", "")
+                    ),
+                ).ratio()
+                if standalone_boundary_candidate is not None
+                else 0.0
+            )
+            if (
+                raw.startswith("-")
+                and standalone_boundary_candidate is not None
+                and standalone_boundary_similarity >= 0.82
+            ):
+                # Runeberg sometimes renders the long base-changing dash as
+                # an ordinary hyphen directly before a full stem.
+                raw = raw[1:]
+                rule_hit("runeberg.långt_streck_ny_bas")
             direct_matches = [
                 item
                 for item in article_items
@@ -1051,35 +1197,24 @@ def recover_runeberg_boundary_series(
                 ]
                 if preceding_bases:
                     preceding_base = preceding_bases[-1]
-                    matching_base = next(
-                        (
-                            item
-                            for item in reversed(preceding_bases)
-                            if normalize_lemma(
-                                item.get("lemma", "")
-                            ).endswith(boundary_prefix)
-                        ),
-                        None,
+                    matching_base = (
+                        next(
+                            (
+                                item
+                                for item in reversed(preceding_bases)
+                                if normalize_lemma(
+                                    item.get("lemma", "")
+                                ).endswith(boundary_prefix)
+                            ),
+                            None,
+                        )
+                        if boundary_prefix not in {"a", "s"}
+                        else None
                     )
                     if matching_base is not None:
                         base_value = matching_base["lemma"]
                     elif boundary_prefix in {"a", "s"}:
-                        preceding_full = next(
-                            (
-                                item
-                                for item in reversed(preceding_bases)
-                                if not item.get("raw", "")
-                                .strip()
-                                .startswith("-")
-                            ),
-                            head_item,
-                        )
-                        preceding_raw = preceding_full.get("raw", "")
-                        base_value = (
-                            preceding_raw
-                            if "|" in preceding_raw or "¦" in preceding_raw
-                            else preceding_full["lemma"]
-                        )
+                        base_value = compound_base
                     elif preceding_base.get("method") == "artikelhuvud":
                         base_value = (
                             head.get("runeberg_stem_headword")
@@ -1158,7 +1293,11 @@ def recover_runeberg_boundary_series(
             ):
                 local_compound_base = anchor["lemma"]
                 matched_boundary_base = True
-            elif raw.startswith("-") and boundary_prefix:
+            elif (
+                raw.startswith("-")
+                and boundary_prefix
+                and boundary_prefix not in {"a", "s"}
+            ):
                 matching_bases = [
                     item
                     for item in (
@@ -1178,44 +1317,6 @@ def recover_runeberg_boundary_series(
                 if matching_bases:
                     local_compound_base = matching_bases[-1]["lemma"]
                     matched_boundary_base = True
-            if (
-                raw.startswith("-")
-                and boundary_prefix in {"a", "s"}
-                and all(
-                    "source_top" in item
-                    and "source_bottom" in item
-                    and "source_left" in item
-                    for item in article_items
-                )
-            ):
-                reading_order = _items_in_reading_order(article_items)
-                candidates_before = [
-                    item
-                    for item in reading_order
-                    if (
-                        item.get("method") != "artikelhuvud"
-                        and not item.get("raw", "").strip().startswith("-")
-                        and (
-                            float(item["source_top"]),
-                            float(item["source_left"]),
-                        )
-                        < (
-                            float(anchor.get("source_top", 0.0)),
-                            float(anchor.get("source_left", 0.0)),
-                        )
-                    )
-                ]
-                preceding_full = (
-                    candidates_before[-1]
-                    if candidates_before
-                    else head_item
-                )
-                preceding_raw = preceding_full.get("raw", "")
-                local_compound_base = suffix_base(
-                    preceding_raw
-                    if "|" in preceding_raw or "¦" in preceding_raw
-                    else preceding_full["lemma"]
-                )
             if (
                 raw.startswith("-")
                 and len(boundary_prefix) >= 2
@@ -1342,6 +1443,10 @@ def recover_runeberg_boundary_series(
                     if (
                         id(item) not in used_ids
                         and item.get("method") != "artikelhuvud"
+                        and (
+                            item.get("raw", "").strip().startswith("-")
+                            == raw.startswith("-")
+                        )
                     )
                 ]
                 similar = max(
@@ -1668,6 +1773,45 @@ def rebase_suffixes_from_runeberg_stems(
                 used_ids.add(id(matching))
                 rule_hit("runeberg.ombyggd_stamsuffix")
     return items
+
+
+def remove_generated_inflections(items: list[dict]) -> list[dict]:
+    """Remove inflections created only after a late base correction."""
+    rejected_ids = set()
+    for article_number in {
+        int(item["article_number"]) for item in items
+    }:
+        article_items = [
+            item
+            for item in items
+            if int(item["article_number"]) == article_number
+        ]
+        ordered = (
+            _items_in_reading_order(article_items)
+            if all(
+                "source_top" in item
+                and "source_bottom" in item
+                and "source_left" in item
+                for item in article_items
+            )
+            else article_items
+        )
+        previous_lemma = ""
+        for item in ordered:
+            raw = item.get("raw", "").strip()
+            current_lemma = normalize_lemma(item.get("lemma", ""))
+            normalized_previous = normalize_lemma(previous_lemma)
+            if (
+                normalized_previous.endswith("era")
+                and raw.startswith("-")
+                and current_lemma
+                == normalized_previous[:-1] + "ade"
+            ):
+                rejected_ids.add(id(item))
+                rule_hit("filter.sent_skapad_böjning")
+                continue
+            previous_lemma = item.get("lemma", "")
+    return [item for item in items if id(item) not in rejected_ids]
 
 
 def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict]:
@@ -2226,6 +2370,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
     repair_false_boundary_from_runeberg(result, heads)
     recover_runeberg_boundary_series(result, heads)
     rebase_suffixes_from_runeberg_stems(result, heads)
+    result = remove_generated_inflections(result)
     result = remove_displaced_inline_alternatives(result, heads)
     return remove_alphabetic_family_outliers(result, heads)
 
