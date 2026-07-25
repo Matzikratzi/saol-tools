@@ -40,6 +40,7 @@ from scripts.lemma_review import (
     render_review_images,
     recover_runeberg_boundary_series,
     rebase_suffixes_from_runeberg_stems,
+    remove_generated_inflections,
     remove_displaced_inline_alternatives,
     remove_alphabetic_family_outliers,
     repair_initial_i_suffix_from_order,
@@ -209,6 +210,98 @@ class LemmaReviewTests(unittest.TestCase):
                     ],
                 },
             )
+        )
+
+    def test_later_definition_mention_does_not_restore_old_base(self):
+        common = {
+            "article_number": 1,
+            "source_page": 20,
+            "source_column": 1,
+            "source_bottom": 150.0,
+        }
+        items = [
+            {
+                **common,
+                "lemma": "addend",
+                "raw": "addend",
+                "method": "artikelhuvud",
+                "source_top": 100.0,
+                "source_left": 100.0,
+            },
+            {
+                **common,
+                "lemma": "addera",
+                "raw": "adder|a",
+                "method": "halvfet token",
+                "source_top": 110.0,
+                "source_left": 200.0,
+            },
+            {
+                **common,
+                "lemma": "addition",
+                "raw": "addition",
+                "method": "halvfet token",
+                "bold_score": 0.8,
+                "source_top": 120.0,
+                "source_left": 300.0,
+            },
+            {
+                **common,
+                "lemma": "addersexempel",
+                "stem_lemma": "addersexempel",
+                "raw": "-s|exempel",
+                "method": "sammansättningssuffix",
+                "reasons": [],
+                "source_top": 130.0,
+                "source_left": 400.0,
+            },
+        ]
+        recover_runeberg_boundary_series(
+            items,
+            {
+                1: {
+                    "headword": "addend",
+                    "stem_headword": "addend",
+                    "runeberg_match_score": 1.0,
+                    "runeberg_article_lines": [
+                        "addend adder|a -ade v. — addition -en s.",
+                        "till addera -s|exempel",
+                    ],
+                }
+            },
+        )
+        self.assertIn(
+            "additionsexempel",
+            [item["lemma"] for item in items],
+        )
+
+    def test_late_base_repair_drops_past_tense_but_keeps_lemmas(self):
+        items = [
+            {
+                "article_number": 1,
+                "lemma": "accentuera",
+                "raw": "-era",
+            },
+            {
+                "article_number": 1,
+                "lemma": "accentuerade",
+                "raw": "-erade",
+            },
+            {
+                "article_number": 2,
+                "lemma": "afrikansk",
+                "raw": "-ansk",
+            },
+            {
+                "article_number": 2,
+                "lemma": "afrikanska",
+                "raw": "-anska",
+            },
+        ]
+        filtered = remove_generated_inflections(items)
+        self.assertEqual(
+            [item["lemma"] for item in filtered],
+            ["accentuera", "afrikansk", "afrikanska"],
         )
 
     def test_runeberg_boundary_uses_previous_printed_compound(self):
