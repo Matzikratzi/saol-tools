@@ -828,7 +828,45 @@ def repair_false_boundary_from_runeberg(
             restored_raw = raw.replace("|", "l").replace("¦", "l")
             restored_lemma = normalize_lemma(restored_raw)
             if restored_lemma not in runeberg_words:
-                continue
+                raw_parts = re.split(r"[|¦]", raw, maxsplit=1)
+                raw_boundary_pattern = (
+                    re.escape(raw_parts[0])
+                    + r"\s*[|¦]\s*"
+                    + re.escape(raw_parts[1])
+                )
+                if re.search(
+                    raw_boundary_pattern,
+                    runeberg_text,
+                    re.IGNORECASE,
+                ):
+                    continue
+                observed = normalize_lemma(raw)
+                similar_words = [
+                    word
+                    for word in runeberg_words
+                    if (
+                        len(word) >= 5
+                        and abs(len(word) - len(observed)) <= 1
+                        and word[:4] == observed[:4]
+                    )
+                ]
+                restored_lemma = max(
+                    similar_words,
+                    key=lambda word: difflib.SequenceMatcher(
+                        None, observed, word
+                    ).ratio(),
+                    default="",
+                )
+                similarity = (
+                    difflib.SequenceMatcher(
+                        None, observed, restored_lemma
+                    ).ratio()
+                    if restored_lemma
+                    else 0.0
+                )
+                if similarity < 0.88:
+                    continue
+                restored_raw = restored_lemma
 
             article_index = article_items.index(item)
             item["lemma"] = restored_lemma
