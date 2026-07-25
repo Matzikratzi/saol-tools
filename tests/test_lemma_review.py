@@ -8,6 +8,7 @@ from PIL import Image
 
 from scripts.lemma_review import (
     alternative_inflection_before_marker,
+    adjectival_lemma_suffix,
     approve_pages,
     approve_through,
     apply_manual_insertions,
@@ -38,6 +39,7 @@ from scripts.lemma_review import (
     repair_final_letter_from_runeberg,
     render_review_images,
     recover_runeberg_boundary_series,
+    rebase_suffixes_from_runeberg_stems,
     remove_displaced_inline_alternatives,
     remove_alphabetic_family_outliers,
     repair_initial_i_suffix_from_order,
@@ -84,6 +86,55 @@ class LemmaReviewTests(unittest.TestCase):
         self.assertEqual(
             expand_boundary_compound("adelsman", "-manna|ära"),
             "adelsmannaära",
+        )
+
+    def test_ad_suffix_before_adjective_grammar_is_a_lemma(self):
+        self.assertTrue(
+            adjectival_lemma_suffix(
+                "-ad",
+                [token("-at", 100, 0.1), token("adj.;", 180, 0.1)],
+            )
+        )
+
+    def test_full_runeberg_stem_rebases_its_suffixes(self):
+        items = [
+            {
+                "article_number": 1,
+                "lemma": "administrationator",
+                "stem_lemma": "administrationator",
+                "raw": "-ator",
+            },
+            {
+                "article_number": 1,
+                "lemma": "administrationatör",
+                "stem_lemma": "administrationatör",
+                "raw": "-atör",
+            },
+            {
+                "article_number": 2,
+                "lemma": "admittansing",
+                "stem_lemma": "admittansing",
+                "raw": "-ing",
+            },
+        ]
+        heads = {
+            1: {
+                "runeberg_match_score": 1.0,
+                "runeberg_article_lines": [
+                    "administr|ativ -t adj. -ator -atör administrer|a"
+                ],
+            },
+            2: {
+                "runeberg_match_score": 1.0,
+                "runeberg_article_lines": [
+                    "admittans s. admitter|a -ade v. -ing s."
+                ],
+            },
+        }
+        rebase_suffixes_from_runeberg_stems(items, heads)
+        self.assertEqual(
+            [item["lemma"] for item in items],
+            ["administrator", "administratör", "admittering"],
         )
 
     def test_runeberg_boundary_uses_previous_printed_compound(self):
