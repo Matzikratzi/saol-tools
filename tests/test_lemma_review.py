@@ -46,7 +46,6 @@ from scripts.lemma_review import (
     remove_alphabetic_family_outliers,
     repair_initial_i_suffix_from_order,
     repair_compacted_multiword_boundary,
-    repair_intrusion_before_boundary,
     repair_mixed_case_duplicate,
     report_html,
     runeberg_short_inflection,
@@ -280,6 +279,69 @@ class LemmaReviewTests(unittest.TestCase):
         self.assertIn(
             "additionsexempel",
             [item["lemma"] for item in items],
+        )
+
+    def test_runeberg_recovers_plain_suffix_after_new_full_base(self):
+        common = {
+            "article_number": 1,
+            "source_page": 20,
+            "source_column": 2,
+            "source_top": 100.0,
+            "source_bottom": 124.0,
+            "source_left": 100.0,
+            "source_right": 260.0,
+        }
+        items = [
+            {
+                **common,
+                "lemma": "acceleration",
+                "stem_lemma": "acceleration",
+                "raw": "acceleration",
+                "method": "artikelhuvud",
+            },
+            {
+                **common,
+                "lemma": "accelerator",
+                "stem_lemma": "accelerator",
+                "raw": "accelerator",
+                "method": "halvfet token",
+                "source_left": 300.0,
+                "source_right": 460.0,
+            },
+            {
+                **common,
+                "lemma": "accelerera",
+                "stem_lemma": "accelerera",
+                "raw": "accelerer|a",
+                "method": "halvfet token",
+                "source_left": 600.0,
+                "source_right": 760.0,
+            },
+        ]
+        recover_runeberg_boundary_series(
+            items,
+            {
+                1: {
+                    "headword": "acceleration",
+                    "stem_headword": "acceleration",
+                    "runeberg_stem_headword": "acceleration",
+                    "runeberg_match_score": 1.0,
+                    "runeberg_article_lines": [
+                        "acceleration -en s. — accelerator -n s.",
+                        "t. ex. för partiklar -anläggning "
+                        "- accelerer|a -ade v.",
+                    ],
+                }
+            },
+        )
+        self.assertEqual(
+            [item["lemma"] for item in items],
+            [
+                "acceleration",
+                "accelerator",
+                "acceleratoranläggning",
+                "accelerera",
+            ],
         )
 
     def test_late_base_repair_drops_past_tense_but_keeps_lemmas(self):
@@ -2608,26 +2670,6 @@ class LemmaReviewTests(unittest.TestCase):
         )
 
 
-    def test_repairs_inserted_j_before_agnostiker_boundary(self):
-        self.assertEqual(
-            repair_intrusion_before_boundary(
-                "agnostjliker", "agnosticism"
-            ),
-            "agnost|iker",
-        )
-        self.assertEqual(
-            repair_intrusion_before_boundary(
-                "agnostj|iker", "agnosticism"
-            ),
-            "agnost|iker",
-        )
-        self.assertEqual(
-            repair_intrusion_before_boundary(
-                "affärs|angelägenhet", "affär"
-            ),
-            "affärs|angelägenhet",
-        )
-
     def test_first_line_alias_and_family_word_are_preserved(self):
         articles = {
             "pages": [24],
@@ -3093,7 +3135,10 @@ class LemmaReviewTests(unittest.TestCase):
                     "article_number": 34,
                     "headword": "agnosticism",
                     "stem_headword": "agnosticism",
-                    "runeberg_match_score": 0.0,
+                    "runeberg_match_score": 1.0,
+                    "runeberg_article_lines": [
+                        "agnosticism -en s. agnost|iker -n s. -isk"
+                    ],
                 }
             ]
         }
