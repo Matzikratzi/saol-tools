@@ -324,14 +324,16 @@ def reconcile_homonym_neighbours(items: list[dict]) -> None:
         first_runeberg = first.get("runeberg_headword", "")
         second_runeberg = second.get("runeberg_headword", "")
         canonical = ""
-        if raw_consensus:
+        if first_runeberg and first_runeberg == second_runeberg:
+            # Two adjacent homonyms with the same independent Runeberg reading
+            # outweigh a repeated glyph error in the primary OCR (aga -> agla).
+            canonical = first_runeberg
+        elif raw_consensus:
             canonical = raw_consensus
         elif first_head == second_runeberg:
             canonical = first_head
         elif second_head == first_runeberg:
             canonical = second_head
-        elif first_runeberg and first_runeberg == second_runeberg:
-            canonical = first_runeberg
         elif difflib.SequenceMatcher(None, first_head, second_head).ratio() >= 0.82:
             if first.get("homonym") is not None:
                 canonical = first_head
