@@ -251,6 +251,39 @@ class HeadwordReviewTests(unittest.TestCase):
         self.assertEqual(items[1]["correction_method"], "angränsande homonym")
         self.assertTrue(items[0]["homonym_inferred"])
 
+    def test_shared_runeberg_reading_beats_repeated_primary_ocr_error(self):
+        items = [
+            {
+                "headword": "aga",
+                "raw_headword": "agla",
+                "homonym": 1,
+                "homonym_marker_detected": True,
+                "runeberg_headword": "aga",
+                "runeberg_stem_headword": "ag|a",
+                "stem_headword": "ag|a",
+                "reasons": [],
+                "status": "preliminär",
+                "corrected_from": "agla",
+                "correction_method": "Runebergs parallella OCR",
+            },
+            {
+                "headword": "agla",
+                "raw_headword": "agla",
+                "homonym": 2,
+                "homonym_marker_detected": True,
+                "runeberg_headword": "aga",
+                "runeberg_stem_headword": "ag|a",
+                "stem_headword": "agla",
+                "reasons": [],
+                "status": "preliminär",
+                "corrected_from": "",
+                "correction_method": "",
+            },
+        ]
+        reconcile_homonym_neighbours(items)
+        self.assertEqual([item["headword"] for item in items], ["aga", "aga"])
+        self.assertEqual([item["stem_headword"] for item in items], ["ag|a", "ag|a"])
+
     def test_repairs_aa_to_grave_accent_when_neighbours_prove_it(self):
         items = [
             {"headword": "al"},
