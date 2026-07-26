@@ -7,6 +7,7 @@ from scripts.headword_review import (
     fits_local_alphabetic_window,
     infer_homonym_runs,
     infer_stem_boundary_from_ocr,
+    transfer_stem_boundary,
     reconcile_homonym_neighbours,
     recover_short_homonym_run,
     repair_alphabetic_accents,
@@ -14,10 +15,28 @@ from scripts.headword_review import (
     trim_plain_definition_tails_by_order,
     visibly_lighter_than_head,
 )
-from scripts.runeberg_headwords import align_lines, raw_headword
+from scripts.runeberg_headwords import (
+    align_lines,
+    boundary_noise_correction,
+    raw_headword,
+)
 
 
 class HeadwordReviewTests(unittest.TestCase):
+    def test_spelling_correction_keeps_existing_boundary_position(self):
+        self.assertEqual(
+            transfer_stem_boundary("akiej|a", "akleja"),
+            "aklej|a",
+        )
+
+    def test_runeberg_must_only_remove_noise_next_to_boundary(self):
+        self.assertTrue(
+            boundary_noise_correction("abskissl|a", "abskiss|a")
+        )
+        self.assertFalse(
+            boundary_noise_correction("akilles|häl", "akilies|häi")
+        )
+
     def test_definition_preposition_ends_hyphenated_head(self):
         article = {
             "lines": [{"tokens": [
