@@ -1,0 +1,6727 @@
+{
+  "version": 2,
+  "pages": {},
+  "manual_insertions": [
+    {
+      "before": {
+        "article_number": 52,
+        "lemma": "accelerera"
+      },
+      "candidate": {
+        "article_number": 52,
+        "lemma": "acceleratoranläggning",
+        "stem_lemma": "acceleratoranläggning",
+        "raw": "-anläggning"
+      }
+    }
+  ],
+  "reviewed_prefix": {
+    "from": {
+      "article_number": 1,
+      "lemma": "a",
+      "source_page": 19,
+      "source_column": 1,
+      "source_top": 1014.0,
+      "source_left": 238.0
+    },
+    "through": {
+      "article_number": 220,
+      "lemma": "akvariefisk",
+      "source_page": 25,
+      "source_column": 2,
+      "source_top": 1397.0,
+      "source_left": 2403.0
+    },
+    "candidates": [
+      {
+        "article_number": 1,
+        "lemma": "a",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 1014.0,
+        "source_left": 238.0
+      },
+      {
+        "article_number": 2,
+        "lemma": "a",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 1233.0,
+        "source_left": 309.0
+      },
+      {
+        "article_number": 3,
+        "lemma": "a",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 1338.0,
+        "source_left": 235.0
+      },
+      {
+        "article_number": 4,
+        "lemma": "a-aktie",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 1487.0,
+        "source_left": 256.0
+      },
+      {
+        "article_number": 4,
+        "lemma": "a-avdrag",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 1486.0,
+        "source_left": 719.0
+      },
+      {
+        "article_number": 5,
+        "lemma": "abakus",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 1562.0,
+        "source_left": 257.0
+      },
+      {
+        "article_number": 6,
+        "lemma": "abandon",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 1703.0,
+        "source_left": 257.0
+      },
+      {
+        "article_number": 7,
+        "lemma": "a-barn",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 1908.0,
+        "source_left": 257.0
+      },
+      {
+        "article_number": 8,
+        "lemma": "abbé",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 1980.0,
+        "source_left": 257.0
+      },
+      {
+        "article_number": 8,
+        "lemma": "abbedissa",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 2040.0,
+        "source_left": 482.0
+      },
+      {
+        "article_number": 9,
+        "lemma": "abborre",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 2181.0,
+        "source_left": 257.0
+      },
+      {
+        "article_number": 9,
+        "lemma": "abborrfiske",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 2185.0,
+        "source_left": 767.0
+      },
+      {
+        "article_number": 9,
+        "lemma": "abborrgrund",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 2186.0,
+        "source_left": 932.0
+      },
+      {
+        "article_number": 9,
+        "lemma": "abborrpinne",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 2186.0,
+        "source_left": 1132.0
+      },
+      {
+        "article_number": 10,
+        "lemma": "abbot",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 2328.0,
+        "source_left": 258.0
+      },
+      {
+        "article_number": 10,
+        "lemma": "abbotsdöme",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 2328.0,
+        "source_left": 444.0
+      },
+      {
+        "article_number": 10,
+        "lemma": "abbotsstift",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 2386.0,
+        "source_left": 963.0
+      },
+      {
+        "article_number": 11,
+        "lemma": "abbreviation",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 2462.0,
+        "source_left": 258.0
+      },
+      {
+        "article_number": 11,
+        "lemma": "abbreviatur",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 2472.0,
+        "source_left": 966.0
+      },
+      {
+        "article_number": 11,
+        "lemma": "abbreviera",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 2527.0,
+        "source_left": 1061.0
+      },
+      {
+        "article_number": 11,
+        "lemma": "abbreviering",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 2600.0,
+        "source_left": 855.0
+      },
+      {
+        "article_number": 12,
+        "lemma": "abc",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 2677.0,
+        "source_left": 256.0
+      },
+      {
+        "article_number": 12,
+        "lemma": "abc-bok",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 2803.0,
+        "source_left": 932.0
+      },
+      {
+        "article_number": 13,
+        "lemma": "abc-stridsmedel",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 2939.0,
+        "source_left": 258.0
+      },
+      {
+        "article_number": 13,
+        "lemma": "abc-vapen",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 3085.0,
+        "source_left": 298.0
+      },
+      {
+        "article_number": 14,
+        "lemma": "abderit",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 3149.0,
+        "source_left": 259.0
+      },
+      {
+        "article_number": 14,
+        "lemma": "abderitisk",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 3147.0,
+        "source_left": 857.0
+      },
+      {
+        "article_number": 15,
+        "lemma": "abdikation",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 3289.0,
+        "source_left": 259.0
+      },
+      {
+        "article_number": 15,
+        "lemma": "abdikationsakt",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 3281.0,
+        "source_left": 841.0
+      },
+      {
+        "article_number": 15,
+        "lemma": "abdikera",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 3282.0,
+        "source_left": 1009.0
+      },
+      {
+        "article_number": 15,
+        "lemma": "abdikering",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 3418.0,
+        "source_left": 937.0
+      },
+      {
+        "article_number": 16,
+        "lemma": "abdomen",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 3489.0,
+        "source_left": 259.0
+      },
+      {
+        "article_number": 16,
+        "lemma": "abdominal",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 3626.0,
+        "source_left": 597.0
+      },
+      {
+        "article_number": 17,
+        "lemma": "aber",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 3704.0,
+        "source_left": 260.0
+      },
+      {
+        "article_number": 18,
+        "lemma": "aberration",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 3840.0,
+        "source_left": 259.0
+      },
+      {
+        "article_number": 19,
+        "lemma": "abessinier",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 3976.0,
+        "source_left": 260.0
+      },
+      {
+        "article_number": 19,
+        "lemma": "abessinsk",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 4049.0,
+        "source_left": 458.0
+      },
+      {
+        "article_number": 19,
+        "lemma": "abessinska",
+        "source_page": 19,
+        "source_column": 1,
+        "source_top": 4042.0,
+        "source_left": 746.0
+      },
+      {
+        "article_number": 20,
+        "lemma": "abilitet",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 1018.0,
+        "source_left": 1476.0
+      },
+      {
+        "article_number": 21,
+        "lemma": "abiturient",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 1092.0,
+        "source_left": 1476.0
+      },
+      {
+        "article_number": 21,
+        "lemma": "abiturientklass",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 1151.0,
+        "source_left": 2342.0
+      },
+      {
+        "article_number": 22,
+        "lemma": "ablation",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 1230.0,
+        "source_left": 1476.0
+      },
+      {
+        "article_number": 23,
+        "lemma": "ablativ",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 1370.0,
+        "source_left": 1477.0
+      },
+      {
+        "article_number": 23,
+        "lemma": "ablativform",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 1431.0,
+        "source_left": 2408.0
+      },
+      {
+        "article_number": 24,
+        "lemma": "abnorm",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 1577.0,
+        "source_left": 1476.0
+      },
+      {
+        "article_number": 24,
+        "lemma": "abnormpsykologi",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 1639.0,
+        "source_left": 2119.0
+      },
+      {
+        "article_number": 24,
+        "lemma": "abnormtillstånd",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 1706.0,
+        "source_left": 1517.0
+      },
+      {
+        "article_number": 24,
+        "lemma": "abnormitet",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 1707.0,
+        "source_left": 1840.0
+      },
+      {
+        "article_number": 25,
+        "lemma": "abolition",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 1784.0,
+        "source_left": 1477.0
+      },
+      {
+        "article_number": 26,
+        "lemma": "abonnemang",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 1923.0,
+        "source_left": 1476.0
+      },
+      {
+        "article_number": 26,
+        "lemma": "abonnemangsbiljett",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 1914.0,
+        "source_left": 2365.0
+      },
+      {
+        "article_number": 26,
+        "lemma": "abonnemangsföreställning",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 1981.0,
+        "source_left": 1517.0
+      },
+      {
+        "article_number": 26,
+        "lemma": "abonnemangskonsert",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 1979.0,
+        "source_left": 1944.0
+      },
+      {
+        "article_number": 26,
+        "lemma": "abonnemangspris",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 1979.0,
+        "source_left": 2236.0
+      },
+      {
+        "article_number": 26,
+        "lemma": "abonnemangssystem",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2046.0,
+        "source_left": 1516.0
+      },
+      {
+        "article_number": 26,
+        "lemma": "abonnemangsvillkor",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2045.0,
+        "source_left": 1795.0
+      },
+      {
+        "article_number": 26,
+        "lemma": "abonnent",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2050.0,
+        "source_left": 2111.0
+      },
+      {
+        "article_number": 26,
+        "lemma": "abonnentförteckning",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2118.0,
+        "source_left": 1754.0
+      },
+      {
+        "article_number": 26,
+        "lemma": "abonnentnummer",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2129.0,
+        "source_left": 2106.0
+      },
+      {
+        "article_number": 26,
+        "lemma": "abonnentpris",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2117.0,
+        "source_left": 2379.0
+      },
+      {
+        "article_number": 26,
+        "lemma": "abonnentutrustning",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2183.0,
+        "source_left": 1518.0
+      },
+      {
+        "article_number": 26,
+        "lemma": "abonnera",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2175.0,
+        "source_left": 1905.0
+      },
+      {
+        "article_number": 27,
+        "lemma": "aborigin",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2392.0,
+        "source_left": 1485.0
+      },
+      {
+        "article_number": 28,
+        "lemma": "abort",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2542.0,
+        "source_left": 1478.0
+      },
+      {
+        "article_number": 28,
+        "lemma": "abortfråga",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2670.0,
+        "source_left": 1691.0
+      },
+      {
+        "article_number": 28,
+        "lemma": "abortfrågan",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2670.0,
+        "source_left": 1691.0
+      },
+      {
+        "article_number": 28,
+        "lemma": "abortindikation",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2671.0,
+        "source_left": 1941.0
+      },
+      {
+        "article_number": 28,
+        "lemma": "abortingrepp",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2671.0,
+        "source_left": 2253.0
+      },
+      {
+        "article_number": 28,
+        "lemma": "abortklinik",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2739.0,
+        "source_left": 1518.0
+      },
+      {
+        "article_number": 28,
+        "lemma": "abortlag",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2739.0,
+        "source_left": 1699.0
+      },
+      {
+        "article_number": 28,
+        "lemma": "abortlagstiftning",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2737.0,
+        "source_left": 1932.0
+      },
+      {
+        "article_number": 28,
+        "lemma": "abortsökande",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2736.0,
+        "source_left": 2280.0
+      },
+      {
+        "article_number": 28,
+        "lemma": "abortera",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2797.0,
+        "source_left": 1517.0
+      },
+      {
+        "article_number": 28,
+        "lemma": "abortering",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2866.0,
+        "source_left": 2359.0
+      },
+      {
+        "article_number": 28,
+        "lemma": "abortiv",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 2932.0,
+        "source_left": 1747.0
+      },
+      {
+        "article_number": 28,
+        "lemma": "abortivmedel",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 3128.0,
+        "source_left": 1520.0
+      },
+      {
+        "article_number": 29,
+        "lemma": "abortör",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 3201.0,
+        "source_left": 1481.0
+      },
+      {
+        "article_number": 30,
+        "lemma": "abradera",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 3338.0,
+        "source_left": 1481.0
+      },
+      {
+        "article_number": 31,
+        "lemma": "abrakadabra",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 3482.0,
+        "source_left": 1482.0
+      },
+      {
+        "article_number": 32,
+        "lemma": "abrasion",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 3623.0,
+        "source_left": 1483.0
+      },
+      {
+        "article_number": 32,
+        "lemma": "abrasionsbrant",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 3623.0,
+        "source_left": 1754.0
+      },
+      {
+        "article_number": 32,
+        "lemma": "abrasionsvittne",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 3682.0,
+        "source_left": 1523.0
+      },
+      {
+        "article_number": 33,
+        "lemma": "abrupt",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 3762.0,
+        "source_left": 1487.0
+      },
+      {
+        "article_number": 34,
+        "lemma": "abscess",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 3902.0,
+        "source_left": 1488.0
+      },
+      {
+        "article_number": 34,
+        "lemma": "abscessbildning",
+        "source_page": 19,
+        "source_column": 2,
+        "source_top": 3963.0,
+        "source_left": 1734.0
+      },
+      {
+        "article_number": 35,
+        "lemma": "absens",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 215.0,
+        "source_left": 159.0
+      },
+      {
+        "article_number": 35,
+        "lemma": "absent",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 355.0,
+        "source_left": 203.0
+      },
+      {
+        "article_number": 35,
+        "lemma": "absentera",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 414.0,
+        "source_left": 549.0
+      },
+      {
+        "article_number": 36,
+        "lemma": "absid",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 565.0,
+        "source_left": 160.0
+      },
+      {
+        "article_number": 36,
+        "lemma": "absidkyrka",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 694.0,
+        "source_left": 394.0
+      },
+      {
+        "article_number": 37,
+        "lemma": "absint",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 770.0,
+        "source_left": 163.0
+      },
+      {
+        "article_number": 37,
+        "lemma": "absintflaska",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 763.0,
+        "source_left": 1034.0
+      },
+      {
+        "article_number": 37,
+        "lemma": "absintgrön",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 846.0,
+        "source_left": 202.0
+      },
+      {
+        "article_number": 38,
+        "lemma": "abskissa",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 903.0,
+        "source_left": 164.0
+      },
+      {
+        "article_number": 38,
+        "lemma": "abskissaxel",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 975.0,
+        "source_left": 203.0
+      },
+      {
+        "article_number": 39,
+        "lemma": "absolut",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 1050.0,
+        "source_left": 166.0
+      },
+      {
+        "article_number": 39,
+        "lemma": "absoluthet",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 1182.0,
+        "source_left": 869.0
+      },
+      {
+        "article_number": 39,
+        "lemma": "absolution",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 1252.0,
+        "source_left": 207.0
+      },
+      {
+        "article_number": 39,
+        "lemma": "absolutism",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 1312.0,
+        "source_left": 207.0
+      },
+      {
+        "article_number": 39,
+        "lemma": "absolutist",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 1381.0,
+        "source_left": 564.0
+      },
+      {
+        "article_number": 39,
+        "lemma": "absolutistisk",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 1449.0,
+        "source_left": 209.0
+      },
+      {
+        "article_number": 40,
+        "lemma": "absolvera",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 1516.0,
+        "source_left": 171.0
+      },
+      {
+        "article_number": 40,
+        "lemma": "absolvering",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 1653.0,
+        "source_left": 211.0
+      },
+      {
+        "article_number": 41,
+        "lemma": "absorbent",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 1727.0,
+        "source_left": 174.0
+      },
+      {
+        "article_number": 41,
+        "lemma": "absorbera",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 1783.0,
+        "source_left": 547.0
+      },
+      {
+        "article_number": 41,
+        "lemma": "absorbering",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 1923.0,
+        "source_left": 495.0
+      },
+      {
+        "article_number": 41,
+        "lemma": "absorption",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 1919.0,
+        "source_left": 725.0
+      },
+      {
+        "article_number": 41,
+        "lemma": "absorptionsförmåga",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 1984.0,
+        "source_left": 361.0
+      },
+      {
+        "article_number": 42,
+        "lemma": "abstinens",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 2062.0,
+        "source_left": 186.0
+      },
+      {
+        "article_number": 42,
+        "lemma": "abstinensbesvär",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 2128.0,
+        "source_left": 619.0
+      },
+      {
+        "article_number": 42,
+        "lemma": "abstinensprocess",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 2138.0,
+        "source_left": 837.0
+      },
+      {
+        "article_number": 42,
+        "lemma": "abstinenssymtom",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 2193.0,
+        "source_left": 221.0
+      },
+      {
+        "article_number": 42,
+        "lemma": "abstinenssymptom",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 2193.0,
+        "source_left": 221.0
+      },
+      {
+        "article_number": 43,
+        "lemma": "abstrahera",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 2259.0,
+        "source_left": 530.0
+      },
+      {
+        "article_number": 43,
+        "lemma": "abstrahering",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 2324.0,
+        "source_left": 209.0
+      },
+      {
+        "article_number": 44,
+        "lemma": "abstrakt",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 2382.0,
+        "source_left": 154.0
+      },
+      {
+        "article_number": 45,
+        "lemma": "abstrakt",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 2708.0,
+        "source_left": 144.0
+      },
+      {
+        "article_number": 45,
+        "lemma": "abstraktion",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 2914.0,
+        "source_left": 362.0
+      },
+      {
+        "article_number": 45,
+        "lemma": "abstraktionsförmåga",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 3042.0,
+        "source_left": 603.0
+      },
+      {
+        "article_number": 45,
+        "lemma": "abstraktionsnivå",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 3042.0,
+        "source_left": 913.0
+      },
+      {
+        "article_number": 46,
+        "lemma": "abstrus",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 3122.0,
+        "source_left": 165.0
+      },
+      {
+        "article_number": 47,
+        "lemma": "absurd",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 3256.0,
+        "source_left": 164.0
+      },
+      {
+        "article_number": 47,
+        "lemma": "absurdhet",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 3318.0,
+        "source_left": 823.0
+      },
+      {
+        "article_number": 47,
+        "lemma": "absurdism",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 3380.0,
+        "source_left": 203.0
+      },
+      {
+        "article_number": 47,
+        "lemma": "absurdist",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 3450.0,
+        "source_left": 617.0
+      },
+      {
+        "article_number": 47,
+        "lemma": "absurdistisk",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 3447.0,
+        "source_left": 1018.0
+      },
+      {
+        "article_number": 47,
+        "lemma": "absurditet",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 3515.0,
+        "source_left": 297.0
+      },
+      {
+        "article_number": 48,
+        "lemma": "absurdum",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 3590.0,
+        "source_left": 165.0
+      },
+      {
+        "article_number": 49,
+        "lemma": "abundans",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 3725.0,
+        "source_left": 168.0
+      },
+      {
+        "article_number": 49,
+        "lemma": "abundant",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 3731.0,
+        "source_left": 1111.0
+      },
+      {
+        "article_number": 50,
+        "lemma": "acajounöt",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 3931.0,
+        "source_left": 171.0
+      },
+      {
+        "article_number": 50,
+        "lemma": "acajouträd",
+        "source_page": 20,
+        "source_column": 1,
+        "source_top": 4001.0,
+        "source_left": 570.0
+      },
+      {
+        "article_number": 51,
+        "lemma": "accedera",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 226.0,
+        "source_left": 1383.0
+      },
+      {
+        "article_number": 52,
+        "lemma": "acceleration",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 377.0,
+        "source_left": 1378.0
+      },
+      {
+        "article_number": 52,
+        "lemma": "accelerationsförmåga",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 437.0,
+        "source_left": 1714.0
+      },
+      {
+        "article_number": 52,
+        "lemma": "accelerationshastighet",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 433.0,
+        "source_left": 2030.0
+      },
+      {
+        "article_number": 52,
+        "lemma": "accelerationssträcka",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 503.0,
+        "source_left": 1418.0
+      },
+      {
+        "article_number": 52,
+        "lemma": "accelerator",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 505.0,
+        "source_left": 1809.0
+      },
+      {
+        "article_number": 52,
+        "lemma": "acceleratoranläggning",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 559.0,
+        "source_left": 1861.0
+      },
+      {
+        "article_number": 52,
+        "lemma": "accelerera",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 559.0,
+        "source_left": 2209.0
+      },
+      {
+        "article_number": 52,
+        "lemma": "accelerering",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 632.0,
+        "source_left": 2353.0
+      },
+      {
+        "article_number": 53,
+        "lemma": "accent",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 715.0,
+        "source_left": 1377.0
+      },
+      {
+        "article_number": 53,
+        "lemma": "accentbeteckning",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 842.0,
+        "source_left": 1417.0
+      },
+      {
+        "article_number": 53,
+        "lemma": "accentförskjutning",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 839.0,
+        "source_left": 1756.0
+      },
+      {
+        "article_number": 53,
+        "lemma": "accentlös",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 838.0,
+        "source_left": 2127.0
+      },
+      {
+        "article_number": 53,
+        "lemma": "accenttecken",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 836.0,
+        "source_left": 2242.0
+      },
+      {
+        "article_number": 53,
+        "lemma": "accentuation",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 902.0,
+        "source_left": 1417.0
+      },
+      {
+        "article_number": 53,
+        "lemma": "accentuera",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 915.0,
+        "source_left": 2110.0
+      },
+      {
+        "article_number": 53,
+        "lemma": "accentuering",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 1042.0,
+        "source_left": 1418.0
+      },
+      {
+        "article_number": 54,
+        "lemma": "accept",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 1121.0,
+        "source_left": 1379.0
+      },
+      {
+        "article_number": 54,
+        "lemma": "acceptkredit",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 1246.0,
+        "source_left": 2032.0
+      },
+      {
+        "article_number": 54,
+        "lemma": "acceptablare",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 1313.0,
+        "source_left": 2100.0
+      },
+      {
+        "article_number": 54,
+        "lemma": "acceptans",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 1384.0,
+        "source_left": 1720.0
+      },
+      {
+        "article_number": 54,
+        "lemma": "acceptant",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 1450.0,
+        "source_left": 1419.0
+      },
+      {
+        "article_number": 54,
+        "lemma": "acceptera",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 1506.0,
+        "source_left": 1420.0
+      },
+      {
+        "article_number": 54,
+        "lemma": "acceptabel",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 1309.0,
+        "source_left": 1418.0
+      },
+      {
+        "article_number": 54,
+        "lemma": "acceptering",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 1570.0,
+        "source_left": 2289.0
+      },
+      {
+        "article_number": 55,
+        "lemma": "access",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 1661.0,
+        "source_left": 1380.0
+      },
+      {
+        "article_number": 55,
+        "lemma": "accesstid",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 1715.0,
+        "source_left": 1656.0
+      },
+      {
+        "article_number": 55,
+        "lemma": "accession",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 1712.0,
+        "source_left": 2032.0
+      },
+      {
+        "article_number": 55,
+        "lemma": "accessionskatalog",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 1842.0,
+        "source_left": 1421.0
+      },
+      {
+        "article_number": 55,
+        "lemma": "accessoarer",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 1856.0,
+        "source_left": 1774.0
+      },
+      {
+        "article_number": 55,
+        "lemma": "accessorisk",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 1910.0,
+        "source_left": 1666.0
+      },
+      {
+        "article_number": 56,
+        "lemma": "accidens",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 2056.0,
+        "source_left": 1382.0
+      },
+      {
+        "article_number": 56,
+        "lemma": "accidenstryck",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 2117.0,
+        "source_left": 2188.0
+      },
+      {
+        "article_number": 56,
+        "lemma": "accidenstryckeri",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 2251.0,
+        "source_left": 1738.0
+      },
+      {
+        "article_number": 56,
+        "lemma": "accidentell",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 2248.0,
+        "source_left": 2050.0
+      },
+      {
+        "article_number": 57,
+        "lemma": "accis",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 2395.0,
+        "source_left": 1388.0
+      },
+      {
+        "article_number": 57,
+        "lemma": "accisfri",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 2455.0,
+        "source_left": 2228.0
+      },
+      {
+        "article_number": 57,
+        "lemma": "accismedel",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 2455.0,
+        "source_left": 2323.0
+      },
+      {
+        "article_number": 57,
+        "lemma": "accispliktig",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 2523.0,
+        "source_left": 1607.0
+      },
+      {
+        "article_number": 58,
+        "lemma": "acetaldehyd",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 2598.0,
+        "source_left": 1388.0
+      },
+      {
+        "article_number": 59,
+        "lemma": "acetat",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 2741.0,
+        "source_left": 1385.0
+      },
+      {
+        "article_number": 59,
+        "lemma": "acetatrayon",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 2814.0,
+        "source_left": 1754.0
+      },
+      {
+        "article_number": 59,
+        "lemma": "acetatsilke",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 2800.0,
+        "source_left": 2203.0
+      },
+      {
+        "article_number": 59,
+        "lemma": "aceton",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 2875.0,
+        "source_left": 1712.0
+      },
+      {
+        "article_number": 59,
+        "lemma": "acetyl",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 2934.0,
+        "source_left": 1968.0
+      },
+      {
+        "article_number": 59,
+        "lemma": "acetylsalicylsyra",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 3001.0,
+        "source_left": 1955.0
+      },
+      {
+        "article_number": 59,
+        "lemma": "acetylgass",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 3146.0,
+        "source_left": 1725.0
+      },
+      {
+        "article_number": 59,
+        "lemma": "acetyllampa",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 3135.0,
+        "source_left": 1857.0
+      },
+      {
+        "article_number": 59,
+        "lemma": "acetylsvetsning",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 3133.0,
+        "source_left": 2066.0
+      },
+      {
+        "article_number": 60,
+        "lemma": "aciditet",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 3209.0,
+        "source_left": 1385.0
+      },
+      {
+        "article_number": 61,
+        "lemma": "ack",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 3283.0,
+        "source_left": 1385.0
+      },
+      {
+        "article_number": 62,
+        "lemma": "ackja",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 3351.0,
+        "source_left": 1386.0
+      },
+      {
+        "article_number": 62,
+        "lemma": "ackjefärd",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 3416.0,
+        "source_left": 1425.0
+      },
+      {
+        "article_number": 63,
+        "lemma": "acklamation",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 3495.0,
+        "source_left": 1386.0
+      },
+      {
+        "article_number": 63,
+        "lemma": "acklamationsval",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 3552.0,
+        "source_left": 2003.0
+      },
+      {
+        "article_number": 64,
+        "lemma": "acklimatisera",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 3629.0,
+        "source_left": 1387.0
+      },
+      {
+        "article_number": 64,
+        "lemma": "acklimatisering",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 3769.0,
+        "source_left": 1427.0
+      },
+      {
+        "article_number": 64,
+        "lemma": "acklimatiseringssvårighet",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 3762.0,
+        "source_left": 1597.0
+      },
+      {
+        "article_number": 65,
+        "lemma": "ackommodation",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 3841.0,
+        "source_left": 1388.0
+      },
+      {
+        "article_number": 65,
+        "lemma": "ackommodationsförmåga",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 3833.0,
+        "source_left": 2147.0
+      },
+      {
+        "article_number": 65,
+        "lemma": "ackommodationsväxel",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 3902.0,
+        "source_left": 1428.0
+      },
+      {
+        "article_number": 65,
+        "lemma": "ackommodera",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 3899.0,
+        "source_left": 1996.0
+      },
+      {
+        "article_number": 65,
+        "lemma": "ackommodering",
+        "source_page": 20,
+        "source_column": 2,
+        "source_top": 3971.0,
+        "source_left": 2042.0
+      },
+      {
+        "article_number": 66,
+        "lemma": "ackompanjatris",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 239.0,
+        "source_left": 193.0
+      },
+      {
+        "article_number": 66,
+        "lemma": "ackompanjatör",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 236.0,
+        "source_left": 1140.0
+      },
+      {
+        "article_number": 66,
+        "lemma": "ackompanjemang",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 306.0,
+        "source_left": 747.0
+      },
+      {
+        "article_number": 66,
+        "lemma": "ackompanjemangsinstrument",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 370.0,
+        "source_left": 718.0
+      },
+      {
+        "article_number": 66,
+        "lemma": "ackompanjera",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 438.0,
+        "source_left": 236.0
+      },
+      {
+        "article_number": 66,
+        "lemma": "ackompanjering",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 507.0,
+        "source_left": 827.0
+      },
+      {
+        "article_number": 67,
+        "lemma": "ackord",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 592.0,
+        "source_left": 206.0
+      },
+      {
+        "article_number": 67,
+        "lemma": "ackordföljd",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 791.0,
+        "source_left": 245.0
+      },
+      {
+        "article_number": 67,
+        "lemma": "ackordlära",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 790.0,
+        "source_left": 404.0
+      },
+      {
+        "article_number": 67,
+        "lemma": "ackordlön",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 785.0,
+        "source_left": 710.0
+      },
+      {
+        "article_number": 67,
+        "lemma": "ackordsanbud",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 850.0,
+        "source_left": 246.0
+      },
+      {
+        "article_number": 67,
+        "lemma": "ackordsarbete",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 847.0,
+        "source_left": 502.0
+      },
+      {
+        "article_number": 67,
+        "lemma": "ackordsförhandling",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 843.0,
+        "source_left": 762.0
+      },
+      {
+        "article_number": 67,
+        "lemma": "ackordsförslag",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 918.0,
+        "source_left": 247.0
+      },
+      {
+        "article_number": 67,
+        "lemma": "ackordsförtjänst",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 914.0,
+        "source_left": 518.0
+      },
+      {
+        "article_number": 67,
+        "lemma": "ackordshets",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 909.0,
+        "source_left": 838.0
+      },
+      {
+        "article_number": 67,
+        "lemma": "ackordsjobb",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 907.0,
+        "source_left": 1038.0
+      },
+      {
+        "article_number": 67,
+        "lemma": "ackordslön",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 983.0,
+        "source_left": 248.0
+      },
+      {
+        "article_number": 67,
+        "lemma": "ackordspris",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 977.0,
+        "source_left": 700.0
+      },
+      {
+        "article_number": 67,
+        "lemma": "ackordssystem",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 975.0,
+        "source_left": 886.0
+      },
+      {
+        "article_number": 67,
+        "lemma": "ackordssättning",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 1051.0,
+        "source_left": 247.0
+      },
+      {
+        "article_number": 67,
+        "lemma": "ackordstid",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 1042.0,
+        "source_left": 844.0
+      },
+      {
+        "article_number": 67,
+        "lemma": "ackordsättning",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 1045.0,
+        "source_left": 999.0
+      },
+      {
+        "article_number": 67,
+        "lemma": "ackordtabell",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 1112.0,
+        "source_left": 688.0
+      },
+      {
+        "article_number": 67,
+        "lemma": "ackordisk",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 1109.0,
+        "source_left": 1084.0
+      },
+      {
+        "article_number": 68,
+        "lemma": "ackordera",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 1248.0,
+        "source_left": 205.0
+      },
+      {
+        "article_number": 68,
+        "lemma": "ackordering",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 1315.0,
+        "source_left": 815.0
+      },
+      {
+        "article_number": 68,
+        "lemma": "ackordion",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 1305.0,
+        "source_left": 1042.0
+      },
+      {
+        "article_number": 69,
+        "lemma": "ackreditera",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 1519.0,
+        "source_left": 208.0
+      },
+      {
+        "article_number": 69,
+        "lemma": "ackreditering",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 1647.0,
+        "source_left": 1087.0
+      },
+      {
+        "article_number": 70,
+        "lemma": "ackumulation",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 1723.0,
+        "source_left": 211.0
+      },
+      {
+        "article_number": 70,
+        "lemma": "ackumulativ",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 1798.0,
+        "source_left": 252.0
+      },
+      {
+        "article_number": 70,
+        "lemma": "ackumulator",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 1861.0,
+        "source_left": 253.0
+      },
+      {
+        "article_number": 70,
+        "lemma": "ackumulatorbatteri",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 1918.0,
+        "source_left": 997.0
+      },
+      {
+        "article_number": 70,
+        "lemma": "ackumulera",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 1987.0,
+        "source_left": 256.0
+      },
+      {
+        "article_number": 70,
+        "lemma": "ackumulering",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 2063.0,
+        "source_left": 257.0
+      },
+      {
+        "article_number": 71,
+        "lemma": "ackurat",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 2139.0,
+        "source_left": 219.0
+      },
+      {
+        "article_number": 71,
+        "lemma": "ackuratess",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 2194.0,
+        "source_left": 864.0
+      },
+      {
+        "article_number": 72,
+        "lemma": "ackusativ",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 2341.0,
+        "source_left": 222.0
+      },
+      {
+        "article_number": 72,
+        "lemma": "ackusativform",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 2474.0,
+        "source_left": 265.0
+      },
+      {
+        "article_number": 72,
+        "lemma": "ackusativobjekt",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 2468.0,
+        "source_left": 554.0
+      },
+      {
+        "article_number": 73,
+        "lemma": "ackuschör",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 2544.0,
+        "source_left": 200.0
+      },
+      {
+        "article_number": 73,
+        "lemma": "ackuschörska",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 2670.0,
+        "source_left": 268.0
+      },
+      {
+        "article_number": 73,
+        "lemma": "ackuschörgroda",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 2599.0,
+        "source_left": 791.0
+      },
+      {
+        "article_number": 73,
+        "lemma": "ackuschörsgroda",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 2599.0,
+        "source_left": 791.0
+      },
+      {
+        "article_number": 74,
+        "lemma": "ackvirera",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 2746.0,
+        "source_left": 229.0
+      },
+      {
+        "article_number": 74,
+        "lemma": "ackvirering",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 2817.0,
+        "source_left": 621.0
+      },
+      {
+        "article_number": 74,
+        "lemma": "ackvisition",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 2811.0,
+        "source_left": 856.0
+      },
+      {
+        "article_number": 74,
+        "lemma": "ackvisitionskatalog",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 2875.0,
+        "source_left": 744.0
+      },
+      {
+        "article_number": 74,
+        "lemma": "ackvisitör",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 2875.0,
+        "source_left": 1093.0
+      },
+      {
+        "article_number": 75,
+        "lemma": "acne",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 3106.0,
+        "source_left": 238.0
+      },
+      {
+        "article_number": 76,
+        "lemma": "action",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 3170.0,
+        "source_left": 238.0
+      },
+      {
+        "article_number": 76,
+        "lemma": "actionfilm",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 3160.0,
+        "source_left": 1083.0
+      },
+      {
+        "article_number": 77,
+        "lemma": "adagio",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 3241.0,
+        "source_left": 240.0
+      },
+      {
+        "article_number": 77,
+        "lemma": "adagiosats",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 3303.0,
+        "source_left": 988.0
+      },
+      {
+        "article_number": 78,
+        "lemma": "adamsdräkt",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 3377.0,
+        "source_left": 239.0
+      },
+      {
+        "article_number": 78,
+        "lemma": "adamskostym",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 3380.0,
+        "source_left": 642.0
+      },
+      {
+        "article_number": 78,
+        "lemma": "adamsäpple",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 3374.0,
+        "source_left": 886.0
+      },
+      {
+        "article_number": 79,
+        "lemma": "adaptation",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 3524.0,
+        "source_left": 242.0
+      },
+      {
+        "article_number": 79,
+        "lemma": "adapter",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 3586.0,
+        "source_left": 675.0
+      },
+      {
+        "article_number": 79,
+        "lemma": "adaptera",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 3706.0,
+        "source_left": 886.0
+      },
+      {
+        "article_number": 79,
+        "lemma": "adaptering",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 3785.0,
+        "source_left": 531.0
+      },
+      {
+        "article_number": 79,
+        "lemma": "adaption",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 3778.0,
+        "source_left": 761.0
+      },
+      {
+        "article_number": 79,
+        "lemma": "adaptiv",
+        "source_page": 21,
+        "source_column": 1,
+        "source_top": 3851.0,
+        "source_left": 289.0
+      },
+      {
+        "article_number": 80,
+        "lemma": "adb",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 219.0,
+        "source_left": 1420.0
+      },
+      {
+        "article_number": 80,
+        "lemma": "adb-användning",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 271.0,
+        "source_left": 1898.0
+      },
+      {
+        "article_number": 80,
+        "lemma": "adb-baserad",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 352.0,
+        "source_left": 1459.0
+      },
+      {
+        "article_number": 80,
+        "lemma": "adb-kostnad",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 348.0,
+        "source_left": 1711.0
+      },
+      {
+        "article_number": 80,
+        "lemma": "adb-område",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 342.0,
+        "source_left": 1969.0
+      },
+      {
+        "article_number": 80,
+        "lemma": "adb-register",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 341.0,
+        "source_left": 2215.0
+      },
+      {
+        "article_number": 80,
+        "lemma": "adb-system",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 424.0,
+        "source_left": 1460.0
+      },
+      {
+        "article_number": 80,
+        "lemma": "adb-teknik",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 415.0,
+        "source_left": 1694.0
+      },
+      {
+        "article_number": 80,
+        "lemma": "adb-utrustning",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 410.0,
+        "source_left": 1899.0
+      },
+      {
+        "article_number": 80,
+        "lemma": "adb-verksamhet",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 483.0,
+        "source_left": 1461.0
+      },
+      {
+        "article_number": 81,
+        "lemma": "addend",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 562.0,
+        "source_left": 1420.0
+      },
+      {
+        "article_number": 81,
+        "lemma": "addera",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 620.0,
+        "source_left": 1593.0
+      },
+      {
+        "article_number": 81,
+        "lemma": "addering",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 696.0,
+        "source_left": 1464.0
+      },
+      {
+        "article_number": 81,
+        "lemma": "additament",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 690.0,
+        "source_left": 1692.0
+      },
+      {
+        "article_number": 81,
+        "lemma": "addition",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 756.0,
+        "source_left": 1650.0
+      },
+      {
+        "article_number": 81,
+        "lemma": "additionsexempel",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 821.0,
+        "source_left": 1467.0
+      },
+      {
+        "article_number": 81,
+        "lemma": "additionstecken",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 815.0,
+        "source_left": 1778.0
+      },
+      {
+        "article_number": 81,
+        "lemma": "additionell",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 810.0,
+        "source_left": 2097.0
+      },
+      {
+        "article_number": 81,
+        "lemma": "additiv",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 884.0,
+        "source_left": 1847.0
+      },
+      {
+        "article_number": 82,
+        "lemma": "adekvans",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1099.0,
+        "source_left": 1441.0
+      },
+      {
+        "article_number": 82,
+        "lemma": "adekvat",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1161.0,
+        "source_left": 1709.0
+      },
+      {
+        "article_number": 83,
+        "lemma": "adel",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1307.0,
+        "source_left": 1445.0
+      },
+      {
+        "article_number": 83,
+        "lemma": "adelsbrev",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1296.0,
+        "source_left": 1706.0
+      },
+      {
+        "article_number": 83,
+        "lemma": "adelsmannaära",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1354.0,
+        "source_left": 2165.0
+      },
+      {
+        "article_number": 83,
+        "lemma": "adelsfamilj",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1297.0,
+        "source_left": 2003.0
+      },
+      {
+        "article_number": 83,
+        "lemma": "adelsfröken",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1295.0,
+        "source_left": 2189.0
+      },
+      {
+        "article_number": 83,
+        "lemma": "adelsgods",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1292.0,
+        "source_left": 2399.0
+      },
+      {
+        "article_number": 83,
+        "lemma": "adelshögfärd",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1370.0,
+        "source_left": 1485.0
+      },
+      {
+        "article_number": 83,
+        "lemma": "adelskalender",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1367.0,
+        "source_left": 1736.0
+      },
+      {
+        "article_number": 83,
+        "lemma": "adelsman",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1375.0,
+        "source_left": 2009.0
+      },
+      {
+        "article_number": 83,
+        "lemma": "adelsmärke",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1437.0,
+        "source_left": 1486.0
+      },
+      {
+        "article_number": 83,
+        "lemma": "adelsmöte",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1435.0,
+        "source_left": 1696.0
+      },
+      {
+        "article_number": 83,
+        "lemma": "adelsprivilegium",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1430.0,
+        "source_left": 1877.0
+      },
+      {
+        "article_number": 83,
+        "lemma": "adelssläkt",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1426.0,
+        "source_left": 2221.0
+      },
+      {
+        "article_number": 83,
+        "lemma": "adelsstånd",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1421.0,
+        "source_left": 2386.0
+      },
+      {
+        "article_number": 83,
+        "lemma": "adelstitel",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1503.0,
+        "source_left": 1486.0
+      },
+      {
+        "article_number": 83,
+        "lemma": "adelsvälde",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1501.0,
+        "source_left": 1632.0
+      },
+      {
+        "article_number": 84,
+        "lemma": "adelskap",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1576.0,
+        "source_left": 1448.0
+      },
+      {
+        "article_number": 85,
+        "lemma": "adenin",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1650.0,
+        "source_left": 1448.0
+      },
+      {
+        "article_number": 86,
+        "lemma": "adenit",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1790.0,
+        "source_left": 1451.0
+      },
+      {
+        "article_number": 86,
+        "lemma": "adenoid",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 1855.0,
+        "source_left": 1492.0
+      },
+      {
+        "article_number": 87,
+        "lemma": "adenom",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 2061.0,
+        "source_left": 1458.0
+      },
+      {
+        "article_number": 88,
+        "lemma": "adept",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 2201.0,
+        "source_left": 1460.0
+      },
+      {
+        "article_number": 89,
+        "lemma": "aderton",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 2277.0,
+        "source_left": 1462.0
+      },
+      {
+        "article_number": 90,
+        "lemma": "adhesion",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 2353.0,
+        "source_left": 1462.0
+      },
+      {
+        "article_number": 90,
+        "lemma": "adhesionskraft",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 2338.0,
+        "source_left": 2321.0
+      },
+      {
+        "article_number": 90,
+        "lemma": "adhesiv",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 2418.0,
+        "source_left": 1503.0
+      },
+      {
+        "article_number": 91,
+        "lemma": "adiafora",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 2491.0,
+        "source_left": 1464.0
+      },
+      {
+        "article_number": 92,
+        "lemma": "adjektiv",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 2566.0,
+        "source_left": 1466.0
+      },
+      {
+        "article_number": 92,
+        "lemma": "adjektivattribut",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 2764.0,
+        "source_left": 1510.0
+      },
+      {
+        "article_number": 92,
+        "lemma": "adjektivböjning",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 2761.0,
+        "source_left": 1750.0
+      },
+      {
+        "article_number": 92,
+        "lemma": "adjektivisk",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 2756.0,
+        "source_left": 2051.0
+      },
+      {
+        "article_number": 93,
+        "lemma": "adjungera",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 2899.0,
+        "source_left": 1812.0
+      },
+      {
+        "article_number": 93,
+        "lemma": "adjungerad",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 3039.0,
+        "source_left": 1514.0
+      },
+      {
+        "article_number": 93,
+        "lemma": "adjungering",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 3033.0,
+        "source_left": 2116.0
+      },
+      {
+        "article_number": 94,
+        "lemma": "adjunkt",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 3114.0,
+        "source_left": 1476.0
+      },
+      {
+        "article_number": 94,
+        "lemma": "adjunktstjänst",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 3237.0,
+        "source_left": 1647.0
+      },
+      {
+        "article_number": 94,
+        "lemma": "adjunktur",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 3239.0,
+        "source_left": 1944.0
+      },
+      {
+        "article_number": 95,
+        "lemma": "adjutant",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 3387.0,
+        "source_left": 1479.0
+      },
+      {
+        "article_number": 95,
+        "lemma": "adjutantfågel",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 3440.0,
+        "source_left": 2438.0
+      },
+      {
+        "article_number": 95,
+        "lemma": "adjutanttjänstgöring",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 3511.0,
+        "source_left": 1521.0
+      },
+      {
+        "article_number": 95,
+        "lemma": "adjutantstjänstgöring",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 3511.0,
+        "source_left": 1521.0
+      },
+      {
+        "article_number": 96,
+        "lemma": "adjö",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 3593.0,
+        "source_left": 1487.0
+      },
+      {
+        "article_number": 96,
+        "lemma": "adjöss",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 3660.0,
+        "source_left": 1525.0
+      },
+      {
+        "article_number": 97,
+        "lemma": "adla",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 3790.0,
+        "source_left": 1486.0
+      },
+      {
+        "article_number": 97,
+        "lemma": "adlig",
+        "source_page": 21,
+        "source_column": 2,
+        "source_top": 3860.0,
+        "source_left": 1629.0
+      },
+      {
+        "article_number": 98,
+        "lemma": "administration",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 229.0,
+        "source_left": 208.0
+      },
+      {
+        "article_number": 98,
+        "lemma": "administrationsapparat",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 237.0,
+        "source_left": 917.0
+      },
+      {
+        "article_number": 98,
+        "lemma": "administrationsavgift",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 288.0,
+        "source_left": 247.0
+      },
+      {
+        "article_number": 98,
+        "lemma": "administrationskostnad",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 293.0,
+        "source_left": 486.0
+      },
+      {
+        "article_number": 98,
+        "lemma": "administrationslokal",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 299.0,
+        "source_left": 789.0
+      },
+      {
+        "article_number": 98,
+        "lemma": "administrationsproblem",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 303.0,
+        "source_left": 1002.0
+      },
+      {
+        "article_number": 98,
+        "lemma": "administrativ",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 303.0,
+        "source_left": 1302.0
+      },
+      {
+        "article_number": 98,
+        "lemma": "administrator",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 434.0,
+        "source_left": 513.0
+      },
+      {
+        "article_number": 98,
+        "lemma": "administratör",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 442.0,
+        "source_left": 1088.0
+      },
+      {
+        "article_number": 98,
+        "lemma": "administrera",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 499.0,
+        "source_left": 754.0
+      },
+      {
+        "article_number": 98,
+        "lemma": "administrering",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 571.0,
+        "source_left": 1016.0
+      },
+      {
+        "article_number": 99,
+        "lemma": "admittans",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 633.0,
+        "source_left": 202.0
+      },
+      {
+        "article_number": 99,
+        "lemma": "admittera",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 786.0,
+        "source_left": 616.0
+      },
+      {
+        "article_number": 99,
+        "lemma": "admittering",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 907.0,
+        "source_left": 559.0
+      },
+      {
+        "article_number": 100,
+        "lemma": "admonition",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 976.0,
+        "source_left": 197.0
+      },
+      {
+        "article_number": 101,
+        "lemma": "adolescens",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1115.0,
+        "source_left": 195.0
+      },
+      {
+        "article_number": 102,
+        "lemma": "adonis",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1255.0,
+        "source_left": 193.0
+      },
+      {
+        "article_number": 102,
+        "lemma": "adonisansikte",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1323.0,
+        "source_left": 337.0
+      },
+      {
+        "article_number": 103,
+        "lemma": "adoptant",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1396.0,
+        "source_left": 191.0
+      },
+      {
+        "article_number": 103,
+        "lemma": "adoptera",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1405.0,
+        "source_left": 967.0
+      },
+      {
+        "article_number": 103,
+        "lemma": "adoptering",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1535.0,
+        "source_left": 579.0
+      },
+      {
+        "article_number": 103,
+        "lemma": "adoption",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1539.0,
+        "source_left": 812.0
+      },
+      {
+        "article_number": 103,
+        "lemma": "adoptionsansökan",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1594.0,
+        "source_left": 469.0
+      },
+      {
+        "article_number": 103,
+        "lemma": "adoptionsbyrå",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1599.0,
+        "source_left": 782.0
+      },
+      {
+        "article_number": 103,
+        "lemma": "adoptionsfall",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1602.0,
+        "source_left": 985.0
+      },
+      {
+        "article_number": 103,
+        "lemma": "adoptionsförmedling",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1602.0,
+        "source_left": 1140.0
+      },
+      {
+        "article_number": 103,
+        "lemma": "adoptionsärende",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1602.0,
+        "source_left": 1456.0
+      },
+      {
+        "article_number": 103,
+        "lemma": "adoptiv",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1676.0,
+        "source_left": 947.0
+      },
+      {
+        "article_number": 103,
+        "lemma": "adoptivbarn",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1736.0,
+        "source_left": 621.0
+      },
+      {
+        "article_number": 103,
+        "lemma": "adoptivdotter",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1739.0,
+        "source_left": 782.0
+      },
+      {
+        "article_number": 103,
+        "lemma": "adoptivfar",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1741.0,
+        "source_left": 988.0
+      },
+      {
+        "article_number": 103,
+        "lemma": "adoptivföräldrar",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1796.0,
+        "source_left": 226.0
+      },
+      {
+        "article_number": 103,
+        "lemma": "adoptivhem",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1801.0,
+        "source_left": 502.0
+      },
+      {
+        "article_number": 103,
+        "lemma": "adoptivmor",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1815.0,
+        "source_left": 660.0
+      },
+      {
+        "article_number": 103,
+        "lemma": "adoptivson",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1817.0,
+        "source_left": 808.0
+      },
+      {
+        "article_number": 104,
+        "lemma": "adoratör",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 1874.0,
+        "source_left": 187.0
+      },
+      {
+        "article_number": 105,
+        "lemma": "adrenalin",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 2013.0,
+        "source_left": 186.0
+      },
+      {
+        "article_number": 105,
+        "lemma": "adrenalinavsöndring",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 2082.0,
+        "source_left": 560.0
+      },
+      {
+        "article_number": 105,
+        "lemma": "adrenalinhalt",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 2083.0,
+        "source_left": 908.0
+      },
+      {
+        "article_number": 106,
+        "lemma": "adress",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 2152.0,
+        "source_left": 184.0
+      },
+      {
+        "article_number": 106,
+        "lemma": "adressbok",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 2156.0,
+        "source_left": 825.0
+      },
+      {
+        "article_number": 106,
+        "lemma": "adressförändring",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 2157.0,
+        "source_left": 966.0
+      },
+      {
+        "article_number": 106,
+        "lemma": "adresskalender",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 2217.0,
+        "source_left": 224.0
+      },
+      {
+        "article_number": 106,
+        "lemma": "adresskort",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 2220.0,
+        "source_left": 500.0
+      },
+      {
+        "article_number": 106,
+        "lemma": "adresslapp",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 2221.0,
+        "source_left": 696.0
+      },
+      {
+        "article_number": 106,
+        "lemma": "adressregister",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 2223.0,
+        "source_left": 852.0
+      },
+      {
+        "article_number": 106,
+        "lemma": "adressändring",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 2284.0,
+        "source_left": 223.0
+      },
+      {
+        "article_number": 107,
+        "lemma": "adressat",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 2358.0,
+        "source_left": 183.0
+      },
+      {
+        "article_number": 107,
+        "lemma": "adressera",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 2427.0,
+        "source_left": 1011.0
+      },
+      {
+        "article_number": 107,
+        "lemma": "adressering",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 2630.0,
+        "source_left": 1017.0
+      },
+      {
+        "article_number": 108,
+        "lemma": "adsorbera",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 2695.0,
+        "source_left": 181.0
+      },
+      {
+        "article_number": 108,
+        "lemma": "adsorption",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 2768.0,
+        "source_left": 640.0
+      },
+      {
+        "article_number": 109,
+        "lemma": "adstringerande",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 2902.0,
+        "source_left": 180.0
+      },
+      {
+        "article_number": 110,
+        "lemma": "aducera",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 3038.0,
+        "source_left": 179.0
+      },
+      {
+        "article_number": 110,
+        "lemma": "aducergods",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 3115.0,
+        "source_left": 1082.0
+      },
+      {
+        "article_number": 110,
+        "lemma": "aducerjärn",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 3178.0,
+        "source_left": 777.0
+      },
+      {
+        "article_number": 110,
+        "lemma": "aducering",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 3180.0,
+        "source_left": 983.0
+      },
+      {
+        "article_number": 111,
+        "lemma": "a-dur",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 3250.0,
+        "source_left": 177.0
+      },
+      {
+        "article_number": 111,
+        "lemma": "a-durackord",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 3247.0,
+        "source_left": 598.0
+      },
+      {
+        "article_number": 111,
+        "lemma": "a-durskala",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 3255.0,
+        "source_left": 976.0
+      },
+      {
+        "article_number": 112,
+        "lemma": "advent",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 3326.0,
+        "source_left": 177.0
+      },
+      {
+        "article_number": 112,
+        "lemma": "adventskalender",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 3323.0,
+        "source_left": 718.0
+      },
+      {
+        "article_number": 112,
+        "lemma": "adventspsalm",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 3325.0,
+        "source_left": 1038.0
+      },
+      {
+        "article_number": 112,
+        "lemma": "adventsstake",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 3386.0,
+        "source_left": 216.0
+      },
+      {
+        "article_number": 112,
+        "lemma": "adventsstjärna",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 3387.0,
+        "source_left": 448.0
+      },
+      {
+        "article_number": 112,
+        "lemma": "adventssöndag",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 3389.0,
+        "source_left": 719.0
+      },
+      {
+        "article_number": 112,
+        "lemma": "adventist",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 3459.0,
+        "source_left": 215.0
+      },
+      {
+        "article_number": 112,
+        "lemma": "adventiv",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 3591.0,
+        "source_left": 215.0
+      },
+      {
+        "article_number": 112,
+        "lemma": "adventivknopp",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 3726.0,
+        "source_left": 1108.0
+      },
+      {
+        "article_number": 112,
+        "lemma": "adventivrot",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 3792.0,
+        "source_left": 215.0
+      },
+      {
+        "article_number": 112,
+        "lemma": "adventivväxt",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 3789.0,
+        "source_left": 332.0
+      },
+      {
+        "article_number": 113,
+        "lemma": "adverb",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 3865.0,
+        "source_left": 176.0
+      },
+      {
+        "article_number": 113,
+        "lemma": "adverbial",
+        "source_page": 22,
+        "source_column": 1,
+        "source_top": 3942.0,
+        "source_left": 627.0
+      },
+      {
+        "article_number": 113,
+        "lemma": "adverbialsats",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 387.0,
+        "source_left": 2342.0
+      },
+      {
+        "article_number": 113,
+        "lemma": "adverbiell",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 438.0,
+        "source_left": 1472.0
+      },
+      {
+        "article_number": 114,
+        "lemma": "advers",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 514.0,
+        "source_left": 1427.0
+      },
+      {
+        "article_number": 115,
+        "lemma": "adversativ",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 590.0,
+        "source_left": 1427.0
+      },
+      {
+        "article_number": 116,
+        "lemma": "ad-vitamin",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 734.0,
+        "source_left": 1426.0
+      },
+      {
+        "article_number": 117,
+        "lemma": "advocera",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 806.0,
+        "source_left": 1425.0
+      },
+      {
+        "article_number": 117,
+        "lemma": "advocering",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 946.0,
+        "source_left": 1823.0
+      },
+      {
+        "article_number": 117,
+        "lemma": "advokat",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 948.0,
+        "source_left": 2056.0
+      },
+      {
+        "article_number": 117,
+        "lemma": "advokatarvode",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 1010.0,
+        "source_left": 1600.0
+      },
+      {
+        "article_number": 117,
+        "lemma": "advokatbyrå",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 1009.0,
+        "source_left": 1825.0
+      },
+      {
+        "article_number": 117,
+        "lemma": "advokatfirma",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 1012.0,
+        "source_left": 2102.0
+      },
+      {
+        "article_number": 117,
+        "lemma": "advokatfiskal",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 1014.0,
+        "source_left": 2284.0
+      },
+      {
+        "article_number": 117,
+        "lemma": "advokatkontor",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 1073.0,
+        "source_left": 1463.0
+      },
+      {
+        "article_number": 117,
+        "lemma": "advokatsamfund",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 1076.0,
+        "source_left": 1681.0
+      },
+      {
+        "article_number": 117,
+        "lemma": "advokatorisk",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 1074.0,
+        "source_left": 2023.0
+      },
+      {
+        "article_number": 117,
+        "lemma": "advokatyr",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 1157.0,
+        "source_left": 2244.0
+      },
+      {
+        "article_number": 118,
+        "lemma": "aero",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 1290.0,
+        "source_left": 1429.0
+      },
+      {
+        "article_number": 118,
+        "lemma": "aerodrom",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 1342.0,
+        "source_left": 1570.0
+      },
+      {
+        "article_number": 118,
+        "lemma": "aerodynamik",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 1415.0,
+        "source_left": 1717.0
+      },
+      {
+        "article_number": 118,
+        "lemma": "aerodynamisk",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 1545.0,
+        "source_left": 1465.0
+      },
+      {
+        "article_number": 118,
+        "lemma": "aerogram",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 1563.0,
+        "source_left": 2124.0
+      },
+      {
+        "article_number": 118,
+        "lemma": "aeroklubb",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 1681.0,
+        "source_left": 1650.0
+      },
+      {
+        "article_number": 118,
+        "lemma": "aerologi",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 1686.0,
+        "source_left": 2104.0
+      },
+      {
+        "article_number": 118,
+        "lemma": "aerologisk",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 1810.0,
+        "source_left": 1462.0
+      },
+      {
+        "article_number": 118,
+        "lemma": "aeroplan",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 1816.0,
+        "source_left": 2012.0
+      },
+      {
+        "article_number": 118,
+        "lemma": "aerosol",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 1880.0,
+        "source_left": 1896.0
+      },
+      {
+        "article_number": 118,
+        "lemma": "aerosolförpackning",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 2002.0,
+        "source_left": 1745.0
+      },
+      {
+        "article_number": 118,
+        "lemma": "aerosolsprej",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 2068.0,
+        "source_left": 1934.0
+      },
+      {
+        "article_number": 118,
+        "lemma": "aerostat",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 2082.0,
+        "source_left": 2202.0
+      },
+      {
+        "article_number": 118,
+        "lemma": "aerostatik",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 2146.0,
+        "source_left": 2350.0
+      },
+      {
+        "article_number": 118,
+        "lemma": "aerostatisk",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 2268.0,
+        "source_left": 1671.0
+      },
+      {
+        "article_number": 119,
+        "lemma": "aerob",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 2339.0,
+        "source_left": 1412.0
+      },
+      {
+        "article_number": 120,
+        "lemma": "afasi",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 2480.0,
+        "source_left": 1412.0
+      },
+      {
+        "article_number": 120,
+        "lemma": "afasisk",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 2614.0,
+        "source_left": 1675.0
+      },
+      {
+        "article_number": 120,
+        "lemma": "afatiker",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 2673.0,
+        "source_left": 1449.0
+      },
+      {
+        "article_number": 120,
+        "lemma": "afatisk",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 2685.0,
+        "source_left": 2222.0
+      },
+      {
+        "article_number": 121,
+        "lemma": "afelium",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 2823.0,
+        "source_left": 1415.0
+      },
+      {
+        "article_number": 122,
+        "lemma": "affekt",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 2895.0,
+        "source_left": 1412.0
+      },
+      {
+        "article_number": 122,
+        "lemma": "affektfri",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 2961.0,
+        "source_left": 1580.0
+      },
+      {
+        "article_number": 122,
+        "lemma": "affektladdad",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 2962.0,
+        "source_left": 1672.0
+      },
+      {
+        "article_number": 122,
+        "lemma": "affektation",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 2965.0,
+        "source_left": 1958.0
+      },
+      {
+        "article_number": 122,
+        "lemma": "affektera",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 3025.0,
+        "source_left": 1700.0
+      },
+      {
+        "article_number": 122,
+        "lemma": "affekterad",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 3096.0,
+        "source_left": 1668.0
+      },
+      {
+        "article_number": 122,
+        "lemma": "affektion",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 3159.0,
+        "source_left": 1446.0
+      },
+      {
+        "article_number": 122,
+        "lemma": "affektionsvärde",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 3227.0,
+        "source_left": 2235.0
+      },
+      {
+        "article_number": 122,
+        "lemma": "affektiv",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 3358.0,
+        "source_left": 1444.0
+      },
+      {
+        "article_number": 123,
+        "lemma": "afficiera",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 3429.0,
+        "source_left": 1407.0
+      },
+      {
+        "article_number": 123,
+        "lemma": "afficiering",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 3443.0,
+        "source_left": 2353.0
+      },
+      {
+        "article_number": 124,
+        "lemma": "affidavit",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 3507.0,
+        "source_left": 1405.0
+      },
+      {
+        "article_number": 125,
+        "lemma": "affinera",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 3643.0,
+        "source_left": 1402.0
+      },
+      {
+        "article_number": 125,
+        "lemma": "affinering",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 3657.0,
+        "source_left": 2363.0
+      },
+      {
+        "article_number": 125,
+        "lemma": "affinitet",
+        "source_page": 22,
+        "source_column": 2,
+        "source_top": 3711.0,
+        "source_left": 1437.0
+      },
+      {
+        "article_number": 126,
+        "lemma": "affirmativ",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 249.0,
+        "source_left": 200.0
+      },
+      {
+        "article_number": 126,
+        "lemma": "affirmation",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 309.0,
+        "source_left": 582.0
+      },
+      {
+        "article_number": 126,
+        "lemma": "affirmera",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 324.0,
+        "source_left": 921.0
+      },
+      {
+        "article_number": 127,
+        "lemma": "affisch",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 398.0,
+        "source_left": 209.0
+      },
+      {
+        "article_number": 127,
+        "lemma": "affischkampanj",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 391.0,
+        "source_left": 858.0
+      },
+      {
+        "article_number": 127,
+        "lemma": "affischkonst",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 390.0,
+        "source_left": 1133.0
+      },
+      {
+        "article_number": 127,
+        "lemma": "affischnamn",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 475.0,
+        "source_left": 247.0
+      },
+      {
+        "article_number": 127,
+        "lemma": "affischpelare",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 462.0,
+        "source_left": 439.0
+      },
+      {
+        "article_number": 127,
+        "lemma": "affischtavla",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 459.0,
+        "source_left": 646.0
+      },
+      {
+        "article_number": 127,
+        "lemma": "affischera",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 450.0,
+        "source_left": 881.0
+      },
+      {
+        "article_number": 127,
+        "lemma": "affischering",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 520.0,
+        "source_left": 1217.0
+      },
+      {
+        "article_number": 127,
+        "lemma": "affischör",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 595.0,
+        "source_left": 310.0
+      },
+      {
+        "article_number": 128,
+        "lemma": "affix",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 665.0,
+        "source_left": 204.0
+      },
+      {
+        "article_number": 129,
+        "lemma": "affrikata",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 732.0,
+        "source_left": 204.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affär",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 945.0,
+        "source_left": 216.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsangelägenhet",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 938.0,
+        "source_left": 765.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsanställd",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1010.0,
+        "source_left": 257.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsbank",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1009.0,
+        "source_left": 511.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsbegåvad",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1006.0,
+        "source_left": 800.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsbegåvning",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1073.0,
+        "source_left": 258.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsbekant",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1074.0,
+        "source_left": 582.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsbesök",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1073.0,
+        "source_left": 808.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsbiträde",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1072.0,
+        "source_left": 1008.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsbrev",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1143.0,
+        "source_left": 257.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärscentrum",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1146.0,
+        "source_left": 415.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsdrivande",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1139.0,
+        "source_left": 682.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsfastighet",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1138.0,
+        "source_left": 960.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsfolk",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1208.0,
+        "source_left": 258.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsförbindelse",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1206.0,
+        "source_left": 395.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsföreståndare",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1202.0,
+        "source_left": 738.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsföretag",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1204.0,
+        "source_left": 1122.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsgata",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1277.0,
+        "source_left": 258.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärshemlighet",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1271.0,
+        "source_left": 416.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärshus",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1270.0,
+        "source_left": 732.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsidé",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1269.0,
+        "source_left": 867.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsidkare",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1269.0,
+        "source_left": 987.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsinnehavare",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1336.0,
+        "source_left": 259.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsintresse",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1335.0,
+        "source_left": 600.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsjurist",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1333.0,
+        "source_left": 854.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärskedja",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1333.0,
+        "source_left": 1032.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärskontakt",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1401.0,
+        "source_left": 259.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärskorrespondens",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1399.0,
+        "source_left": 507.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärskvinna",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1397.0,
+        "source_left": 955.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsliv",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1397.0,
+        "source_left": 1174.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärslokal",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1469.0,
+        "source_left": 260.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsman",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1479.0,
+        "source_left": 426.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsmetod",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1467.0,
+        "source_left": 585.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsmoral",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1465.0,
+        "source_left": 801.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsmässig",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1465.0,
+        "source_left": 998.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsmässighet",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1533.0,
+        "source_left": 502.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsresa",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1543.0,
+        "source_left": 871.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsrörelse",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1531.0,
+        "source_left": 1069.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärssinne",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1600.0,
+        "source_left": 261.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsskylt",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1598.0,
+        "source_left": 444.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsspekulation",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1596.0,
+        "source_left": 611.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärstid",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1595.0,
+        "source_left": 970.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärstransaktion",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1664.0,
+        "source_left": 261.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsuppgörelse",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1663.0,
+        "source_left": 612.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsverk",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1662.0,
+        "source_left": 957.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsverksamhet",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1731.0,
+        "source_left": 261.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsvän",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1731.0,
+        "source_left": 622.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsvärld",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1727.0,
+        "source_left": 757.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsvärlden",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1727.0,
+        "source_left": 757.0
+      },
+      {
+        "article_number": 130,
+        "lemma": "affärsägare",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1729.0,
+        "source_left": 1038.0
+      },
+      {
+        "article_number": 131,
+        "lemma": "afghan",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1808.0,
+        "source_left": 221.0
+      },
+      {
+        "article_number": 131,
+        "lemma": "afghanhund",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1869.0,
+        "source_left": 609.0
+      },
+      {
+        "article_number": 131,
+        "lemma": "afghansk",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1868.0,
+        "source_left": 851.0
+      },
+      {
+        "article_number": 131,
+        "lemma": "afghanska",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 1932.0,
+        "source_left": 354.0
+      },
+      {
+        "article_number": 132,
+        "lemma": "aforism",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 2015.0,
+        "source_left": 215.0
+      },
+      {
+        "article_number": 132,
+        "lemma": "aforismsamling",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 2076.0,
+        "source_left": 697.0
+      },
+      {
+        "article_number": 132,
+        "lemma": "aforistik",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 2074.0,
+        "source_left": 1016.0
+      },
+      {
+        "article_number": 132,
+        "lemma": "aforistiker",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 2204.0,
+        "source_left": 256.0
+      },
+      {
+        "article_number": 132,
+        "lemma": "aforistisk",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 2205.0,
+        "source_left": 1112.0
+      },
+      {
+        "article_number": 133,
+        "lemma": "afrikan",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 2348.0,
+        "source_left": 219.0
+      },
+      {
+        "article_number": 133,
+        "lemma": "afrikand",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 2414.0,
+        "source_left": 255.0
+      },
+      {
+        "article_number": 133,
+        "lemma": "afrikanisera",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 2544.0,
+        "source_left": 258.0
+      },
+      {
+        "article_number": 133,
+        "lemma": "afrikanisering",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 2678.0,
+        "source_left": 951.0
+      },
+      {
+        "article_number": 133,
+        "lemma": "afrikanist",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 2743.0,
+        "source_left": 260.0
+      },
+      {
+        "article_number": 133,
+        "lemma": "afrikansk",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 2810.0,
+        "source_left": 967.0
+      },
+      {
+        "article_number": 133,
+        "lemma": "afrikanska",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 2878.0,
+        "source_left": 433.0
+      },
+      {
+        "article_number": 133,
+        "lemma": "afrikaresa",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 2868.0,
+        "source_left": 1055.0
+      },
+      {
+        "article_number": 134,
+        "lemma": "afro",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3020.0,
+        "source_left": 222.0
+      },
+      {
+        "article_number": 134,
+        "lemma": "afroamerikan",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3076.0,
+        "source_left": 535.0
+      },
+      {
+        "article_number": 134,
+        "lemma": "afroamerikansk",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3078.0,
+        "source_left": 935.0
+      },
+      {
+        "article_number": 134,
+        "lemma": "afroasiatisk",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3149.0,
+        "source_left": 263.0
+      },
+      {
+        "article_number": 134,
+        "lemma": "afrofrisyr",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3209.0,
+        "source_left": 955.0
+      },
+      {
+        "article_number": 135,
+        "lemma": "afrodisiakum",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3281.0,
+        "source_left": 224.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "afton",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3497.0,
+        "source_left": 226.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftonandakt",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3489.0,
+        "source_left": 732.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftonbön",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3488.0,
+        "source_left": 958.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftondräkt",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3486.0,
+        "source_left": 1100.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftonglöd",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3561.0,
+        "source_left": 263.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftonhimmel",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3558.0,
+        "source_left": 420.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftonklädd",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3555.0,
+        "source_left": 665.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftonklädsel",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3553.0,
+        "source_left": 852.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftonklänning",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3551.0,
+        "source_left": 1080.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftonkurs",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3629.0,
+        "source_left": 264.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftonkvist",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3625.0,
+        "source_left": 417.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftonmåltid",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3616.0,
+        "source_left": 972.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftonpsalm",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3693.0,
+        "source_left": 264.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftonringning",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3689.0,
+        "source_left": 466.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftonrodnad",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3686.0,
+        "source_left": 733.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftonskola",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3684.0,
+        "source_left": 965.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftonsol",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3683.0,
+        "source_left": 1146.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftonstjärna",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3760.0,
+        "source_left": 265.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftonstund",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3755.0,
+        "source_left": 489.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftonsång",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3751.0,
+        "source_left": 683.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftontidning",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3749.0,
+        "source_left": 1088.0
+      },
+      {
+        "article_number": 136,
+        "lemma": "aftonvard",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3825.0,
+        "source_left": 265.0
+      },
+      {
+        "article_number": 137,
+        "lemma": "ag",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3911.0,
+        "source_left": 232.0
+      },
+      {
+        "article_number": 137,
+        "lemma": "agmyr",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3905.0,
+        "source_left": 670.0
+      },
+      {
+        "article_number": 137,
+        "lemma": "agtak",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3892.0,
+        "source_left": 814.0
+      },
+      {
+        "article_number": 137,
+        "lemma": "agtäckt",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3891.0,
+        "source_left": 936.0
+      },
+      {
+        "article_number": 138,
+        "lemma": "aga",
+        "source_page": 23,
+        "source_column": 1,
+        "source_top": 3960.0,
+        "source_left": 214.0
+      },
+      {
+        "article_number": 139,
+        "lemma": "aga",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 238.0,
+        "source_left": 1401.0
+      },
+      {
+        "article_number": 139,
+        "lemma": "agaförbud",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 302.0,
+        "source_left": 1895.0
+      },
+      {
+        "article_number": 139,
+        "lemma": "agalös",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 299.0,
+        "source_left": 2162.0
+      },
+      {
+        "article_number": 140,
+        "lemma": "aga",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 370.0,
+        "source_left": 1401.0
+      },
+      {
+        "article_number": 141,
+        "lemma": "agat",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 588.0,
+        "source_left": 1426.0
+      },
+      {
+        "article_number": 141,
+        "lemma": "agatsmycke",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 574.0,
+        "source_left": 2265.0
+      },
+      {
+        "article_number": 141,
+        "lemma": "agatsnäcka",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 648.0,
+        "source_left": 1466.0
+      },
+      {
+        "article_number": 142,
+        "lemma": "agave",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 736.0,
+        "source_left": 1428.0
+      },
+      {
+        "article_number": 142,
+        "lemma": "agavehampa",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 719.0,
+        "source_left": 2090.0
+      },
+      {
+        "article_number": 143,
+        "lemma": "agenda",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 792.0,
+        "source_left": 1428.0
+      },
+      {
+        "article_number": 144,
+        "lemma": "agens",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 953.0,
+        "source_left": 1429.0
+      },
+      {
+        "article_number": 145,
+        "lemma": "agent",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 1152.0,
+        "source_left": 1431.0
+      },
+      {
+        "article_number": 145,
+        "lemma": "agentfilm",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 1205.0,
+        "source_left": 2391.0
+      },
+      {
+        "article_number": 145,
+        "lemma": "agentkontor",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 1277.0,
+        "source_left": 1472.0
+      },
+      {
+        "article_number": 145,
+        "lemma": "agentprovision",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 1275.0,
+        "source_left": 1690.0
+      },
+      {
+        "article_number": 145,
+        "lemma": "agentroman",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 1284.0,
+        "source_left": 1983.0
+      },
+      {
+        "article_number": 145,
+        "lemma": "agentverksamhet",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 1269.0,
+        "source_left": 2198.0
+      },
+      {
+        "article_number": 145,
+        "lemma": "agentskap",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 1341.0,
+        "source_left": 1536.0
+      },
+      {
+        "article_number": 145,
+        "lemma": "agentur",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 1341.0,
+        "source_left": 2125.0
+      },
+      {
+        "article_number": 145,
+        "lemma": "agenturfirma",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 1471.0,
+        "source_left": 1825.0
+      },
+      {
+        "article_number": 146,
+        "lemma": "agera",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 1542.0,
+        "source_left": 1435.0
+      },
+      {
+        "article_number": 147,
+        "lemma": "agg",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 1701.0,
+        "source_left": 1435.0
+      },
+      {
+        "article_number": 147,
+        "lemma": "aggande",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 1684.0,
+        "source_left": 2114.0
+      },
+      {
+        "article_number": 148,
+        "lemma": "agglomerat",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 1830.0,
+        "source_left": 1437.0
+      },
+      {
+        "article_number": 148,
+        "lemma": "agglomeratlava",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 1896.0,
+        "source_left": 1580.0
+      },
+      {
+        "article_number": 148,
+        "lemma": "agglomeration",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 1892.0,
+        "source_left": 1792.0
+      },
+      {
+        "article_number": 148,
+        "lemma": "agglomerera",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 1954.0,
+        "source_left": 1477.0
+      },
+      {
+        "article_number": 148,
+        "lemma": "agglomerering",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 2022.0,
+        "source_left": 2306.0
+      },
+      {
+        "article_number": 149,
+        "lemma": "agglutination",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 2099.0,
+        "source_left": 1439.0
+      },
+      {
+        "article_number": 149,
+        "lemma": "agglutinera",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 2090.0,
+        "source_left": 2105.0
+      },
+      {
+        "article_number": 149,
+        "lemma": "agglutinering",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 2294.0,
+        "source_left": 2114.0
+      },
+      {
+        "article_number": 149,
+        "lemma": "agglutinin",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 2362.0,
+        "source_left": 1480.0
+      },
+      {
+        "article_number": 150,
+        "lemma": "aggregat",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 2509.0,
+        "source_left": 1442.0
+      },
+      {
+        "article_number": 150,
+        "lemma": "aggregation",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 2633.0,
+        "source_left": 2083.0
+      },
+      {
+        "article_number": 150,
+        "lemma": "aggregationstillstånd",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 2764.0,
+        "source_left": 1483.0
+      },
+      {
+        "article_number": 151,
+        "lemma": "aggression",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 2907.0,
+        "source_left": 1444.0
+      },
+      {
+        "article_number": 151,
+        "lemma": "aggressionsdrift",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 2966.0,
+        "source_left": 1754.0
+      },
+      {
+        "article_number": 151,
+        "lemma": "aggressionshämmad",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 2966.0,
+        "source_left": 1943.0
+      },
+      {
+        "article_number": 151,
+        "lemma": "aggressionshämning",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3032.0,
+        "source_left": 1485.0
+      },
+      {
+        "article_number": 151,
+        "lemma": "aggressionspolitik",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3031.0,
+        "source_left": 1810.0
+      },
+      {
+        "article_number": 151,
+        "lemma": "aggressiv",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3034.0,
+        "source_left": 2127.0
+      },
+      {
+        "article_number": 151,
+        "lemma": "aggressivitet",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3166.0,
+        "source_left": 1915.0
+      },
+      {
+        "article_number": 152,
+        "lemma": "aggressor",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3254.0,
+        "source_left": 1447.0
+      },
+      {
+        "article_number": 153,
+        "lemma": "agio",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3318.0,
+        "source_left": 1448.0
+      },
+      {
+        "article_number": 154,
+        "lemma": "agitation",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3523.0,
+        "source_left": 1450.0
+      },
+      {
+        "article_number": 154,
+        "lemma": "agitationsmöte",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3523.0,
+        "source_left": 1734.0
+      },
+      {
+        "article_number": 154,
+        "lemma": "agitationstal",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3513.0,
+        "source_left": 2335.0
+      },
+      {
+        "article_number": 154,
+        "lemma": "agitator",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3583.0,
+        "source_left": 1490.0
+      },
+      {
+        "article_number": 154,
+        "lemma": "agitatorisk",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3585.0,
+        "source_left": 2149.0
+      },
+      {
+        "article_number": 154,
+        "lemma": "agitera",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3647.0,
+        "source_left": 1647.0
+      },
+      {
+        "article_number": 154,
+        "lemma": "agitering",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3784.0,
+        "source_left": 1863.0
+      },
+      {
+        "article_number": 155,
+        "lemma": "agn",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3847.0,
+        "source_left": 1434.0
+      },
+      {
+        "article_number": 155,
+        "lemma": "agnborst",
+        "source_page": 23,
+        "source_column": 2,
+        "source_top": 3986.0,
+        "source_left": 1495.0
+      },
+      {
+        "article_number": 156,
+        "lemma": "agn",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 242.0,
+        "source_left": 182.0
+      },
+      {
+        "article_number": 156,
+        "lemma": "agnfisk",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 256.0,
+        "source_left": 941.0
+      },
+      {
+        "article_number": 156,
+        "lemma": "agna",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 256.0,
+        "source_left": 1065.0
+      },
+      {
+        "article_number": 157,
+        "lemma": "agnat",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 463.0,
+        "source_left": 198.0
+      },
+      {
+        "article_number": 157,
+        "lemma": "agnatisk",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 526.0,
+        "source_left": 637.0
+      },
+      {
+        "article_number": 158,
+        "lemma": "agning",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 599.0,
+        "source_left": 197.0
+      },
+      {
+        "article_number": 159,
+        "lemma": "agnosticism",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 671.0,
+        "source_left": 198.0
+      },
+      {
+        "article_number": 159,
+        "lemma": "agnostiker",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 863.0,
+        "source_left": 236.0
+      },
+      {
+        "article_number": 159,
+        "lemma": "agnostisk",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 875.0,
+        "source_left": 1190.0
+      },
+      {
+        "article_number": 160,
+        "lemma": "agoni",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1009.0,
+        "source_left": 198.0
+      },
+      {
+        "article_number": 161,
+        "lemma": "agorafobi",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1084.0,
+        "source_left": 197.0
+      },
+      {
+        "article_number": 162,
+        "lemma": "agraff",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1159.0,
+        "source_left": 197.0
+      },
+      {
+        "article_number": 162,
+        "lemma": "agraffnål",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1227.0,
+        "source_left": 888.0
+      },
+      {
+        "article_number": 163,
+        "lemma": "agrar",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1313.0,
+        "source_left": 198.0
+      },
+      {
+        "article_number": 163,
+        "lemma": "agrarparti",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1440.0,
+        "source_left": 869.0
+      },
+      {
+        "article_number": 163,
+        "lemma": "agrarpolitik",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1440.0,
+        "source_left": 1034.0
+      },
+      {
+        "article_number": 164,
+        "lemma": "agreabel",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1503.0,
+        "source_left": 197.0
+      },
+      {
+        "article_number": 165,
+        "lemma": "agremang",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1659.0,
+        "source_left": 196.0
+      },
+      {
+        "article_number": 166,
+        "lemma": "agrikultur",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1919.0,
+        "source_left": 195.0
+      },
+      {
+        "article_number": 166,
+        "lemma": "agrikulturkemi",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1985.0,
+        "source_left": 233.0
+      },
+      {
+        "article_number": 166,
+        "lemma": "agrikulturell",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 1986.0,
+        "source_left": 467.0
+      },
+      {
+        "article_number": 167,
+        "lemma": "agronom",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2072.0,
+        "source_left": 194.0
+      },
+      {
+        "article_number": 167,
+        "lemma": "agronomexamen",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2208.0,
+        "source_left": 664.0
+      },
+      {
+        "article_number": 167,
+        "lemma": "agronomi",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2198.0,
+        "source_left": 983.0
+      },
+      {
+        "article_number": 167,
+        "lemma": "agronomisk",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2392.0,
+        "source_left": 230.0
+      },
+      {
+        "article_number": 168,
+        "lemma": "ah",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2468.0,
+        "source_left": 195.0
+      },
+      {
+        "article_number": 168,
+        "lemma": "aha",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2467.0,
+        "source_left": 358.0
+      },
+      {
+        "article_number": 168,
+        "lemma": "ahaupplevelse",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2467.0,
+        "source_left": 610.0
+      },
+      {
+        "article_number": 169,
+        "lemma": "aids",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2541.0,
+        "source_left": 196.0
+      },
+      {
+        "article_number": 170,
+        "lemma": "aikido",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2612.0,
+        "source_left": 199.0
+      },
+      {
+        "article_number": 171,
+        "lemma": "aimabel",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2754.0,
+        "source_left": 199.0
+      },
+      {
+        "article_number": 172,
+        "lemma": "air",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2829.0,
+        "source_left": 198.0
+      },
+      {
+        "article_number": 173,
+        "lemma": "airedaleterrier",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 2970.0,
+        "source_left": 197.0
+      },
+      {
+        "article_number": 174,
+        "lemma": "aiss",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3046.0,
+        "source_left": 196.0
+      },
+      {
+        "article_number": 175,
+        "lemma": "aj",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3187.0,
+        "source_left": 196.0
+      },
+      {
+        "article_number": 176,
+        "lemma": "ajabaja",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3262.0,
+        "source_left": 195.0
+      },
+      {
+        "article_number": 177,
+        "lemma": "à jour",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3334.0,
+        "source_left": 194.0
+      },
+      {
+        "article_number": 177,
+        "lemma": "ajourföra",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3524.0,
+        "source_left": 230.0
+      },
+      {
+        "article_number": 177,
+        "lemma": "ajourföring",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3529.0,
+        "source_left": 527.0
+      },
+      {
+        "article_number": 177,
+        "lemma": "ajourhålla",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3529.0,
+        "source_left": 785.0
+      },
+      {
+        "article_number": 177,
+        "lemma": "ajourhållning",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3529.0,
+        "source_left": 969.0
+      },
+      {
+        "article_number": 178,
+        "lemma": "ajournera",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3663.0,
+        "source_left": 190.0
+      },
+      {
+        "article_number": 178,
+        "lemma": "ajournering",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3736.0,
+        "source_left": 1042.0
+      },
+      {
+        "article_number": 179,
+        "lemma": "ajöss",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3810.0,
+        "source_left": 188.0
+      },
+      {
+        "article_number": 180,
+        "lemma": "akacia",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3880.0,
+        "source_left": 187.0
+      },
+      {
+        "article_number": 180,
+        "lemma": "akacieträd",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3882.0,
+        "source_left": 949.0
+      },
+      {
+        "article_number": 181,
+        "lemma": "akademi",
+        "source_page": 24,
+        "source_column": 1,
+        "source_top": 3956.0,
+        "source_left": 187.0
+      },
+      {
+        "article_number": 181,
+        "lemma": "akademihemman",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 255.0,
+        "source_left": 2076.0
+      },
+      {
+        "article_number": 181,
+        "lemma": "akademiledamot",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 325.0,
+        "source_left": 1458.0
+      },
+      {
+        "article_number": 181,
+        "lemma": "akademimedlem",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 323.0,
+        "source_left": 1722.0
+      },
+      {
+        "article_number": 181,
+        "lemma": "akademiräntmästare",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 324.0,
+        "source_left": 1985.0
+      },
+      {
+        "article_number": 181,
+        "lemma": "akademisekreterare",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 394.0,
+        "source_left": 1457.0
+      },
+      {
+        "article_number": 181,
+        "lemma": "akademiker",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 392.0,
+        "source_left": 1869.0
+      },
+      {
+        "article_number": 181,
+        "lemma": "akademikeryrke",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 532.0,
+        "source_left": 2297.0
+      },
+      {
+        "article_number": 181,
+        "lemma": "akademisk",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 594.0,
+        "source_left": 1457.0
+      },
+      {
+        "article_number": 181,
+        "lemma": "akademist",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 724.0,
+        "source_left": 1708.0
+      },
+      {
+        "article_number": 182,
+        "lemma": "akajer",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 863.0,
+        "source_left": 1416.0
+      },
+      {
+        "article_number": 183,
+        "lemma": "akantus",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 936.0,
+        "source_left": 1415.0
+      },
+      {
+        "article_number": 183,
+        "lemma": "akantusblad",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 1005.0,
+        "source_left": 1887.0
+      },
+      {
+        "article_number": 183,
+        "lemma": "akantusväxt",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 1007.0,
+        "source_left": 2044.0
+      },
+      {
+        "article_number": 184,
+        "lemma": "a-kassa",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 1078.0,
+        "source_left": 1413.0
+      },
+      {
+        "article_number": 185,
+        "lemma": "akatalektisk",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 1152.0,
+        "source_left": 1416.0
+      },
+      {
+        "article_number": 186,
+        "lemma": "akilleshäl",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 1289.0,
+        "source_left": 1416.0
+      },
+      {
+        "article_number": 186,
+        "lemma": "akillessena",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 1306.0,
+        "source_left": 2295.0
+      },
+      {
+        "article_number": 187,
+        "lemma": "akleja",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 1434.0,
+        "source_left": 1632.0
+      },
+      {
+        "article_number": 187,
+        "lemma": "aklejfrö",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 1436.0,
+        "source_left": 2139.0
+      },
+      {
+        "article_number": 188,
+        "lemma": "akne",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 1510.0,
+        "source_left": 1414.0
+      },
+      {
+        "article_number": 188,
+        "lemma": "aknebehandling",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 1575.0,
+        "source_left": 1976.0
+      },
+      {
+        "article_number": 189,
+        "lemma": "akonitin",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 1649.0,
+        "source_left": 1413.0
+      },
+      {
+        "article_number": 190,
+        "lemma": "akribi",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 1721.0,
+        "source_left": 1413.0
+      },
+      {
+        "article_number": 191,
+        "lemma": "akrobat",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 1860.0,
+        "source_left": 1413.0
+      },
+      {
+        "article_number": 191,
+        "lemma": "akrobattrupp",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 1997.0,
+        "source_left": 1738.0
+      },
+      {
+        "article_number": 191,
+        "lemma": "akrobatik",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 1986.0,
+        "source_left": 1988.0
+      },
+      {
+        "article_number": 191,
+        "lemma": "akrobatisk",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 2058.0,
+        "source_left": 1514.0
+      },
+      {
+        "article_number": 192,
+        "lemma": "akropol",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 2131.0,
+        "source_left": 1410.0
+      },
+      {
+        "article_number": 193,
+        "lemma": "akrostikon",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 2271.0,
+        "source_left": 1412.0
+      },
+      {
+        "article_number": 193,
+        "lemma": "akrostikondiktare",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 2465.0,
+        "source_left": 1554.0
+      },
+      {
+        "article_number": 194,
+        "lemma": "akryl",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 2545.0,
+        "source_left": 1411.0
+      },
+      {
+        "article_number": 194,
+        "lemma": "akrylfiber",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 2609.0,
+        "source_left": 1731.0
+      },
+      {
+        "article_number": 194,
+        "lemma": "akrylfärg",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 2609.0,
+        "source_left": 2211.0
+      },
+      {
+        "article_number": 194,
+        "lemma": "akrylplast",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 2610.0,
+        "source_left": 2359.0
+      },
+      {
+        "article_number": 194,
+        "lemma": "akrylsyra",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 2688.0,
+        "source_left": 1451.0
+      },
+      {
+        "article_number": 195,
+        "lemma": "akrylat",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 2750.0,
+        "source_left": 1411.0
+      },
+      {
+        "article_number": 195,
+        "lemma": "akrylatplast",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 2816.0,
+        "source_left": 1714.0
+      },
+      {
+        "article_number": 196,
+        "lemma": "akt",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 2875.0,
+        "source_left": 1396.0
+      },
+      {
+        "article_number": 196,
+        "lemma": "aktstudie",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 3083.0,
+        "source_left": 1970.0
+      },
+      {
+        "article_number": 196,
+        "lemma": "aktstycke",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 3149.0,
+        "source_left": 1450.0
+      },
+      {
+        "article_number": 197,
+        "lemma": "akt",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 3207.0,
+        "source_left": 1397.0
+      },
+      {
+        "article_number": 197,
+        "lemma": "aktförklaring",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 3273.0,
+        "source_left": 1647.0
+      },
+      {
+        "article_number": 197,
+        "lemma": "aktsförklaring",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 3273.0,
+        "source_left": 1647.0
+      },
+      {
+        "article_number": 198,
+        "lemma": "akt",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 3337.0,
+        "source_left": 1397.0
+      },
+      {
+        "article_number": 198,
+        "lemma": "aktgiva",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 3539.0,
+        "source_left": 1710.0
+      },
+      {
+        "article_number": 198,
+        "lemma": "aktge",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 3552.0,
+        "source_left": 1926.0
+      },
+      {
+        "article_number": 198,
+        "lemma": "aktgivenhet",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 3539.0,
+        "source_left": 2203.0
+      },
+      {
+        "article_number": 198,
+        "lemma": "aktgivning",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 3604.0,
+        "source_left": 1449.0
+      },
+      {
+        "article_number": 198,
+        "lemma": "aktpågivenhet",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 3601.0,
+        "source_left": 1691.0
+      },
+      {
+        "article_number": 199,
+        "lemma": "akta",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 3673.0,
+        "source_left": 1409.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "akter",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 3825.0,
+        "source_left": 1412.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "akterbrygga",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 4020.0,
+        "source_left": 1448.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "akterdäck",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 4021.0,
+        "source_left": 1677.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "akterhytt",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 4021.0,
+        "source_left": 1841.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "akterifrån",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 4019.0,
+        "source_left": 1989.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "akterkajuta",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 4019.0,
+        "source_left": 2141.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "akterkastell",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 4019.0,
+        "source_left": 2329.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "akterlanterna",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 4019.0,
+        "source_left": 2533.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "akterom",
+        "source_page": 24,
+        "source_column": 2,
+        "source_top": 4019.0,
+        "source_left": 2753.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "akterpik",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 246.0,
+        "source_left": 524.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "aktersalong",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 246.0,
+        "source_left": 645.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "aktersegla",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 247.0,
+        "source_left": 866.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "akterseglad",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 247.0,
+        "source_left": 1049.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "akterskepp",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 316.0,
+        "source_left": 1156.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "aktersnurra",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 393.0,
+        "source_left": 267.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "akterspegel",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 448.0,
+        "source_left": 267.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "akterstäv",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 449.0,
+        "source_left": 484.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "aktertoft",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 447.0,
+        "source_left": 637.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "akterut",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 453.0,
+        "source_left": 773.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "akteråra",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 446.0,
+        "source_left": 1092.0
+      },
+      {
+        "article_number": 200,
+        "lemma": "akteröver",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 450.0,
+        "source_left": 1215.0
+      },
+      {
+        "article_number": 201,
+        "lemma": "akterlig",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 588.0,
+        "source_left": 231.0
+      },
+      {
+        "article_number": 201,
+        "lemma": "akterst",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 653.0,
+        "source_left": 271.0
+      },
+      {
+        "article_number": 201,
+        "lemma": "aktersta",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 719.0,
+        "source_left": 271.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktie",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 792.0,
+        "source_left": 231.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktieaffär",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 856.0,
+        "source_left": 394.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktiebok",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 857.0,
+        "source_left": 556.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktiebolag",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 857.0,
+        "source_left": 696.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktiebrev",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 857.0,
+        "source_left": 888.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktiebörs",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 857.0,
+        "source_left": 1047.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktieemission",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 921.0,
+        "source_left": 272.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktiefond",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 921.0,
+        "source_left": 557.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktiefondssparande",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 915.0,
+        "source_left": 720.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktieförsäljning",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 988.0,
+        "source_left": 272.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktieindex",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 988.0,
+        "source_left": 603.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktieinnehav",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 988.0,
+        "source_left": 791.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktiekapital",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 989.0,
+        "source_left": 1049.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktiekupong",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1055.0,
+        "source_left": 272.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktiekurs",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1054.0,
+        "source_left": 515.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktieköp",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1054.0,
+        "source_left": 668.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktiemajoritet",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1054.0,
+        "source_left": 805.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktiemarknad",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1055.0,
+        "source_left": 1094.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktieomsättning",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1120.0,
+        "source_left": 271.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktieportfölj",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1119.0,
+        "source_left": 629.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktiepost",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1124.0,
+        "source_left": 868.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktiesparande",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1121.0,
+        "source_left": 1028.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktiesparare",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1198.0,
+        "source_left": 271.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktiesparfond",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1185.0,
+        "source_left": 514.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktiesparklubb",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1186.0,
+        "source_left": 797.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktiespekulation",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1252.0,
+        "source_left": 271.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktiestock",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1252.0,
+        "source_left": 630.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktieteckning",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1252.0,
+        "source_left": 815.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktieutdelning",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1318.0,
+        "source_left": 271.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktievinst",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1318.0,
+        "source_left": 572.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktievärde",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1318.0,
+        "source_left": 744.0
+      },
+      {
+        "article_number": 202,
+        "lemma": "aktieägare",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1319.0,
+        "source_left": 936.0
+      },
+      {
+        "article_number": 203,
+        "lemma": "aktinium",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1387.0,
+        "source_left": 230.0
+      },
+      {
+        "article_number": 204,
+        "lemma": "aktion",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1533.0,
+        "source_left": 231.0
+      },
+      {
+        "article_number": 204,
+        "lemma": "aktionsart",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1656.0,
+        "source_left": 866.0
+      },
+      {
+        "article_number": 204,
+        "lemma": "aktionsforskning",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1722.0,
+        "source_left": 271.0
+      },
+      {
+        "article_number": 204,
+        "lemma": "aktionsgrupp",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1722.0,
+        "source_left": 615.0
+      },
+      {
+        "article_number": 204,
+        "lemma": "aktionsprogram",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1722.0,
+        "source_left": 862.0
+      },
+      {
+        "article_number": 204,
+        "lemma": "aktionsradie",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1788.0,
+        "source_left": 272.0
+      },
+      {
+        "article_number": 204,
+        "lemma": "aktionstid",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1788.0,
+        "source_left": 742.0
+      },
+      {
+        "article_number": 205,
+        "lemma": "aktionär",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1883.0,
+        "source_left": 235.0
+      },
+      {
+        "article_number": 206,
+        "lemma": "aktiv",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 1959.0,
+        "source_left": 235.0
+      },
+      {
+        "article_number": 206,
+        "lemma": "aktivform",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 2157.0,
+        "source_left": 979.0
+      },
+      {
+        "article_number": 206,
+        "lemma": "aktiva",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 2225.0,
+        "source_left": 277.0
+      },
+      {
+        "article_number": 206,
+        "lemma": "aktivera",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 2218.0,
+        "source_left": 1024.0
+      },
+      {
+        "article_number": 206,
+        "lemma": "aktivering",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 2290.0,
+        "source_left": 854.0
+      },
+      {
+        "article_number": 206,
+        "lemma": "aktivism",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 2284.0,
+        "source_left": 1087.0
+      },
+      {
+        "article_number": 206,
+        "lemma": "aktivist",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 2487.0,
+        "source_left": 280.0
+      },
+      {
+        "article_number": 206,
+        "lemma": "aktivistisk",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 2486.0,
+        "source_left": 960.0
+      },
+      {
+        "article_number": 206,
+        "lemma": "aktivitet",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 2551.0,
+        "source_left": 280.0
+      },
+      {
+        "article_number": 206,
+        "lemma": "aktivitetsbehov",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 2612.0,
+        "source_left": 281.0
+      },
+      {
+        "article_number": 206,
+        "lemma": "aktivitetspedagogik",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 2612.0,
+        "source_left": 533.0
+      },
+      {
+        "article_number": 206,
+        "lemma": "aktivitetsstöd",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 2611.0,
+        "source_left": 902.0
+      },
+      {
+        "article_number": 206,
+        "lemma": "aktivitetsträning",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 2611.0,
+        "source_left": 1103.0
+      },
+      {
+        "article_number": 206,
+        "lemma": "aktivum",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 2676.0,
+        "source_left": 345.0
+      },
+      {
+        "article_number": 207,
+        "lemma": "aktning",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 2822.0,
+        "source_left": 242.0
+      },
+      {
+        "article_number": 207,
+        "lemma": "aktningsbjudande",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 2882.0,
+        "source_left": 282.0
+      },
+      {
+        "article_number": 207,
+        "lemma": "aktningsfull",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 2887.0,
+        "source_left": 905.0
+      },
+      {
+        "article_number": 207,
+        "lemma": "aktningsfullhet",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 2887.0,
+        "source_left": 1028.0
+      },
+      {
+        "article_number": 207,
+        "lemma": "aktningsvärd",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 2955.0,
+        "source_left": 283.0
+      },
+      {
+        "article_number": 207,
+        "lemma": "aktningsvärdhet",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 2954.0,
+        "source_left": 596.0
+      },
+      {
+        "article_number": 208,
+        "lemma": "aktra",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 3029.0,
+        "source_left": 243.0
+      },
+      {
+        "article_number": 208,
+        "lemma": "aktre",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 3029.0,
+        "source_left": 488.0
+      },
+      {
+        "article_number": 209,
+        "lemma": "aktris",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 3170.0,
+        "source_left": 244.0
+      },
+      {
+        "article_number": 210,
+        "lemma": "aktsam",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 3245.0,
+        "source_left": 244.0
+      },
+      {
+        "article_number": 210,
+        "lemma": "aktsamhet",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 3243.0,
+        "source_left": 938.0
+      },
+      {
+        "article_number": 211,
+        "lemma": "aktualisera",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 3310.0,
+        "source_left": 245.0
+      },
+      {
+        "article_number": 211,
+        "lemma": "aktualisering",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 3316.0,
+        "source_left": 1146.0
+      },
+      {
+        "article_number": 211,
+        "lemma": "aktualitet",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 3383.0,
+        "source_left": 285.0
+      },
+      {
+        "article_number": 211,
+        "lemma": "aktualitetsintresse",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 3444.0,
+        "source_left": 287.0
+      },
+      {
+        "article_number": 211,
+        "lemma": "aktualitetsvärde",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 3443.0,
+        "source_left": 591.0
+      },
+      {
+        "article_number": 212,
+        "lemma": "aktuarie",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 3525.0,
+        "source_left": 248.0
+      },
+      {
+        "article_number": 212,
+        "lemma": "aktuariebefattning",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 3584.0,
+        "source_left": 966.0
+      },
+      {
+        "article_number": 213,
+        "lemma": "aktuell",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 3666.0,
+        "source_left": 249.0
+      },
+      {
+        "article_number": 214,
+        "lemma": "aktör",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 3806.0,
+        "source_left": 251.0
+      },
+      {
+        "article_number": 215,
+        "lemma": "akupunktera",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 3940.0,
+        "source_left": 254.0
+      },
+      {
+        "article_number": 215,
+        "lemma": "akupunktur",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 4012.0,
+        "source_left": 622.0
+      },
+      {
+        "article_number": 215,
+        "lemma": "akupunkturnål",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 4012.0,
+        "source_left": 949.0
+      },
+      {
+        "article_number": 215,
+        "lemma": "akupunktör",
+        "source_page": 25,
+        "source_column": 1,
+        "source_top": 4012.0,
+        "source_left": 1169.0
+      },
+      {
+        "article_number": 216,
+        "lemma": "akustik",
+        "source_page": 25,
+        "source_column": 2,
+        "source_top": 246.0,
+        "source_left": 1460.0
+      },
+      {
+        "article_number": 216,
+        "lemma": "akustikplatta",
+        "source_page": 25,
+        "source_column": 2,
+        "source_top": 381.0,
+        "source_left": 1671.0
+      },
+      {
+        "article_number": 216,
+        "lemma": "akustisk",
+        "source_page": 25,
+        "source_column": 2,
+        "source_top": 381.0,
+        "source_left": 2208.0
+      },
+      {
+        "article_number": 217,
+        "lemma": "akut",
+        "source_page": 25,
+        "source_column": 2,
+        "source_top": 522.0,
+        "source_left": 1462.0
+      },
+      {
+        "article_number": 217,
+        "lemma": "akutavdelning",
+        "source_page": 25,
+        "source_column": 2,
+        "source_top": 783.0,
+        "source_left": 2251.0
+      },
+      {
+        "article_number": 217,
+        "lemma": "akutfall",
+        "source_page": 25,
+        "source_column": 2,
+        "source_top": 848.0,
+        "source_left": 1503.0
+      },
+      {
+        "article_number": 217,
+        "lemma": "akutmottagning",
+        "source_page": 25,
+        "source_column": 2,
+        "source_top": 849.0,
+        "source_left": 1622.0
+      },
+      {
+        "article_number": 217,
+        "lemma": "akutsjukhus",
+        "source_page": 25,
+        "source_column": 2,
+        "source_top": 849.0,
+        "source_left": 1981.0
+      },
+      {
+        "article_number": 217,
+        "lemma": "akutsjukvård",
+        "source_page": 25,
+        "source_column": 2,
+        "source_top": 846.0,
+        "source_left": 2226.0
+      },
+      {
+        "article_number": 217,
+        "lemma": "akutvård",
+        "source_page": 25,
+        "source_column": 2,
+        "source_top": 911.0,
+        "source_left": 1504.0
+      },
+      {
+        "article_number": 218,
+        "lemma": "akvamarin",
+        "source_page": 25,
+        "source_column": 2,
+        "source_top": 989.0,
+        "source_left": 1464.0
+      },
+      {
+        "article_number": 218,
+        "lemma": "akvamarinblå",
+        "source_page": 25,
+        "source_column": 2,
+        "source_top": 1051.0,
+        "source_left": 1504.0
+      },
+      {
+        "article_number": 219,
+        "lemma": "akvarell",
+        "source_page": 25,
+        "source_column": 2,
+        "source_top": 1129.0,
+        "source_left": 1465.0
+      },
+      {
+        "article_number": 219,
+        "lemma": "akvarellfärg",
+        "source_page": 25,
+        "source_column": 2,
+        "source_top": 1195.0,
+        "source_left": 2058.0
+      },
+      {
+        "article_number": 219,
+        "lemma": "akvarellmålning",
+        "source_page": 25,
+        "source_column": 2,
+        "source_top": 1193.0,
+        "source_left": 2202.0
+      },
+      {
+        "article_number": 219,
+        "lemma": "akvarellskiss",
+        "source_page": 25,
+        "source_column": 2,
+        "source_top": 1261.0,
+        "source_left": 1504.0
+      },
+      {
+        "article_number": 219,
+        "lemma": "akvarellist",
+        "source_page": 25,
+        "source_column": 2,
+        "source_top": 1262.0,
+        "source_left": 1738.0
+      },
+      {
+        "article_number": 220,
+        "lemma": "akvarium",
+        "source_page": 25,
+        "source_column": 2,
+        "source_top": 1330.0,
+        "source_left": 1463.0
+      },
+      {
+        "article_number": 220,
+        "lemma": "akvariefisk",
+        "source_page": 25,
+        "source_column": 2,
+        "source_top": 1397.0,
+        "source_left": 2403.0
+      }
+    ]
+  },
+  "reviewed_ranges": []
+}
