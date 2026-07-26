@@ -40,6 +40,38 @@ class HeadwordReviewTests(unittest.TestCase):
             boundary_noise_correction("akilles|häl", "akilies|häi")
         )
 
+    def test_homonym_correction_drops_stale_unstructured_stem(self):
+        items = [
+            {
+                "headword": "akt",
+                "raw_headword": "akt",
+                "stem_headword": "akt",
+                "runeberg_headword": "akt",
+                "homonym": 1,
+                "homonym_marker_detected": True,
+                "reasons": [],
+                "status": "preliminär",
+                "corrected_from": "",
+                "correction_method": "",
+            },
+            {
+                "headword": "akts",
+                "raw_headword": "akts.",
+                "stem_headword": "akts.",
+                "runeberg_headword": "akt",
+                "runeberg_stem_headword": "akt",
+                "homonym": 2,
+                "homonym_marker_detected": True,
+                "reasons": [],
+                "status": "preliminär",
+                "corrected_from": "",
+                "correction_method": "",
+            },
+        ]
+        reconcile_homonym_neighbours(items)
+        self.assertEqual(items[1]["headword"], "akt")
+        self.assertEqual(items[1]["stem_headword"], "akt")
+
     def test_definition_preposition_ends_hyphenated_head(self):
         article = {
             "lines": [{"tokens": [
