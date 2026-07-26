@@ -38,8 +38,10 @@ from scripts.lemma_review import (
     repair_false_boundary_from_runeberg,
     repair_final_letter_from_runeberg,
     repair_runeberg_letter_confusions,
+    repair_suffix_vowel_from_runeberg,
     render_review_images,
     recover_runeberg_boundary_series,
+    recover_missing_runeberg_plain_forms,
     rebase_suffixes_from_runeberg_stems,
     remove_generated_inflections,
     remove_displaced_inline_alternatives,
@@ -54,6 +56,7 @@ from scripts.lemma_review import (
     strip_merged_pos_marker,
     swedish_sort_key,
     weak_alternative_suffix,
+    weak_false_boundary_definition,
     write_review_bundle,
 )
 
@@ -70,6 +73,82 @@ def token(text: str, left: float, density: float) -> dict:
 
 
 class LemmaReviewTests(unittest.TestCase):
+    def test_weak_false_boundary_definition_keeps_article_base(self):
+        head = {
+            "runeberg_article_lines": [
+                "akrylplast -fiber -färg -plast -syra"
+            ]
+        }
+        self.assertTrue(
+            weak_false_boundary_definition(
+                "akry|plast",
+                [token("-plast", 100, 0.5)],
+                0.0,
+                head,
+            )
+        )
+
+    def test_two_ocr_vowel_marks_resolve_to_plain_a(self):
+        self.assertEqual(
+            repair_suffix_vowel_from_runeberg(
+                "-plåtta",
+                {"runeberg_article_lines": ["-plätta"]},
+            ),
+            "-platta",
+        )
+
+    def test_runeberg_recovers_forms_lost_at_truncated_article_end(self):
+        common = {
+            "article_number": 1,
+            "source_page": 25,
+            "source_column": 1,
+            "source_top": 100.0,
+            "source_bottom": 130.0,
+            "source_left": 100.0,
+            "source_right": 220.0,
+        }
+        items = [
+            {
+                **common,
+                "lemma": "akupunktera",
+                "raw": "akupunkter|a",
+                "method": "artikelhuvud",
+            },
+            {
+                **common,
+                "lemma": "akupunktur",
+                "raw": "akupunktur",
+                "method": "halvfet token",
+                "source_left": 300.0,
+                "source_right": 440.0,
+            },
+        ]
+        recover_missing_runeberg_plain_forms(
+            items,
+            {1: {
+                "headword": "akupunktera",
+                "runeberg_match_score": 1.0,
+                "runeberg_article_lines": [
+                    "akupunkter|a -ade v. utföra",
+                    "akupunktur (-u’r) -en s. -nål",
+                    "— akupunktör (-ö’r) -en -er s.",
+                ],
+            }},
+            [{"number": 1, "lines": [
+                {"page": 25, "tokens": []},
+                {"page": 25, "tokens": []},
+            ]}],
+        )
+        self.assertEqual(
+            [item["lemma"] for item in items],
+            [
+                "akupunktera",
+                "akupunktur",
+                "akupunkturnål",
+                "akupunktör",
+            ],
+        )
+
     def test_inline_spelling_alternative_does_not_rebase_later_suffix(self):
         article = {
             "number": 1,
