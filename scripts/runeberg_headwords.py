@@ -83,6 +83,18 @@ def align_lines(items: list[dict], raw_lines: list[str]) -> list[tuple[int, floa
     return list(reversed(result))
 
 
+def boundary_noise_correction(primary: str, secondary: str) -> bool:
+    """Accept Runeberg only when it removes one glyph before a boundary."""
+    primary = primary.replace("¦", "|")
+    secondary = secondary.replace("¦", "|")
+    boundary = primary.find("|")
+    return (
+        boundary > 0
+        and secondary
+        == primary[: boundary - 1] + primary[boundary:]
+    )
+
+
 def fetch_and_enrich(items: list[dict]) -> None:
     module = debug._load_base_module()
     headers = {"User-Agent": "saol-tools/headword-review"}
@@ -139,7 +151,13 @@ def fetch_and_enrich(items: list[dict]) -> None:
                 None, item["headword"], secondary
             ).ratio()
             strong_boundary_correction = (
-                explicit_boundary and score >= 0.75 and headword_similarity >= 0.70
+                explicit_boundary
+                and boundary_noise_correction(
+                    item.get("stem_headword", ""),
+                    secondary_stem,
+                )
+                and score >= 0.75
+                and headword_similarity >= 0.70
             )
             strong_single_word_correction = (
                 only_low_confidence
