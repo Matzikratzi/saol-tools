@@ -359,6 +359,8 @@ def reconcile_homonym_neighbours(items: list[dict]) -> None:
                     item["stem_headword"] = runeberg_stem
                     item["stem_boundary_inferred"] = False
                     item["stem_boundary_method"] = "Runebergs parallella OCR"
+                else:
+                    item["stem_headword"] = canonical
                 item["reasons"] = [
                     reason for reason in item["reasons"]
                     if not reason.startswith(("låg OCR-säkerhet", "homonymtecknet"))
