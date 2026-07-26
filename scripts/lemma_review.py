@@ -963,8 +963,8 @@ def recover_runeberg_boundary_series(
             continue
 
         compound_base = suffix_base(
-            head.get("runeberg_stem_headword")
-            or head.get("stem_headword")
+            head.get("stem_headword")
+            or head.get("runeberg_stem_headword")
             or head["headword"]
         )
         anchor = head_item
@@ -972,8 +972,6 @@ def recover_runeberg_boundary_series(
         used_ids = set()
         for match in matches:
             preceding_segment = runeberg_text[cursor : match.start()]
-            segment_base_item = None
-            segment_anchor = None
             for token_match in token_pattern.finditer(preceding_segment):
                 token_value = token_match.group(0)
                 text_before_token = preceding_segment[
@@ -1101,112 +1099,30 @@ def recover_runeberg_boundary_series(
                             if "|" in preceding_raw or "¦" in preceding_raw
                             else preceding["lemma"]
                         )
-                        if follows_base_dash:
-                            segment_base_item = preceding
-                            segment_anchor = preceding
-                elif (
-                    segment_base_item is not None
-                    and token_value.startswith("-")
-                ):
-                    before_suffix = preceding_segment[
-                        : token_match.start()
-                    ]
-                    inside_parentheses = (
-                        before_suffix.count("(")
-                        > before_suffix.count(")")
-                    )
-                    normalized_suffix = (
-                        "-" + normalize_lemma(token_value[1:])
-                    )
-                    recovered_lemma = expand_compound(
-                        segment_base_item["lemma"], token_value
-                    )
-                    already_present = next(
-                        (
-                            item
-                            for item in article_items
-                            if item["lemma"] == recovered_lemma
-                        ),
-                        None,
-                    )
-                    raw_already_present = any(
-                        normalize_lemma(item.get("raw", ""))
-                        == normalize_lemma(token_value)
-                        for item in article_items
-                    )
-                    if (
-                        already_present is None
-                        and not raw_already_present
-                        and not inside_parentheses
-                        and normalized_suffix not in NON_LEMMA_SUFFIXES
-                        and len(normalized_suffix) > 4
-                        and not merged_pos_inflection(
-                            token_value, normalized_suffix, 0.0
-                        )
-                    ):
-                        recovered = head_item.copy()
-                        recovered.update(
-                            {
-                                "lemma": recovered_lemma,
-                                "stem_lemma": recovered_lemma,
-                                "raw": token_value,
-                                "method": (
-                                    "Runebergs suffix efter ny bas"
-                                ),
-                                "bold_score": 0.0,
-                                "status": "osäker",
-                                "reasons": [
-                                    "saknades i bild-OCR; återställd "
-                                    "efter utskriven bas i Runeberg"
-                                ],
-                            }
-                        )
-                        source_left = float(
-                            segment_anchor.get(
-                                "source_right",
-                                segment_anchor.get("source_left", 0.0),
-                            )
-                        ) + 12.0
-                        recovered.update(
-                            {
-                                "source_page": int(
-                                    segment_anchor.get("source_page", 0)
-                                ),
-                                "source_column": int(
-                                    segment_anchor.get(
-                                        "source_column", 0
-                                    )
-                                ),
-                                "source_top": float(
-                                    segment_anchor.get("source_top", 0.0)
-                                ),
-                                "source_bottom": float(
-                                    segment_anchor.get(
-                                        "source_bottom", 0.0
-                                    )
-                                ),
-                                "source_left": source_left,
-                                "source_right": source_left
-                                + max(
-                                    60.0,
-                                    len(recovered_lemma) * 16.0,
-                                ),
-                            }
-                        )
-                        anchor_index = items.index(segment_anchor)
-                        items.insert(anchor_index + 1, recovered)
-                        article_items.append(recovered)
-                        segment_anchor = recovered
-                        anchor = recovered
-                        rule_hit(
-                            "runeberg.återställd_suffix_efter_ny_bas"
-                        )
 
             raw = match.group(0)
             repaired_raw = repair_runeberg_letter_confusions(raw)
             if repaired_raw != raw:
                 raw = repaired_raw
                 rule_hit("repair.runeberg_i_som_l")
+            primary_stem = head.get("stem_headword", "")
+            if (
+                match is matches[0]
+                and not raw.startswith("-")
+                and ("|" in primary_stem or "¦" in primary_stem)
+                and difflib.SequenceMatcher(
+                    None,
+                    normalize_lemma(raw),
+                    normalize_lemma(head["headword"]),
+                ).ratio()
+                >= 0.75
+            ):
+                # This is Runeberg's rendering of the article head itself.
+                # Keep the primary OCR spelling and use Runeberg only for
+                # later boundary-bearing members of the article family.
+                anchor = head_item
+                cursor = match.end()
+                continue
             standalone_boundary_candidate = (
                 max(
                     (
@@ -1304,8 +1220,8 @@ def recover_runeberg_boundary_series(
                         base_value = compound_base
                     elif preceding_base.get("method") == "artikelhuvud":
                         base_value = (
-                            head.get("runeberg_stem_headword")
-                            or head.get("stem_headword")
+                            head.get("stem_headword")
+                            or head.get("runeberg_stem_headword")
                             or preceding_base["lemma"]
                         )
                     else:
@@ -1761,6 +1677,19 @@ def rebase_suffixes_from_runeberg_stems(
         for index, boundary in enumerate(boundaries):
             boundary_lemma = normalize_lemma(boundary.group(0))
             base = suffix_base(boundary.group(0))
+            primary_stem = head.get("stem_headword", "")
+            if (
+                index == 0
+                and ("|" in primary_stem or "¦" in primary_stem)
+                and difflib.SequenceMatcher(
+                    None,
+                    boundary_lemma,
+                    normalize_lemma(head["headword"]),
+                ).ratio()
+                >= 0.75
+            ):
+                boundary_lemma = normalize_lemma(head["headword"])
+                base = suffix_base(primary_stem)
             folded_boundary = boundary_lemma.translate(
                 str.maketrans({"à": "a", "á": "a", "é": "e"})
             )
@@ -2036,8 +1965,25 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
         )
         for line_index, line in enumerate(article["lines"]):
             tokens = sorted(line.get("tokens", []), key=lambda token: token["left"])
+            leading_alternative = False
             if line_index == 0:
                 tokens = _after_inflection_prefix(tokens)
+                if tokens:
+                    first_position = next(
+                        (
+                            index
+                            for index, candidate in enumerate(head_tokens)
+                            if candidate is tokens[0]
+                        ),
+                        -1,
+                    )
+                    leading_alternative = (
+                        first_position > 0
+                        and normalize_lemma(
+                            head_tokens[first_position - 1].get("text", "")
+                        )
+                        in {"el", "eller"}
+                    )
             previous_separator = False
             at_line_start = True
             parenthesis_depth = 0
@@ -2332,10 +2278,14 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                     ) in POS
                 )
                 preceded_by_alternative_marker = (
-                    token_index > 0
-                    and normalize_lemma(
-                        tokens[token_index - 1].get("text", "")
-                    ) in {"el", "eller"}
+                    (
+                        token_index > 0
+                        and normalize_lemma(
+                            tokens[token_index - 1].get("text", "")
+                        )
+                        in {"el", "eller"}
+                    )
+                    or (token_index == 0 and leading_alternative)
                 )
                 normalized_cleaned = normalize_lemma(cleaned)
                 normalized_head = normalize_lemma(current_head)
@@ -2462,7 +2412,10 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                                 and same_article_family
                             )
                         )
-                        if structurally_new_base:
+                        if (
+                            structurally_new_base
+                            and not preceded_by_alternative_marker
+                        ):
                             last_lookup_lemma = lemma
                             current_base = suffix_base(cleaned)
                 previous_separator = False
