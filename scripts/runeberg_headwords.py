@@ -84,14 +84,18 @@ def align_lines(items: list[dict], raw_lines: list[str]) -> list[tuple[int, floa
 
 
 def boundary_noise_correction(primary: str, secondary: str) -> bool:
-    """Accept Runeberg only when it removes one glyph before a boundary."""
+    """Accept Runeberg when one OCR glyph explains the whole disagreement."""
     primary = primary.replace("¦", "|")
     secondary = secondary.replace("¦", "|")
-    boundary = primary.find("|")
-    return (
-        boundary > 0
-        and secondary
-        == primary[: boundary - 1] + primary[boundary:]
+    primary_plain = primary.replace("|", "")
+    secondary_plain = secondary.replace("|", "")
+    if len(primary_plain) != len(secondary_plain) + 1:
+        return False
+    return any(
+        character in "li1j"
+        and primary_plain[:index] + primary_plain[index + 1:]
+        == secondary_plain
+        for index, character in enumerate(primary_plain)
     )
 
 
