@@ -33,6 +33,9 @@ class HeadwordReviewTests(unittest.TestCase):
         self.assertTrue(
             boundary_noise_correction("abskissl|a", "abskiss|a")
         )
+        self.assertTrue(
+            boundary_noise_correction("abbrevilation", "abbrevi|ation")
+        )
         self.assertFalse(
             boundary_noise_correction("akilles|häl", "akilies|häi")
         )
