@@ -267,6 +267,38 @@ def infer_stem_boundary_from_ocr(raw_headword: str, canonical: str) -> str:
     return ""
 
 
+def transfer_stem_boundary(stem: str, canonical: str) -> str:
+    """Keep a known printed boundary when spelling alone is corrected."""
+    canonical = normalize_headword(canonical).replace(" ", "")
+    compact_stem = normalize_headword(stem).replace(" ", "")
+    boundaries = [
+        index for index, character in enumerate(stem)
+        if character in "|¦"
+    ]
+    if len(boundaries) != 1 or len(compact_stem) != len(canonical):
+        return ""
+    boundary = boundaries[0]
+    return canonical[:boundary] + "|" + canonical[boundary:]
+
+
+def apply_headword_correction(item: dict, corrected: str) -> None:
+    """Apply one spelling correction without losing stem structure."""
+    previous_stem = item.get("stem_headword", "")
+    item["corrected_from"] = item["headword"]
+    item["correction_method"] = "manuell korrektionsfil"
+    item["headword"] = corrected
+    item["stem_headword"] = (
+        transfer_stem_boundary(previous_stem, corrected)
+        or infer_stem_boundary_from_ocr(previous_stem, corrected)
+        or corrected
+    )
+    item["reasons"] = [
+        reason for reason in item["reasons"]
+        if not reason.startswith("låg OCR-säkerhet")
+    ]
+    item["status"] = "osäker" if item["reasons"] else "preliminär"
+
+
 def reconcile_homonym_neighbours(items: list[dict]) -> None:
     """Use a detected homonym marker as evidence about adjacent entries."""
     for index in range(len(items) - 1):
@@ -430,14 +462,7 @@ def extract_heads(
     for item in result:
         corrected = corrections.get(item["headword"])
         if corrected:
-            item["corrected_from"] = item["headword"]
-            item["correction_method"] = "manuell korrektionsfil"
-            item["headword"] = corrected
-            item["reasons"] = [
-                reason for reason in item["reasons"]
-                if not reason.startswith("låg OCR-säkerhet")
-            ]
-            item["status"] = "osäker" if item["reasons"] else "preliminär"
+            apply_headword_correction(item, corrected)
     reconcile_homonym_neighbours(result)
     infer_homonym_runs(result)
     return result
@@ -498,14 +523,7 @@ def main() -> None:
         for item in items:
             corrected = corrections.get(item["headword"])
             if corrected:
-                item["corrected_from"] = item["headword"]
-                item["correction_method"] = "manuell korrektionsfil"
-                item["headword"] = corrected
-                item["reasons"] = [
-                    reason for reason in item["reasons"]
-                    if not reason.startswith("låg OCR-säkerhet")
-                ]
-                item["status"] = "osäker" if item["reasons"] else "preliminär"
+                apply_headword_correction(item, corrected)
         recover_short_homonym_run(items)
         reconcile_homonym_neighbours(items)
         infer_homonym_runs(items)
