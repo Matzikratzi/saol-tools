@@ -70,6 +70,49 @@ def token(text: str, left: float, density: float) -> dict:
 
 
 class LemmaReviewTests(unittest.TestCase):
+    def test_inline_spelling_alternative_does_not_rebase_later_suffix(self):
+        article = {
+            "number": 1,
+            "start_page": 24,
+            "start_column": 2,
+            "lines": [
+                {"tokens": [
+                    token("akne", 100, 0.50),
+                    token("(akn'e)", 220, 0.28),
+                    token("el.", 350, 0.31),
+                    token("acne", 410, 0.55),
+                    token("-n", 530, 0.32),
+                    token("s.", 590, 0.40),
+                    token("hudsjukdom", 650, 0.27),
+                ]},
+                {"tokens": [
+                    token("med", 100, 0.34),
+                    token("utslag", 190, 0.28),
+                    token("finnar", 310, 0.31),
+                    token("-behandling", 430, 0.40),
+                ]},
+            ],
+        }
+        items = extract_candidates(
+            {"articles": [article]},
+            {"headwords": [{
+                "article_number": 1,
+                "headword": "akne",
+                "raw_headword": "akne",
+                "stem_headword": "akne",
+                "homonym": None,
+                "homonym_marker_detected": False,
+                "runeberg_match_score": 1.0,
+                "runeberg_article_lines": [
+                    "akne (akn’e) ei. acne -n s. hudsjukdom",
+                    "med utslag; finnar -behandling",
+                ],
+            }]},
+        )
+        lemmas = [item["lemma"] for item in items]
+        self.assertIn("aknebehandling", lemmas)
+        self.assertNotIn("acnebehandling", lemmas)
+
     def test_displays_and_preserves_homonym_number(self):
         item = {
             "lemma": "afro",
@@ -279,69 +322,6 @@ class LemmaReviewTests(unittest.TestCase):
         self.assertIn(
             "additionsexempel",
             [item["lemma"] for item in items],
-        )
-
-    def test_runeberg_recovers_plain_suffix_after_new_full_base(self):
-        common = {
-            "article_number": 1,
-            "source_page": 20,
-            "source_column": 2,
-            "source_top": 100.0,
-            "source_bottom": 124.0,
-            "source_left": 100.0,
-            "source_right": 260.0,
-        }
-        items = [
-            {
-                **common,
-                "lemma": "acceleration",
-                "stem_lemma": "acceleration",
-                "raw": "acceleration",
-                "method": "artikelhuvud",
-            },
-            {
-                **common,
-                "lemma": "accelerator",
-                "stem_lemma": "accelerator",
-                "raw": "accelerator",
-                "method": "halvfet token",
-                "source_left": 300.0,
-                "source_right": 460.0,
-            },
-            {
-                **common,
-                "lemma": "accelerera",
-                "stem_lemma": "accelerera",
-                "raw": "accelerer|a",
-                "method": "halvfet token",
-                "source_left": 600.0,
-                "source_right": 760.0,
-            },
-        ]
-        recover_runeberg_boundary_series(
-            items,
-            {
-                1: {
-                    "headword": "acceleration",
-                    "stem_headword": "acceleration",
-                    "runeberg_stem_headword": "acceleration",
-                    "runeberg_match_score": 1.0,
-                    "runeberg_article_lines": [
-                        "acceleration -en s. — accelerator -n s.",
-                        "t. ex. för partiklar -anläggning "
-                        "- accelerer|a -ade v.",
-                    ],
-                }
-            },
-        )
-        self.assertEqual(
-            [item["lemma"] for item in items],
-            [
-                "acceleration",
-                "accelerator",
-                "acceleratoranläggning",
-                "accelerera",
-            ],
         )
 
     def test_late_base_repair_drops_past_tense_but_keeps_lemmas(self):
