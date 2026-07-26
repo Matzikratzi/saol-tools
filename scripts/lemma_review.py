@@ -181,6 +181,77 @@ def weak_alternative_suffix(previous_raw: str, bold_score: float) -> bool:
     )
 
 
+def weak_false_boundary_definition(
+    value: str,
+    following_tokens: list[dict],
+    bold_score: float,
+    head: dict,
+) -> bool:
+    """Reject ordinary prose misread with | when its tail follows as a suffix."""
+    if (
+        bold_score >= 0.25
+        or ("|" not in value and "¦" not in value)
+    ):
+        return False
+    prefix, tail = re.split(r"[|¦]", value, maxsplit=1)
+    restored = normalize_lemma(prefix + "l" + tail)
+    runeberg_words = {
+        normalize_lemma(word)
+        for word in re.findall(
+            r"[A-Za-zÅÄÖåäöÀÁÉàáé]+",
+            " ".join(
+                head.get("runeberg_article_lines")
+                or [head.get("runeberg_line", "")]
+            ),
+        )
+    }
+    following_suffixes = {
+        normalize_lemma(
+            normalize_leading_dash(token.get("text", "")).lstrip("-")
+        )
+        for token in following_tokens
+        if normalize_leading_dash(
+            token.get("text", "")
+        ).startswith("-")
+    }
+    return restored in runeberg_words and normalize_lemma(tail) in following_suffixes
+
+
+def repair_suffix_vowel_from_runeberg(value: str, head: dict) -> str:
+    """Resolve å/ä disagreement between OCR engines as an unaccented a."""
+    if not value.startswith("-"):
+        return value
+    source = normalize_lemma(value[1:])
+    runeberg_suffixes = [
+        normalize_lemma(match)
+        for match in re.findall(
+            r"-([A-Za-zÅÄÖåäöÀÁÉàáé]+)",
+            " ".join(
+                head.get("runeberg_article_lines")
+                or [head.get("runeberg_line", "")]
+            ),
+        )
+    ]
+    for secondary in runeberg_suffixes:
+        differences = [
+            index
+            for index, (left, right) in enumerate(zip(source, secondary))
+            if left != right
+        ]
+        if (
+            len(source) == len(secondary)
+            and len(differences) == 1
+            and {
+                source[differences[0]],
+                secondary[differences[0]],
+            }
+            == {"å", "ä"}
+        ):
+            index = differences[0]
+            return "-" + source[:index] + "a" + source[index + 1:]
+    return value
+
+
 def alternative_inflection_before_marker(
     raw: str, following_tokens: list[dict], bold_score: float
 ) -> bool:
@@ -1649,6 +1720,209 @@ def recover_runeberg_boundary_series(
     return items
 
 
+def _insert_runeberg_recovery(
+    items: list[dict],
+    anchor: dict,
+    lemma: str,
+    raw: str,
+    method: str,
+) -> dict:
+    recovered = anchor.copy()
+    recovered.update({
+        "lemma": lemma,
+        "stem_lemma": lemma,
+        "raw": raw,
+        "method": method,
+        "bold_score": 0.0,
+        "status": "osäker",
+        "reasons": ["saknades i bild-OCR; återställd från Runeberg"],
+        "source_left": float(anchor.get("source_right", 0.0)) + 12.0,
+        "source_right": float(anchor.get("source_right", 0.0))
+        + 12.0
+        + max(60.0, len(lemma) * 16.0),
+    })
+    items.insert(items.index(anchor) + 1, recovered)
+    return recovered
+
+
+def recover_missing_runeberg_plain_forms(
+    items: list[dict],
+    heads: dict[int, dict],
+    articles: list[dict],
+) -> list[dict]:
+    """Recover explicit Runeberg lemmas lost wholly by the image OCR."""
+    letters = "A-Za-zÅÄÖåäöÀÁÉàáé"
+    article_payload = {article["number"]: article for article in articles}
+    for article_number, head in heads.items():
+        if float(head.get("runeberg_match_score", 0.0)) < 0.80:
+            continue
+        article_items = [
+            item for item in items
+            if int(item["article_number"]) == int(article_number)
+        ]
+        if not article_items:
+            continue
+        runeberg_text = " ".join(
+            head.get("runeberg_article_lines")
+            or [head.get("runeberg_line", "")]
+        )
+        existing_raw = {
+            "-" + normalize_lemma(
+                item.get("raw", "").strip().strip(";,:.()[]{}").lstrip("-")
+            )
+            for item in article_items
+            if item.get("raw", "").strip().startswith("-")
+        }
+
+        # At a page break Runeberg may retain the final printed suffixes even
+        # when the image OCR loses the bottom of the preceding column.
+        pages = {
+            int(line.get("page", 0))
+            for line in article_payload.get(article_number, {}).get("lines", [])
+        }
+        suffix_matches = list(
+            re.finditer(rf"-[{letters}]+", runeberg_text)
+        )
+        observed_positions = [
+            index
+            for index, match in enumerate(suffix_matches)
+            if (
+                "-" + normalize_lemma(match.group(0)[1:])
+            ) in existing_raw
+        ]
+        if len(pages) > 1 and observed_positions:
+            last_observed_raw = (
+                "-"
+                + normalize_lemma(
+                    suffix_matches[observed_positions[-1]].group(0)[1:]
+                )
+            )
+            anchor = next(
+                (
+                    item for item in article_items
+                    if (
+                        "-"
+                        + normalize_lemma(
+                            item.get("raw", "")
+                            .strip()
+                            .strip(";,:.()[]{}")
+                            .lstrip("-")
+                        )
+                    )
+                    == last_observed_raw
+                ),
+                article_items[-1],
+            )
+            base = normalize_lemma(head["headword"])
+            for match in suffix_matches[observed_positions[-1] + 1:]:
+                raw = match.group(0)
+                normalized = "-" + normalize_lemma(raw[1:])
+                if (
+                    normalized in existing_raw
+                    or normalized in NON_LEMMA_SUFFIXES
+                    or merged_pos_inflection(raw, normalized, 0.0)
+                ):
+                    continue
+                lemma = expand_compound(base, raw)
+                anchor = _insert_runeberg_recovery(
+                    items,
+                    anchor,
+                    lemma,
+                    raw,
+                    "Runebergssvans över sidbrytning",
+                )
+                article_items.append(anchor)
+                existing_raw.add(normalized)
+                rule_hit("runeberg.sidbrytningssvans")
+
+        # A visible full base followed by an explicit -suffix is equally
+        # strong evidence even when the suffix vanished from image OCR.
+        runeberg_lines = (
+            head.get("runeberg_article_lines")
+            or [head.get("runeberg_line", "")]
+        )
+        image_lines = article_payload.get(article_number, {}).get("lines", [])
+        truncated_image_article = len(runeberg_lines) > len(image_lines)
+        full_bases = (
+            [
+                item for item in article_items
+                if (
+                    item.get("method") != "artikelhuvud"
+                    and not item.get("raw", "").strip().startswith("-")
+                )
+            ]
+            if truncated_image_article
+            else []
+        )
+        for base_item in full_bases:
+            base = normalize_lemma(base_item["lemma"])
+            occurrences = list(
+                re.finditer(
+                    rf"(?<![{letters}]){re.escape(base)}(?![{letters}])",
+                    runeberg_text,
+                    re.IGNORECASE,
+                )
+            )
+            if not occurrences:
+                continue
+            start = occurrences[-1].end()
+            end_match = re.search(r"[—–]", runeberg_text[start:])
+            end = start + end_match.start() if end_match else len(runeberg_text)
+            segment = runeberg_text[start:end]
+            anchor = base_item
+            parenthesis_depth = 0
+            for token in re.finditer(rf"[()]|-[{letters}]+", segment):
+                raw = token.group(0)
+                if raw == "(":
+                    parenthesis_depth += 1
+                    continue
+                if raw == ")":
+                    parenthesis_depth = max(0, parenthesis_depth - 1)
+                    continue
+                normalized = "-" + normalize_lemma(raw[1:])
+                if (
+                    parenthesis_depth
+                    or normalized in existing_raw
+                    or normalized in NON_LEMMA_SUFFIXES
+                    or merged_pos_inflection(raw, normalized, 0.0)
+                ):
+                    continue
+                lemma = expand_compound(base, raw)
+                anchor = _insert_runeberg_recovery(
+                    items,
+                    anchor,
+                    lemma,
+                    raw,
+                    "Runebergsuffix efter synlig bas",
+                )
+                article_items.append(anchor)
+                existing_raw.add(normalized)
+                rule_hit("runeberg.suffix_efter_synlig_bas")
+
+        # A long dash plus a pronounced, inflected word marks a new lemma.
+        for match in (
+            re.finditer(
+                rf"[—–]\s*([{letters}]+)\s*(?=\()", runeberg_text
+            )
+            if truncated_image_article
+            else []
+        ):
+            lemma = normalize_lemma(match.group(1))
+            if any(item["lemma"] == lemma for item in article_items):
+                continue
+            anchor = article_items[-1]
+            recovered = _insert_runeberg_recovery(
+                items,
+                anchor,
+                lemma,
+                match.group(1),
+                "Runeberglemma efter långt streck",
+            )
+            article_items.append(recovered)
+            rule_hit("runeberg.lemma_efter_långt_streck")
+    return items
+
+
 def rebase_suffixes_from_runeberg_stems(
     items: list[dict], heads: dict[int, dict]
 ) -> list[dict]:
@@ -2096,6 +2370,12 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                         previous_separator = False
                         at_line_start = False
                         continue
+                    vowel_repaired = repair_suffix_vowel_from_runeberg(
+                        cleaned, head
+                    )
+                    if vowel_repaired != cleaned:
+                        cleaned = vowel_repaired
+                        rule_hit("repair.runeberg_vokaltriangulering")
                     if alternative_inflection_before_marker(
                         raw, same_line_following, score
                     ):
@@ -2372,6 +2652,9 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                             and score >= 0.45
                         )
                     )
+                    false_boundary_definition = weak_false_boundary_definition(
+                        cleaned, following_tokens, score, head
+                    )
                     if (
                         lemma
                         and lemma not in GRAMMAR_MARKERS
@@ -2380,6 +2663,7 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                         and not embedded_head_inflection
                         and not full_word_inflection
                         and not unsupported_definition_before_inflection
+                        and not false_boundary_definition
                     ):
                         add(
                             article, lemma, cleaned, "halvfet token",
@@ -2415,6 +2699,13 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
                         if (
                             structurally_new_base
                             and not preceded_by_alternative_marker
+                            and not (
+                                token_index > 0
+                                and normalize_lemma(
+                                    tokens[token_index - 1].get("text", "")
+                                )
+                                == normalized_head
+                            )
                         ):
                             last_lookup_lemma = lemma
                             current_base = suffix_base(cleaned)
@@ -2423,6 +2714,9 @@ def extract_candidates(articles_payload: dict, heads_payload: dict) -> list[dict
     repair_final_letter_from_runeberg(result, heads)
     repair_false_boundary_from_runeberg(result, heads)
     recover_runeberg_boundary_series(result, heads)
+    recover_missing_runeberg_plain_forms(
+        result, heads, articles_payload["articles"]
+    )
     rebase_suffixes_from_runeberg_stems(result, heads)
     result = remove_generated_inflections(result)
     result = remove_displaced_inline_alternatives(result, heads)
